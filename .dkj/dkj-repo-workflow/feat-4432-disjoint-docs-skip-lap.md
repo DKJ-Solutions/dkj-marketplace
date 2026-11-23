@@ -50,6 +50,8 @@ pass locally on the merged result.
 - [x] `Test-DisjointDocsOnlyCertificate` + `Get-NameStatusPaths` (pure) in `scripts/lib/pr-issues-lib.ps1`, with its mirror
 - [x] `Get-DisjointDocsVerdict` + `Invoke-MergedResultChecks` in `scripts/release/ship-pr.ps1`, wired into step 3b (once per gained-commit set) and step 3a (eligibility only, no early forward), with its mirror
 - [x] `skills/ship-pr/SKILL.md` and the `-MaxForwardLaps` help name the second discount
+- [x] off under `-TrustedRoot`: the first gate run failed `trusted-tree-seam` (#2452 -- the unattended token-bearing run may not spawn scripts from a PR-derived tree); the discount now runs only in a session's own checkout, with an allowance naming why, and the unattended half is #4440
+- [x] the three new captures are judged after `Test-NativeExitMeasured`; the native-capture audit count moves 132 -> 135
 
 ### TEST
 
@@ -64,14 +66,16 @@ commits touched. Step 3b now discounts that case: when the PR's diff is docs-onl
 and shares no file with the counted (non-fold) commits `main` gained, ship-pr merges `main` into the PR
 head in a throwaway worktree and runs `check-plugin-integrity` and `check-always-on-budget` there (~2
 min). Green, the certificate holds and the merge goes ahead without a lap; anything that fails or cannot
-run falls through to the lap unchanged. Step 3a no longer early-forwards such a PR. (#4432)
+run falls through to the lap unchanged. Step 3a no longer early-forwards such a PR. The discount applies
+only to a run in a session's own checkout: the unattended merge-on-green run (`-TrustedRoot`) keeps the
+lap, because it may not spawn scripts from a PR-derived tree (#2452); that half is #4440. (#4432)
 
 **Score:** 3
 
 #### What makes this deploy extra special
 
-A repo that ships through `ship-pr` with merge-on-green sees its docs-only pull requests merge one after
-another instead of queueing a CI cycle each behind every other merge.
+A session that ships a docs-only pull request with `ship-pr` no longer waits a full CI cycle each time
+another merge lands first. The local cross-file checks on the merged result take about two minutes.
 
 **Score:** 3
 

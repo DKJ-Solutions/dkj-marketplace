@@ -1961,7 +1961,7 @@ function Get-DisjointDocsVerdict {
 
         # -Utf8: these paths are DATA that get compared (issue #907). -M so a rename names both sides.
         $prDiff = Invoke-NativeCapture -Utf8 -FilePath 'git' -DiscardStderr -Arguments @('-c', 'core.quotePath=false', 'diff', '--name-status', '-M', "$base".Trim(), $head)
-        if ($prDiff.ExitCode -ne 0) { return (& $no 'the PR diff could not be read') }
+        if (-not (Test-NativeExitMeasured -Capture $prDiff) -or $prDiff.ExitCode -ne 0) { return (& $no 'the PR diff could not be read') }
         $prPaths = @(Get-NameStatusPaths -Lines @($prDiff.Output))
 
         # PER COMMIT AGAINST ITS FIRST PARENT, not `git show`: a merge commit shows an EMPTY diff there, and
@@ -1970,7 +1970,7 @@ function Get-DisjointDocsVerdict {
         foreach ($sha in $Commits) {
             $one = "$sha".Trim()
             $d = Invoke-NativeCapture -Utf8 -FilePath 'git' -DiscardStderr -Arguments @('-c', 'core.quotePath=false', 'diff', '--name-status', '-M', "$one^1", $one)
-            if ($d.ExitCode -ne 0) { return (& $no "the diff of gained commit $one could not be read") }
+            if (-not (Test-NativeExitMeasured -Capture $d) -or $d.ExitCode -ne 0) { return (& $no "the diff of gained commit $one could not be read") }
             $gainedPaths += @(Get-NameStatusPaths -Lines @($d.Output))
         }
         $v = Test-DisjointDocsOnlyCertificate -PrPaths $prPaths -GainedPaths $gainedPaths
@@ -1995,6 +1995,11 @@ function Invoke-MergedResultChecks {
     #>
     param([Parameter(Mandatory = $true)][string]$HeadSha)
 
+    # NEVER UNDER -TrustedRoot (#2452). This spawns scripts from a tree built out of the PR head -- what the
+    # lint gate already does in a session's own checkout, and exactly what the token-bearing unattended run
+    # must not do. There the discount is off and the lap applies; step 3b asks first, this is the backstop.
+    if ($TrustedRoot) { return [pscustomobject]@{ Passed = $false; Reason = 'an unattended (-TrustedRoot) run does not run the merged-result checks (#2452)' } }
+
     $wt = Join-Path ([System.IO.Path]::GetTempPath()) ('ship-pr-merged-' + [guid]::NewGuid().ToString('N').Substring(0, 8))
     $priorCwd = [Environment]::CurrentDirectory
     try {
@@ -2012,7 +2017,7 @@ function Invoke-MergedResultChecks {
         )
         foreach ($c in $checks) {
             $r = Invoke-NativeCapture -FilePath 'powershell' -DiscardStderr -TimeoutSeconds 900 -Arguments @($c.Args)
-            if ($r.TimedOut -or $r.ExitCodeUnknown -or $r.ExitCode -ne 0) {
+            if ($r.TimedOut -or -not (Test-NativeExitMeasured -Capture $r) -or $r.ExitCode -ne 0) {
                 @($r.Output) | Where-Object { $_ -and "$_".Trim() } | Select-Object -Last 4 | ForEach-Object { Write-Host "    $_" -ForegroundColor DarkGray }
                 return [pscustomobject]@{ Passed = $false; Reason = "$($c.Name) did not pass on the merged result" }
             }
@@ -2098,7 +2103,7 @@ function Get-EarlyStaleReading {
         # commit is not worth an early forward; step 3b owns the decision (it adds the local cross-file checks
         # on the merged result, which this poll deliberately does not run). A read that fails leaves $verdict
         # stale, i.e. the early forward as before.
-        if ($verdict.Stale -and $Pr) {
+        if ($verdict.Stale -and $Pr -and -not $TrustedRoot) {
             $disjoint = Get-DisjointDocsVerdict -Pr $Pr -Commits @($verdict.Commits)
             if ($disjoint.Eligible) {
                 $verdict = Get-StaleCertificateVerdict -NewMainCommits $gained -ExemptCommits $gained
@@ -3281,7 +3286,9 @@ certificate anyway.
             # ~10 min of CI; check-plugin-integrity is ~2 min measured (114 s on 2026-11-23). Under merge-on-green
             # five of seven armed PRs were docs-only and each paid a lap after every other merge. Anything that
             # fails or cannot run falls through to the lap/refusal below unchanged.
-            if ($staleVerdict.Stale) {
+            if ($staleVerdict.Stale -and $TrustedRoot) {
+                Write-Host "  stale-CI check: the docs-only discount (issue #4432) does not apply to an unattended -TrustedRoot run (#2452) -- the normal forward lap applies." -ForegroundColor DarkGray
+            } elseif ($staleVerdict.Stale) {
                 $docsSkipNow = (@($staleVerdict.Commits) -join ',')
                 if ($docsSkipKey -ne $docsSkipNow) {
                     $docsSkipKey = $docsSkipNow
