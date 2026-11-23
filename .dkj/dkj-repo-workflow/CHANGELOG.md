@@ -2,7 +2,31 @@
 
 ## [Unreleased]
 
-**7 / 7 minor entries** <!-- pending-tally -->
+**8 / 8 minor entries** <!-- pending-tally -->
+
+### DEPLOY: docs/4410-tip-check-image-tips · 20261123-112440Z
+
+`tip-check` now says what to do when a post's tips are in its images: ask the owner for all the
+slides at once, or judge the caption and note that the slides were unread (#4410).
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+Checking a carousel post no longer stalls, and the owner no longer has to send ten separate
+screenshots. The skill asks for all the slides in one go.
+
+**Score:** 2
+
+#### Pull Request
+
+tip-check: what to do when a post's tips sit in its images
+
+Plugins: dkj-subagents-alpha
+
+[PR #4416](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4416)
+
+---
 
 ### DEPLOY: fix/4405-guard-shell-syntax · 20261123-111109Z
 
