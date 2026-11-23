@@ -293,7 +293,10 @@ if ($NoManifest) {
 Write-Host "`nReading the estate ..." -ForegroundColor Yellow
 # -DiscardStderr because this output is PARSED: the CLI writes a hint line to stderr while succeeding,
 # and a merged capture puts it in front of the JSON. -Quiet because the JSON is not for a reader.
-$list = Invoke-ShopifyCli -Arguments @('theme', 'list', '--store', $Store, '--json') -Quiet -DiscardStderr
+# BOUNDED (#4393): an expired login makes this read wait silently on a device-code login it hides.
+$list = Invoke-ShopifyCli -Arguments @('theme', 'list', '--store', $Store, '--json') -Quiet -DiscardStderr -TimeoutSeconds 60
+$loginNote = Get-ShopifyLoginNote -Result $list -Store $Store -TimeoutSeconds 60
+if ($loginNote) { throw "Could not read the theme list: $loginNote" }
 if ($list.ExitCode -ne 0 -or -not $list.Output) {
     throw "Could not read the theme list (is the Shopify CLI logged in? 'shopify theme list --store $Store' re-triggers auth)."
 }

@@ -561,10 +561,23 @@ if (@($ExecutionContext.InvokeCommand.GetCommands('Get-BwjPagesConfig', 'Functio
 # Shopify's limit the preflight's backup has no slot to duplicate into, so a sweep printed after the push
 # deadlocks the day. A read only (theme list), skipped with -SkipDrift like the other CLI read. Connected
 # stores are read too: their preflight takes the same backup.
+#
+# BOUNDED, AND THE LOGIN NAMED (#4384). With an expired CLI login this read prints a device-code login to
+# stderr and waits for it; unbounded and with stderr discarded, the run sat silent ~11 minutes. 60 s
+# covers a real read, and a timeout or the login diagnostic becomes a skip that says what to do.
 $themeCount = -1
+$themeCountNote = ''
 if (-not $SkipDriftArg -and $store) {
     $list = $null
-    try { $list = Invoke-ShopifyCli -Arguments @('theme', 'list', '--store', $store, '--json') -Quiet -DiscardStderr } catch { $list = $null }
+    try { $list = Invoke-ShopifyCli -Arguments @('theme', 'list', '--store', $store, '--json') -Quiet -DiscardStderr -TimeoutSeconds 60 } catch { $list = $null }
+    if ($null -ne $list -and ($list.TimedOut -or $list.LoginRequired)) {
+        $themeCountNote = if ($list.TimedOut -and -not $list.LoginRequired) {
+            "the Shopify CLI timed out after 60 s (an expired login is the usual cause) -- run 'shopify theme list --store $store' once to log in."
+        } else {
+            "Shopify CLI not logged in -- run 'shopify theme list --store $store' once to log in."
+        }
+        $list = $null
+    }
     if ($null -ne $list -and $list.ExitCode -eq 0) {
         # The CLI can print a hint line beside the JSON, so only the JSON span is parsed.
         $text = ($list.Output | Out-String)
@@ -577,11 +590,13 @@ if (-not $SkipDriftArg -and $store) {
         } catch { $themeCount = -1 }
     }
 }
-$sweepOrder = Get-ThemeSweepOrder -Count $themeCount
+$sweepOrder = Get-ThemeSweepOrder -Count $themeCount -Limit (Resolve-ShopifyThemeLimit -Answer (Get-Seam 'Get-ShopifyThemeLimit' $null))
 if ($SkipDriftArg -or -not $store) {
     Add-Step -Name 'theme slots' -State 'skip' -Detail "the store's theme count was not read$(if ($SkipDriftArg) { ' (-SkipDrift)' } else { ' (no store domain)' }), so the runbook keeps the sweep after the push. live-preflight counts again on the day."
 } elseif ($themeCount -lt 0) {
-    Add-Step -Name 'theme slots' -State 'skip' -Detail "$($sweepOrder.Message) live-preflight counts again on the day."
+    Add-Step -Name 'theme slots' -State 'skip' -Detail "$(if ($themeCountNote) { "$themeCountNote " })$($sweepOrder.Message) live-preflight counts again on the day."
+} elseif ($sweepOrder.LimitExceeded) {
+    Add-Step -Name 'theme slots' -State 'attention' -Detail "$($sweepOrder.Message) live-preflight counts again on the day."
 } elseif ($sweepOrder.SweepFirst) {
     Add-Step -Name 'theme slots' -State 'attention' -Detail "$($sweepOrder.Message) The runbook puts the sweep first."
 } else {

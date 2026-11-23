@@ -330,7 +330,10 @@ if (-not $id) {
     # the consumer's break was here (BWJ-ecommerce/smartwatchbanden#433). -DiscardStderr keeps the CLI's
     # hint line out of Output, which ConvertFrom-Json would otherwise refuse as a JSON primitive; -Quiet
     # keeps a theme list off the console, where it is noise rather than progress.
-    $list = Invoke-ShopifyCli -Arguments @('theme', 'list', '--store', $store, '--json') -Quiet -DiscardStderr
+    # BOUNDED (#4393): an expired login makes this read wait silently on a device-code login it hides.
+    $list = Invoke-ShopifyCli -Arguments @('theme', 'list', '--store', $store, '--json') -Quiet -DiscardStderr -TimeoutSeconds 60
+    $loginNote = Get-ShopifyLoginNote -Result $list -Store $store -TimeoutSeconds 60
+    if ($loginNote) { Write-Error "shopify theme list failed: $loginNote"; exit 1 }
     if ($list.ExitCode -ne 0) { Write-Error "shopify theme list failed."; exit 1 }
     $parsed = $null
     try { $parsed = ($list.Output | Out-String) | ConvertFrom-Json } catch {
@@ -473,7 +476,10 @@ if (-not $id) {
         # ANSWERED means parsed, not merely exit 0: a list that cannot be read says nothing about the name.
         $listAnswered = $false
         $themeCount = -1
-        $list = Invoke-ShopifyCli -Arguments @('theme', 'list', '--store', $store, '--json') -Quiet -DiscardStderr
+        # BOUNDED (#4393). A timed-out or login-blocked read is simply not answered, and says why.
+        $list = Invoke-ShopifyCli -Arguments @('theme', 'list', '--store', $store, '--json') -Quiet -DiscardStderr -TimeoutSeconds 60
+        $loginNote = Get-ShopifyLoginNote -Result $list -Store $store -TimeoutSeconds 60
+        if ($loginNote) { Write-Warning "the theme list could not be read: $loginNote" }
         if ($list.ExitCode -eq 0) {
             try {
                 $parsedList = ($list.Output | Out-String) | ConvertFrom-Json

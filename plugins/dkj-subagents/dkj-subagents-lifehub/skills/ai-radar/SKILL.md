@@ -31,7 +31,9 @@ Then fetch and read, before writing anything:
 
 An item belongs to its model family's page, directly under the marker line that page carries for new
 items. Write with `notion-update-page` (insert new text, only ever add to existing text), in exactly the
-format the page shows.
+format the page shows, and **newest first** (Ian's rule, #4379): a new item goes directly under that
+marker line, above the older items, and an addition to an existing item goes at the top of it, its
+newest source first.
 
 ## Mode 1: the inbox (the owner pastes something)
 
@@ -66,7 +68,9 @@ Per followed source on the sources page:
 5. **Move *last processed* on** to the newest version or date you read, even when nothing belonged.
 
 **Give no verdict during a check.** Every new item gets the verdict for a new item; judging it needs a
-look at the owner's own setup, which is a separate pass the main page describes.
+look at the owner's own setup, which is a separate pass the main page describes. That pass is the
+[`tip-check`](https://github.com/DKJ-Solutions/dkj-marketplace/blob/main/plugins/dkj-subagents/dkj-subagents-alpha/skills/tip-check/SKILL.md) skill of the core team (#4382):
+hand it the items still awaiting a verdict, and record the finding and advice it returns as the item's verdict, in the main page's own terms.
 
 ## Close
 

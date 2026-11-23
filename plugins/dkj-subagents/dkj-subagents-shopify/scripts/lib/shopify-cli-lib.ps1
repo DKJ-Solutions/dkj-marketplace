@@ -65,8 +65,15 @@
          here would trade one silent hang for another.
       2. ITS BOUNDED/UTF-8 ARM USES Start-Process, WHICH CANNOT RUN A .ps1. On Windows 'shopify' is an
          npm shim -- AppData\Roaming\npm\shopify.ps1 -- resolved by PowerShell's own command discovery,
-         not an .exe. So -TimeoutSeconds and -Utf8 are unavailable to a Shopify call whatever else is
-         decided, and a wrapper that cannot offer them should not look like the one that can.
+         not an .exe. So -Utf8 stays unavailable to a Shopify call whatever else is decided.
+
+    -TimeoutSeconds IS AVAILABLE AFTER ALL, BUT ONLY WITH -Quiet (#4384). A captured '--json' read has no
+    prompt worth showing, and it hung: with an expired CLI login 'shopify theme list --json' prints a
+    device-code login to stderr and WAITS for it, and -DiscardStderr swallowed that, so prepare-release
+    sat silent for ~11 minutes until the code expired. The bounded arm starts a child powershell.exe
+    (an .exe, so Start-Process works) that runs the shim, redirects its streams to temp files so a full
+    pipe cannot deadlock, and on timeout kills the child's whole process TREE (node is a grandchild).
+    The streaming calls (theme pull/push) stay unbounded, as argued in point 1.
 
     Invoke-SyncGitQuiet in sync-rules.ps1 is the precedent for that call: a small purpose-built wrapper
     that repeats the four-line dance deliberately, because what it needs around the call differs.
@@ -126,6 +133,9 @@ function Invoke-ShopifyCli {
         back a pscustomobject with:
           - Output   : the command's output lines. Always populated, so a caller that streams can still
                        parse afterwards; empty only where the command wrote nothing.
+          - TimedOut / LoginRequired : set by -TimeoutSeconds runs (#4384); TimedOut means the call was
+                       killed (ExitCode is then -1), LoginRequired means stderr said 'log in to Shopify'.
+                       $false on every unbounded run, where stderr is not inspected.
           - ExitCode : $LASTEXITCODE, recorded immediately after the command ran. THE FIRST THING A
                        CALLER JUDGES THE RUN ON -- never the absence of an ErrorRecord. Necessary but not
                        always sufficient: 'theme push' exits 0 when it rejects a file (#2624), so that
@@ -155,8 +165,15 @@ function Invoke-ShopifyCli {
     param(
         [Parameter(Mandatory = $true)][string[]]$Arguments,
         [switch]$Quiet,
-        [switch]$DiscardStderr
+        [switch]$DiscardStderr,
+        # Opt-in bound for a captured read (#4384). 0 = unbounded, the historical behaviour.
+        [int]$TimeoutSeconds = 0
     )
+
+    if ($TimeoutSeconds -gt 0) {
+        if (-not $Quiet) { throw 'Invoke-ShopifyCli: -TimeoutSeconds needs -Quiet; a streaming call stays unbounded.' }
+        return Invoke-ShopifyCliBounded -Arguments $Arguments -TimeoutSeconds $TimeoutSeconds -DiscardStderr:$DiscardStderr
+    }
 
     $prevEap = $ErrorActionPreference
     try {
@@ -182,7 +199,78 @@ function Invoke-ShopifyCli {
         $ErrorActionPreference = $prevEap
     }
 
-    return [pscustomobject]@{ Output = $out; ExitCode = $code }
+    return [pscustomobject]@{ Output = $out; ExitCode = $code; TimedOut = $false; LoginRequired = $false }
+}
+
+function Invoke-ShopifyCliBounded {
+    <#
+        The -TimeoutSeconds arm of Invoke-ShopifyCli (#4384). Internal to this lib.
+
+        The real call is inside a child powershell.exe, as TEXT in a temp script rather than a command
+        in this file, so the lint gate's one-call rule (check 31) is untouched: the call stays in this
+        file. Output and stderr go to temp files, never pipes. stderr is kept OUT of Output (like
+        -DiscardStderr) unless the caller asked for it merged, but it is always read for the login
+        diagnostic, which is exactly what -DiscardStderr used to hide.
+    #>
+    param(
+        [Parameter(Mandatory = $true)][string[]]$Arguments,
+        [Parameter(Mandatory = $true)][int]$TimeoutSeconds,
+        [switch]$DiscardStderr
+    )
+    $base = Join-Path ([System.IO.Path]::GetTempPath()) ("shopify-bounded-$PID-" + [guid]::NewGuid().ToString('N'))
+    $scriptFile = "$base.ps1"; $outFile = "$base.out"; $errFile = "$base.err"
+    $timedOut = $false; $code = -1; $p = $null
+    try {
+        # UTF-8 inside the child only; the child's console is its own, so nothing console-wide changes.
+        $childText = '[Console]::OutputEncoding = New-Object System.Text.UTF8Encoding $false' + "`r`n" +
+            '& shopify @args' + "`r`n" + 'exit $LASTEXITCODE' + "`r`n"
+        [System.IO.File]::WriteAllText($scriptFile, $childText, [System.Text.Encoding]::ASCII)
+        $quoted = ($Arguments | ForEach-Object { '"' + ([string]$_).Replace('"', '\"') + '"' }) -join ' '
+        $p = Start-Process -FilePath 'powershell.exe' -PassThru -WindowStyle Hidden `
+            -ArgumentList ('-NoProfile -ExecutionPolicy Bypass -File "' + $scriptFile + '" ' + $quoted) `
+            -RedirectStandardOutput $outFile -RedirectStandardError $errFile
+        $null = $p.Handle   # PS 5.1 loses ExitCode for a process whose handle was never cached
+        if ($p.WaitForExit($TimeoutSeconds * 1000)) { $code = $p.ExitCode }
+        else {
+            $timedOut = $true
+            & taskkill.exe /PID $p.Id /T /F 2>&1 | Out-Null
+            try { $p.Kill() } catch { }
+            $null = $p.WaitForExit(5000)
+        }
+        $read = { param($f) if (Test-Path -LiteralPath $f) { [System.IO.File]::ReadAllText($f, [System.Text.Encoding]::UTF8) } else { '' } }
+        $outText = & $read $outFile
+        $errText = & $read $errFile
+    } finally {
+        Remove-Item -LiteralPath $scriptFile, $outFile, $errFile -Force -ErrorAction SilentlyContinue
+    }
+    $split = { param($t) @(($t -split "`r?`n") | Where-Object { $_ -ne '' }) }
+    $out = & $split $outText
+    if (-not $DiscardStderr) { $out = @($out) + @(& $split $errText) }
+    return [pscustomobject]@{
+        Output        = @($out)
+        ExitCode      = $code
+        TimedOut      = $timedOut
+        LoginRequired = [bool]($errText -match 'log in to Shopify')
+    }
+}
+
+function Get-ShopifyLoginNote {
+    <#
+        The one sentence a caller prints when a bounded read (-TimeoutSeconds) came back timed out or
+        asking for a login, or '' when it did neither (#4393). Pure: it reads the result object and runs
+        nothing. Every bounded 'theme list' read words this the same way, so the operator learns the same
+        remedy -- run the read once by hand, which shows the device-code login the capture hid.
+    #>
+    param(
+        [AllowNull()]$Result,
+        [Parameter(Mandatory = $true)][string]$Store,
+        [Parameter(Mandatory = $true)][int]$TimeoutSeconds
+    )
+    if ($null -eq $Result) { return '' }
+    $retry = "run 'shopify theme list --store $Store' once to log in."
+    if ($Result.LoginRequired) { return "Shopify CLI not logged in -- $retry" }
+    if ($Result.TimedOut) { return "the Shopify CLI timed out after $TimeoutSeconds s (an expired login is the usual cause) -- $retry" }
+    return ''
 }
 
 function Get-ThemeFileCount {

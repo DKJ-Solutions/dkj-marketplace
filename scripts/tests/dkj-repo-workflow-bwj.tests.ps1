@@ -1202,6 +1202,8 @@ Assert-True $prSweep.Contains('5. Preview sweep -- done as step 0') 'and step 5 
 Assert-True ($prBook -notmatch '0\. Preview sweep') 'without it, the sweep stays at step 5, after the push'
 $prDrvSweep = [System.IO.File]::ReadAllText((Join-Path $PluginRoot 'scripts\task\prepare-release.ps1'))
 Assert-True ($prDrvSweep.Contains('Get-ThemeSweepOrder -Count') -and $prDrvSweep.Contains('-SweepFirst:$sweepOrder.SweepFirst')) 'prepare-release reads the theme count and hands the verdict to the runbook'
+Assert-True ($prDrvSweep.Contains("Resolve-ShopifyThemeLimit -Answer (Get-Seam 'Get-ShopifyThemeLimit'")) 'prepare-release reads the store''s theme limit through the one helper (#4388)'
+Assert-True (-not (Get-ThemeSweepOrder -Count 43 -Limit 100).Full -and (Get-ThemeSweepOrder -Count 43 -Limit 20).LimitExceeded) 'the mirrored rules: 43 themes is room at 100 and proves the limit wrong at 20 (#4388)'
 $prCtl = @([pscustomobject]@{ Branch = 'feat/1-x'; Sentence = "Once live, stop it.$([char]27)[2J" })
 Assert-True (-not ((Format-ReleaseRunbook -Obligations $prCtl) -join "`n").Contains([char]27)) 'entry prose reaches the runbook with its control characters stripped'
 

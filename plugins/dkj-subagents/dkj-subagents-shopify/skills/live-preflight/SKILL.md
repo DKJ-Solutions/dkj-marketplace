@@ -158,7 +158,7 @@ held, goes through the same control-character strip.
 | 2 | **gates** -- the repo's own lint and tests | one of them fails. |
 | 3 | **push list** -- derived from the range | nothing in the range lives on a theme and no app file changed, or a theme path is not safe to paste (failure 3 above). Where `Get-ShopifyAppRoot` is named, it also carries an `app deploy` check, which refuses an app root that cannot be printed. |
 | 4 | **version** -- what the pending entries owe, and the target | never; it reports. |
-| 5 | **live theme** -- by configured **id** and by the **role** the store reports; from the same list, the **theme slots** | the two disagree, or the id is not in the list. The slots refuse a full store (20/20), whose backup could not duplicate live, and warn within two free slots (#4157). |
+| 5 | **live theme** -- by configured **id** and by the **role** the store reports; from the same list, the **theme slots** | the two disagree, or the id is not in the list. The slots refuse a full store (20/20), whose backup could not duplicate live, and warn within two free slots (#4157), at the limit `Get-ShopifyThemeLimit` answers (20 unless the store says otherwise, #4388). |
 | 6 | **drift** -- the check, with the list as an array, and again with the deletions | the check says the live files about to be overwritten are not what this repo thinks. On the deletions alone it withholds the deletion command instead. |
 | 7 | **backup** -- one verified copy of live | the backup cannot be proven complete. |
 | 8 | **the push command, the deletion command and, where `Get-ShopifyAppRoot` is named, the app deploy command** -- all without the marker | never; with no list there is simply no command. |
@@ -306,6 +306,7 @@ person to run, which is a **completed step** rather than a failure -- see
 | `Get-ShopifyDriftCheckPath` | optional | the drift check, default `scripts/theme/live-snapshot.ps1`. |
 | `Get-ShopifyLiveDeployBranch` | optional | the branch a Git-connected live theme deploys from. Default `''`, the CLI push. A name switches on [the Git-connected mode](#the-git-connected-mode-2998-3009). |
 | `Get-ShopifyAppRoot` | optional | the folder of a Shopify app the store also ships, e.g. `extensions`. Default `''`, no app. See [the app deploy](#the-app-deploy-3174). |
+| `Get-ShopifyThemeLimit` | optional | the theme limit of the store's plan: 20 for Basic, Grow and Advanced, 100 for Shopify Plus ([help center](https://help.shopify.com/manual/online-store/themes/adding-themes)). Default 20; anything but a positive whole number reads as 20. It counts every role `shopify theme list` returns (whether development themes count toward the library limit is not verified). A count above it proves the limit is not this store's: step 5 then warns instead of refusing (#4388). |
 
 ### `Get-ShopifyLivePushMarker` is deliberately absent from that table
 
