@@ -254,6 +254,25 @@ function Invoke-ShopifyCliBounded {
     }
 }
 
+function Get-ShopifyLoginNote {
+    <#
+        The one sentence a caller prints when a bounded read (-TimeoutSeconds) came back timed out or
+        asking for a login, or '' when it did neither (#4393). Pure: it reads the result object and runs
+        nothing. Every bounded 'theme list' read words this the same way, so the operator learns the same
+        remedy -- run the read once by hand, which shows the device-code login the capture hid.
+    #>
+    param(
+        [AllowNull()]$Result,
+        [Parameter(Mandatory = $true)][string]$Store,
+        [Parameter(Mandatory = $true)][int]$TimeoutSeconds
+    )
+    if ($null -eq $Result) { return '' }
+    $retry = "run 'shopify theme list --store $Store' once to log in."
+    if ($Result.LoginRequired) { return "Shopify CLI not logged in -- $retry" }
+    if ($Result.TimedOut) { return "the Shopify CLI timed out after $TimeoutSeconds s (an expired login is the usual cause) -- $retry" }
+    return ''
+}
+
 function Get-ThemeFileCount {
     <#
         How many files a theme on the store holds, or -1 where that cannot be measured. It exists for one

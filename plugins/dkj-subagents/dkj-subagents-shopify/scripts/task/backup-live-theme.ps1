@@ -257,7 +257,10 @@ function Get-ThemeList {
     # -Quiet AND -DiscardStderr, and both are required rather than tidy: the CLI writes a hint line to
     # stderr WHILE SUCCEEDING under Claude Code, which ConvertFrom-Json then refuses as a JSON
     # primitive. This is the exact call a consumer's break was measured on.
-    $list = Invoke-ShopifyCli -Arguments @('theme', 'list', '--store', $store, '--json') -Quiet -DiscardStderr
+    # BOUNDED (#4393): an expired login makes this read wait silently on a device-code login it hides.
+    $list = Invoke-ShopifyCli -Arguments @('theme', 'list', '--store', $store, '--json') -Quiet -DiscardStderr -TimeoutSeconds 60
+    $loginNote = Get-ShopifyLoginNote -Result $list -Store $store -TimeoutSeconds 60
+    if ($loginNote) { Write-Error "shopify theme list failed: $loginNote"; exit 1 }
     if ($list.ExitCode -ne 0) { Write-Error 'shopify theme list failed.'; exit 1 }
     $parsed = $null
     try { $parsed = ($list.Output | Out-String) | ConvertFrom-Json } catch {
