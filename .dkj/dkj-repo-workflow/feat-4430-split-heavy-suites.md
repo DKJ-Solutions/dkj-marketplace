@@ -56,6 +56,9 @@
 
 ### TEST
 
+- [x] consumer-dashboard's `GET /consumers` timed out at 15 s in 3 of 4 CI runs on this branch (0 of 10 on five
+  shards): a diagnostic for #3932 waits up to 90 s on that one fetch and prints its timing, with the gh, git and
+  powershell-child costs measured on the runner
 - [x] guard-live-theme: 220 + 192 = 412 asserts (411 before, plus the restored one), all green
 - [x] script-contract: 451 + 65 = 516 asserts, the same as before, all green
 - [x] ci-shard, ci-suite-selection-lib and affected-suites suites green

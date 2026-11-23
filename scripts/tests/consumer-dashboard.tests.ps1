@@ -378,10 +378,10 @@ if ([System.Environment]::OSVersion.Platform -ne [System.PlatformID]::Win32NT) {
         # that got the wrong page used to fail an assert identically, so three recurrences could not tell them apart.
         # A caller whose assert has flaked captures it right after the fetch and passes it to Assert-True's -Why.
         $script:RawWhy = ''
-        function Get-Raw([string]$Method, [string]$Path, [string]$HostHeader, [string]$Extra = '', [int]$OnPort = $port) {
+        function Get-Raw([string]$Method, [string]$Path, [string]$HostHeader, [string]$Extra = '', [int]$OnPort = $port, [int]$TimeoutMs = 15000) {
             $sw = [Diagnostics.Stopwatch]::StartNew()
             $c = New-Object System.Net.Sockets.TcpClient('127.0.0.1', $OnPort)
-            $c.ReceiveTimeout = 15000
+            $c.ReceiveTimeout = $TimeoutMs
             try {
                 $s = $c.GetStream()
                 $req = [System.Text.Encoding]::ASCII.GetBytes("$Method $Path HTTP/1.1`r`nHost: $HostHeader`r`n$Extra`r`n")
@@ -394,7 +394,7 @@ if ([System.Environment]::OSVersion.Platform -ne [System.PlatformID]::Win32NT) {
                 $e = $_.Exception
                 while ($e -is [System.Management.Automation.MethodInvocationException] -and $e.InnerException) { $e = $e.InnerException }
                 $inner = if ($e.InnerException) { " ($($e.InnerException.GetType().Name))" } else { '' }
-                $script:RawWhy = "$Method $Path threw $($e.GetType().Name)$inner after $($sw.ElapsedMilliseconds) ms (the receive timeout is 15000 ms)"
+                $script:RawWhy = "$Method $Path threw $($e.GetType().Name)$inner after $($sw.ElapsedMilliseconds) ms (the receive timeout is $TimeoutMs ms)"
                 return ''
             } finally { $c.Close() }
         }
@@ -520,8 +520,23 @@ if ([System.Environment]::OSVersion.Platform -eq [System.PlatformID]::Win32NT -a
             $repoLinks = @([regex]::Matches($page, 'href="(/consumers/other/[A-Za-z0-9._-]+)"') | ForEach-Object { $_.Groups[1].Value } | Select-Object -Unique)
             $repoPages = (@($repoLinks | ForEach-Object { if ($up) { Get-Raw 'GET' $_ "localhost:$port3" '' $port3 } }) -join "`n")
             $missing = if ($up) { Get-Raw 'GET' '/consumers/other/no-such-repo' "localhost:$port3" '' $port3 } else { '' }
-            $overviewPage = if ($up) { Get-Raw 'GET' '/consumers' "localhost:$port3" '' $port3 } else { '' }
+            # DIAGNOSTIC (#3932, PR #4437): the overview timed out at 15 s in 3 of 4 CI runs on the six-shard layout and
+            # answers in about 0.1 s locally. Longer wait and an always-printed timing, plus the server's three costly steps
+            # timed from here on CI, so a run says which step is slow. Removed again once #3932 names the cause.
+            $overviewPage = if ($up) { Get-Raw 'GET' '/consumers' "localhost:$port3" '' $port3 -TimeoutMs 90000 } else { '' }
             $overviewWhy = $script:RawWhy
+            Write-Host "  [TIMING #3932] $overviewWhy"
+            if ($env:CI) {
+                $gs = [Diagnostics.Stopwatch]::StartNew()
+                $null = & gh api graphql -f 'query=query { viewer { login } }' 2>&1; $ghExit = $LASTEXITCODE
+                $ghMs = $gs.ElapsedMilliseconds; $gs.Restart()
+                $null = & git --no-optional-locks -c core.fsmonitor=false -C $noup remote get-url origin 2>&1
+                $null = & git --no-optional-locks -c core.fsmonitor=false -C $noup status --porcelain 2>&1
+                $gitMs = $gs.ElapsedMilliseconds; $gs.Restart()
+                $null = & powershell -NoProfile -ExecutionPolicy Bypass -Command 'exit 0' 2>&1
+                $psMs = $gs.ElapsedMilliseconds
+                Write-Host "  [TIMING #3932] from the test process: gh api graphql $ghMs ms (exit $ghExit), two git calls $gitMs ms, a bare powershell child $psMs ms"
+            }
             Assert-True ($page -match 'HTTP/1.1 200') 'the page is served with a checkout that has no upstream' $pageWhy
             Assert-True ($repoLinks.Count -ge 1 -and $repoPages -match 'HTTP/1.1 200' -and $repoPages -notmatch 'HTTP/1.1 404') 'every repo the group page links has a page of its own (#4113)'
             Assert-True ($missing -match 'HTTP/1.1 404') 'a repo no group member is named for is a 404, never an empty page'
