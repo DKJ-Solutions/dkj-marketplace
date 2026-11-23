@@ -1,7 +1,7 @@
 <#
 .SYNOPSIS
     Tests for guard-live-theme.ps1's rule 5 routes onto a Git-connected live theme's deploy branch
-    (#4329) and its merged-only live push (#3758, group 10).
+    (#4329), its merged-only live push (#3758, group 10), and rule 6, the go-live command (#4402).
 
 .DESCRIPTION
     Split out of guard-live-theme.tests.ps1 (#4430), which keeps groups 1 to 9, the session check and
@@ -283,6 +283,47 @@ try {
 
     # Degraded, the push cannot be read, so the marker alone no longer authorises it.
     Assert-Equal 2 (Invoke-DegradedGuard -Command "$push --only assets/x.css $mk" -Root $m).Code 'no lib: an authorised live push is refused -- what it carries cannot be read'
+
+    # --- rule 6: the go-live command (#4402) -----------------------------------------------------------
+    # One marker on the go-live line authorises the whole release; without it the line is refused, in a
+    # Git-connected repo and in one with no seams at all. Naming the file in a text tool is not running it.
+    Write-Host "rule 6 -- the go-live command (#4402)" -ForegroundColor Cyan
+    $gl = 'powershell -NoProfile -ExecutionPolicy Bypass -File "C:/x/dkj-repo-workflow-bwj/7.4.0/scripts/task/go-live.ps1" -Version 3.2.0 -AppDeploy'
+    $bare = New-FixtureRepo -Label 'golive-bare'
+    foreach ($root in @($conn, $bare)) {
+        $label = if ($root -eq $conn) { 'connected' } else { 'no seams' }
+        Assert-Equal 2 (Invoke-Guard -Command $gl -Root $root) "go-live ($label): refused without the marker"
+        Assert-Equal 0 (Invoke-Guard -Command "$gl # SWB-LIVE-PUSH-AUTHORIZED" -Root $root) "go-live ($label): allowed with the marker on the line"
+    }
+    $glBlocked = @(
+        @{ n = 'a call operator and a quoted path'; c = "& 'C:\x\scripts\task\go-live.ps1' -Version 3.2.0 -SkipAppDeploy" },
+        @{ n = 'a relative path';                    c = '.\scripts\task\go-live.ps1 -Version 3.2.0' },
+        @{ n = 'after a semicolon';                  c = "cd C:\repo; $gl" },
+        @{ n = 'inside a bash -c wrapper';           c = "bash -c `"$($gl -replace '"', '')`"" },
+        # Sebastian's review of #4402: each of these passed the first cut.
+        @{ n = 'a substitution inside echo';         c = 'echo $(powershell -File go-live.ps1 -Version 1.0.0 -AppDeploy)' },
+        @{ n = 'a backtick substitution inside cat'; c = 'cat x `powershell -File go-live.ps1 -Version 1.0.0`' },
+        @{ n = 'a git alias on the line';            c = 'git -c alias.x="!powershell -File go-live.ps1 -Version 1.0.0" x' },
+        @{ n = 'git config writing an alias';        c = "git config alias.g '!powershell -File scripts/go-live.ps1'" },
+        @{ n = 'a comma-joined argument';            c = "powershell '-File',go-live.ps1 -Version 1.0.0" },
+        @{ n = 'a trailing dot Windows strips';      c = 'powershell -File .\go-live.ps1. -Version 1.0.0' },
+        @{ n = 'upper case';                         c = 'powershell -File .\GO-LIVE.PS1 -Version 1.0.0' }
+    )
+    foreach ($case in $glBlocked) { Assert-Equal 2 (Invoke-Guard -Command $case.c -Root $conn) "go-live blocked: $($case.n)" }
+    $glMentions = @(
+        @{ n = 'reading the script';          c = 'Get-Content scripts/task/go-live.ps1' },
+        @{ n = 'grepping for it';             c = 'grep -n Stop-GoLive go-live.ps1' },
+        @{ n = 'staging it in git';           c = 'git add plugins/x/scripts/task/go-live.ps1' },
+        @{ n = 'a git log of it';             c = 'git -C repo log --oneline -- scripts/task/go-live.ps1' },
+        @{ n = 'a heredoc body naming it';    c = "cat > notes.md <<'EOF'${LF}run go-live.ps1 -AppDeploy${LF}EOF" },
+        @{ n = 'a different script name';     c = 'powershell -File scripts/task/go-live-check.ps1' }
+    )
+    foreach ($case in $glMentions) { Assert-Equal 0 (Invoke-Guard -Command $case.c -Root $conn) "go-live mention passes: $($case.n)" }
+    # In a repo without a deploy branch, so rule 5's local-write check does not answer first.
+    Assert-Equal 0 (Invoke-Guard -Command 'git commit -m "feat: add go-live.ps1"' -Root $bare) 'go-live mention passes: a commit message naming it'
+    Assert-True ((Get-GuardRefusal -Command $gl -Root $conn) -match '-AppDeploy or -SkipAppDeploy') 'go-live refusal names the app-deploy switch'
+    # Towards checking, stated: a command that is not a text tool and only NAMES the file is refused too.
+    Assert-Equal 2 (Invoke-Guard -Command 'Test-Path scripts/task/go-live.ps1' -Root $conn) 'go-live: a non-text command naming the file is refused (the stated false positive)'
 
     # And the rest of rule 3 is untouched: a preview push is not measured at all.
     [System.IO.File]::WriteAllText($css, "body { color: blue; }`n", $Utf8NoBom)

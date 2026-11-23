@@ -9,8 +9,8 @@
 
       guard-live-theme.tests.ps1         groups 1 to 9, the session check, and rule 5's git push to the
                                          deploy branch (#3014)
-      guard-live-theme-deploy.tests.ps1  rule 5's other routes onto the deploy branch (#4329) and
-                                         group 10, the merged-only live push (#3758)
+      guard-live-theme-deploy.tests.ps1  rule 5's other routes onto the deploy branch (#4329), group 10,
+                                         the merged-only live push (#3758), and rule 6, go-live (#4402)
 
     WHY IT IS MORE THAN ONE FILE (#4430, November 23, 2026). The gate parallelises per FILE, and the
     single file measured 465s in CI (measure-suites over PR runs 45154073407, 45156109457 and

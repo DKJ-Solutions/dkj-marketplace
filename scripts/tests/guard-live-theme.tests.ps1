@@ -56,7 +56,7 @@
     adopt-shopify-floor.tests.ps1.
 
     SPLIT IN TWO (#4430): rule 5's other routes onto the deploy branch (#4329) and group 10, the
-    merged-only live push (#3758), are guard-live-theme-deploy.tests.ps1. The setup both share is
+    merged-only live push (#3758), and rule 6, go-live (#4402), are guard-live-theme-deploy.tests.ps1. The setup both share is
     guard-live-theme-fixture.ps1, which says why the file was cut.
 
     Pure ASCII (repo convention for .ps1).
