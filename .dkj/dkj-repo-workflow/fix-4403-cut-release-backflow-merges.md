@@ -39,19 +39,45 @@
 
 ### PLAN
 
+#4403, verified before the repair: `cut-release.ps1` read each entry's merge commit only from
+`git log --first-parent <baseTag>..HEAD`, so a branch merged into the deploy branch `live` and brought to
+`main` by one back-flow merge left no match on the trunk's first-parent line. Keep the first-parent
+lookup first, and read the full merge history once, only for the entries it missed. The record still
+decides each entry's state: the issue's suggestion to default these entries to `live` is not taken,
+because the record is the authority on what the push carried.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `cut-release.ps1` (source and plugin mirror): a lazy second `git log --merges` read for entries
+  the first-parent line missed, its warning on failure, the comment block and the `-LivePushRecord` help
+- [x] `live-record-lib.ps1` (source and three mirrors): the `Find-BranchMergeCommit` synopsis no longer
+  claims it is only handed first-parent lines
+- [x] `cut-release-drive.tests.ps1`: case 10b, a branch merged through a side branch `live`, run with a
+  `live` record and a `hold` record
+- [x] Is the change visible in the frontend / storefront? No -- a release script and its test, nothing rendered
 
 ### TEST
 
+- [x] `cut-release-drive.tests.ps1`: all 150 asserts pass, the 10 new ones included (run during the build)
+- [x] `build-shared-scripts.ps1`: every mirror in sync
+- [x] The full gate runs in `ship-pr`
+
 ### DEPLOY: fix/4403-cut-release-backflow-merges
 
-**Score:**
+`cut-release -LivePushRecord` now finds the merge commit of a branch that reached `main` through a
+back-flow from the deploy branch (the hotfix lane), instead of reporting it as unknown (#4403). The
+first-parent line is still read first. For an entry it misses, the cut reads the range's full merge
+history once, and the live-push record decides that entry's state as for any other.
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+In a Git-connected store that ships hotfixes through `live`, a cut with a live-push record no longer
+warns about every hotfix-lane entry and no longer drops them from the drafted audience note. A
+smartwatchbanden cut measured 19 warnings and 7 dropped entries, all re-checked by hand.
+
+**Score:** 3
 
 #### Pull Request
 
