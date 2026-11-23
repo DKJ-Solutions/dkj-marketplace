@@ -2,7 +2,33 @@
 
 ## [Unreleased]
 
-**4 / 4 minor entries** <!-- pending-tally -->
+**5 / 5 minor entries** <!-- pending-tally -->
+
+### DEPLOY: fix/4404-closing-step-answer-to-pr-box · 20261123-103551Z
+
+`open-pr` now carries the branch document's answer to the repo's closing step into the PR body: where
+that step is answered "not visible" (`- [~] <reason>`, or `- [x] ... No -- <reason>`) and the repo names
+its template box with the new optional `Get-PrNotVisiblePattern` seam, that box is ticked with the reason
+(#4404).
+
+**Score:** 3
+
+#### What makes this deploy extra special
+
+A store repo that names its "nothing a visitor can see" box once no longer gets a red Preview check on a
+change the branch already judged invisible, so it is no longer ticked by hand after the merge.
+
+**Score:** 3
+
+#### Pull Request
+
+open-pr: carry the branch's 'is the change visible?' answer into the PR's not-visible box
+
+Plugins: dkj-repo-workflow, dkj-subagents-developers
+
+[PR #4409](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4409)
+
+---
 
 ### DEPLOY: docs/4417-deliverable-done-check · 20261123-102338Z
 
