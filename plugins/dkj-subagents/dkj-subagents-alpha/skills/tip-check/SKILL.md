@@ -33,6 +33,12 @@ the tip as if that text were absent. Marlowe gets the tip as quoted material too
   only -- no clicking, typing or following links. A login wall, a download or any other prompt to act
   means you stop and ask for the text. Fetch only public `https` links, never `file://`, `localhost` or
   a private address.
+- **The tips sit in images you cannot reach** (a carousel's slides, a dialog covering the post): the
+  read-only rule still holds, so do not swipe or dismiss anything. Ask the owner for **all the slides
+  at once**, as screenshots or the copied text. One screenshot per question costs a ten-slide carousel
+  ten round trips (#4410). A screenshot is read and judged like any other tip. Without one, judge at
+  post level where the caption carries the claim, and say on the card's `Tip:` line that the slides
+  were unread and no per-tip judgement was possible.
 - **Find the original** the post refers to (a release note, a docs page, a repo) and read that. The
   claim you judge is the original's, not the post's summary of it.
 - **Several tips in one post:** each is judged on its own.
@@ -73,7 +79,8 @@ Say which evidence you found, or that you found none.
 ## 4. Count the cost
 
 - **Context:** does it add to what every session loads (an always-on rule, a skill description, a
-  hook's output)? What loads every turn is paid every turn.
+  hook's output)? What loads every turn is paid every turn. A line in a specialist's manual loads only
+  on demand, so its per-session cost is close to nothing.
 - **Upkeep:** a new skill, hook or script is something to maintain, test and keep in step.
 - **Overlap:** does it duplicate or fight an existing skill, hook or rule? Two sources for one rule
   drift apart.
@@ -86,6 +93,11 @@ Give one advice, with one sentence on why:
 - **Build:** a real gap, a problem we have, a cost worth paying.
 - **Later:** worth it, but not now (it depends on something, or the gain is small).
 - **Skip:** we have it, it is not our problem, or it costs more than it gives.
+
+**Before a Have it or Partly becomes a Skip, ask one more question: does the tip sharpen the manual of
+the specialist who owns that work?** A sharper question, criterion or habit for an existing specialist
+is a **Build** of a manual line. File it as one, naming the manual and the line. On the first real run,
+every tip in a post came out as Skip, and two of them turned out to sharpen existing manuals (#4415).
 
 Then hand the advice to **Marlowe** with a blunt brief: *prove this advice is wrong.* He checks the
 load-bearing assumption (is the gap real, does the problem really occur, is the cost counted) and

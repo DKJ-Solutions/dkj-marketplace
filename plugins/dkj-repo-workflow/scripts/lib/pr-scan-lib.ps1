@@ -80,7 +80,9 @@ function Invoke-BoundedPrScan {
         two verdict inputs are $null where their own parse threw.
 
     .OUTPUTS
-        [pscustomobject] Status, Total, JudgedCount, UnjudgedCount, Findings. Each finding carries
+        [pscustomobject] Status, Total, JudgedCount, UnjudgedCount, ReadFailedCount, BudgetCount,
+        Findings. ReadFailedCount and BudgetCount say which cause left a record unjudged (#4424); a record
+        with no number is the remainder. Each finding carries
         Number, Branch and Title (scrubbed to printable ASCII, for display only), CheckoutToken and
         CheckoutNote (from Get-PasteableRef, judged on the RAW branch name), plus the Judge's fields.
     #>
@@ -94,7 +96,7 @@ function Invoke-BoundedPrScan {
         [int]$MaxElapsedSeconds = 90
     )
 
-    $result = [pscustomobject]@{ Status = ''; Total = 0; JudgedCount = 0; UnjudgedCount = 0; Findings = @() }
+    $result = [pscustomobject]@{ Status = ''; Total = 0; JudgedCount = 0; UnjudgedCount = 0; ReadFailedCount = 0; BudgetCount = 0; Findings = @() }
 
     $scanStart = Get-Date
 
@@ -124,27 +126,36 @@ function Invoke-BoundedPrScan {
         if (-not $budgetExceeded -and ((Get-Date) - $scanStart).TotalSeconds -ge $MaxElapsedSeconds) {
             $budgetExceeded = $true
         }
-        if ($budgetExceeded) { $result.UnjudgedCount++; continue }
+        if ($budgetExceeded) { $result.UnjudgedCount++; $result.BudgetCount++; continue }
 
         if ($null -eq $record -or -not $record.PSObject.Properties['number']) { $result.UnjudgedCount++; continue }
         $number = [string]$record.number
 
         if ($Precheck -and -not (& $Precheck $record)) { $result.JudgedCount++; continue }
 
-        $requiredRead = Invoke-NativeCapture -FilePath 'gh' -DiscardStderr -TimeoutSeconds $TimeoutSeconds -Arguments @(
-            'pr', 'checks', $number, '--repo', $Repo, '--required', '--json', 'name,bucket,state,link,completedAt')
-        if (-not (Test-PrScanReadAnswered -Capture $requiredRead)) {
+        $checksArgs = @('pr', 'checks', $number, '--repo', $Repo, '--required', '--json', 'name,bucket,state,link,completedAt')
+        $requiredRead = Invoke-NativeCapture -FilePath 'gh' -DiscardStderr -TimeoutSeconds $TimeoutSeconds -Arguments $checksArgs
+        $blockVerdict = $null
+        $greenAge = $null
+        if (Test-PrScanReadAnswered -Capture $requiredRead) {
+            $requiredJson = ($requiredRead.Output -join "`n")
+            try { $blockVerdict = Get-MergeBlockVerdict -RequiredChecksJson $requiredJson } catch { $blockVerdict = $null }
+            try { $greenAge = Get-RequiredGreenAgeMinutes -RequiredChecksJson $requiredJson -Now (Get-Date) } catch { $greenAge = $null }
+        } elseif (Test-PrScanRequiredNotReported -Capture $requiredRead -Arguments $checksArgs -TimeoutSeconds $TimeoutSeconds) {
+            # NOT A FAILED READ, A MEASURED "PENDING" (#4424). `gh pr checks --required` exits 1 and prints
+            # `no required checks reported on the '<branch>' branch` while CI has not yet CREATED the required
+            # check -- in this repo `lint-en-tests` runs after the suite shards, so every freshly armed pull
+            # request sits in this state for minutes. Counting it as unjudged left 4 of 8 armed pull requests
+            # unjudged on every rerun of one sweep, and a pull request whose required check NEVER appears --
+            # the runner-not-firing case [STUCK] exists for -- was never judged at all.
+            $blockVerdict = New-PrScanNotReportedVerdict
+        } else {
             # FAIL CLOSED FOR THIS ONE RECORD, counted as unjudged: it was never actually checked, so a
             # summary folding it into "nothing found" would report more than it knows (#2438).
             $result.UnjudgedCount++
+            $result.ReadFailedCount++
             continue
         }
-        $requiredJson = ($requiredRead.Output -join "`n")
-
-        $blockVerdict = $null
-        try { $blockVerdict = Get-MergeBlockVerdict -RequiredChecksJson $requiredJson } catch { $blockVerdict = $null }
-        $greenAge = $null
-        try { $greenAge = Get-RequiredGreenAgeMinutes -RequiredChecksJson $requiredJson -Now (Get-Date) } catch { $greenAge = $null }
 
         $extra = & $Judge $record $blockVerdict $greenAge
         $result.JudgedCount++
@@ -161,6 +172,45 @@ function Test-PrScanReadAnswered {
     param([Parameter(Mandatory = $true)]$Capture)
     return [bool]((Test-NativeCommandStarted -Capture $Capture) -and (Test-NativeExitMeasured -Capture $Capture) `
         -and -not $Capture.TimedOut -and $Capture.ExitCode -eq 0)
+}
+
+function Test-PrScanRequiredNotReported {
+    <#
+    .SYNOPSIS
+        True when a failed `gh pr checks --required` read failed because no required check has been
+        reported on the head yet -- gh's own words for it -- rather than for any other reason (#4424).
+    .DESCRIPTION
+        THE FIRST READ DISCARDS STDERR, deliberately: its output is parsed as JSON. gh writes this sentence
+        to stderr, so it is asked for once more with stderr merged, and only where the first read reported
+        a MEASURED non-zero exit and did not time out. That second read costs one call per record in this
+        state and nothing on the ordinary path. Anything that is not that sentence stays a failed read.
+    #>
+    param(
+        [Parameter(Mandatory = $true)]$Capture,
+        [Parameter(Mandatory = $true)][string[]]$Arguments,
+        [int]$TimeoutSeconds = 15
+    )
+    if (-not (Test-NativeCommandStarted -Capture $Capture) -or -not (Test-NativeExitMeasured -Capture $Capture) `
+        -or $Capture.TimedOut -or $Capture.ExitCode -eq 0) { return $false }
+    $probe = Invoke-NativeCapture -FilePath 'gh' -TimeoutSeconds $TimeoutSeconds -Arguments $Arguments
+    if (-not (Test-NativeCommandStarted -Capture $probe) -or -not (Test-NativeExitMeasured -Capture $probe) `
+        -or $probe.TimedOut -or $probe.ExitCode -eq 0) { return $false }
+    return [bool](($probe.Output | Out-String) -match 'no required checks reported')
+}
+
+function New-PrScanNotReportedVerdict {
+    <#
+    .SYNOPSIS
+        The merge-block verdict for a head whose required check has not been reported yet: blocked, no
+        failure, nothing named -- in Get-MergeBlockVerdict's shape, so every verdict reads it unchanged.
+    #>
+    return [pscustomobject]@{
+        Blocked            = $true
+        Reason             = 'no required check has been reported on this head yet -- CI has not created it'
+        FailedRequired     = @()
+        FailedOther        = @()
+        UnfinishedRequired = @()
+    }
 }
 
 function New-PrScanFinding {
@@ -213,7 +263,19 @@ function Get-PrScanIncompleteLine {
         [Parameter(Mandatory = $true)][int]$MaxElapsedSeconds
     )
     if ($Scan.UnjudgedCount -le 0) { return '' }
-    return "[INCOMPLETE] judged $($Scan.JudgedCount) of $($Scan.Total) $Noun pull request(s); $($Scan.UnjudgedCount) not checked (a required-check read failed, or the ${MaxElapsedSeconds}s scan budget ran out) -- the rest were not checked, so run this again to cover them."
+    # NAME THE CAUSE THAT HIT (#4424): the line used to offer both causes as an "or", so a reader could
+    # not tell a budget that ran out (a rerun helps) from reads that fail on every run (a rerun does not).
+    $readFailed = 0; $budget = 0
+    if ($Scan.PSObject.Properties['ReadFailedCount']) { $readFailed = [int]$Scan.ReadFailedCount }
+    if ($Scan.PSObject.Properties['BudgetCount']) { $budget = [int]$Scan.BudgetCount }
+    $causes = @()
+    if ($readFailed -gt 0) { $causes += "$readFailed whose required-check read failed" }
+    if ($budget -gt 0) { $causes += "$budget past the ${MaxElapsedSeconds}s scan budget" }
+    $other = $Scan.UnjudgedCount - $readFailed - $budget
+    if ($other -gt 0) { $causes += "$other with no readable number" }
+    $why = if ($causes.Count -gt 0) { $causes -join ', ' } else { 'cause not recorded' }
+    $remedy = if ($budget -gt 0) { 'run this again to cover them' } else { 'a rerun reads them the same way, so read one by hand: gh pr checks <n> --required' }
+    return "[INCOMPLETE] judged $($Scan.JudgedCount) of $($Scan.Total) $Noun pull request(s); $($Scan.UnjudgedCount) not checked: $why -- $remedy."
 }
 
 function Get-PrScanResumeLines {

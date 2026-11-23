@@ -2,7 +2,268 @@
 
 ## [Unreleased]
 
-**6 / 6 minor entries** <!-- pending-tally -->
+**16 / 16 minor entries** <!-- pending-tally -->
+
+### DEPLOY: fix/4426-reach-test-seo-defects · 20261123-132051Z
+
+A store session filing a measured SEO defect on indexed live pages (a missing H1, a wrong canonical,
+broken structured data, a page that cannot be indexed) now gives it the reach label and names the
+store's SEO team in `## Why <reach label>`, instead of reading it as developer-only and filing it tier
+0 without an Asana card. [`report-issue`](../../plugins/dkj-repo-workflow/extensions/dkj-repo-workflow-bwj/skills/report-issue/SKILL.md)
+and [`WORKFLOW-portable.md`](../../plugins/dkj-repo-workflow/extensions/dkj-repo-workflow-bwj/WORKFLOW-portable.md)
+name the case (#4426).
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+A store's SEO defects on live pages now reach its Asana board and business worklist consistently,
+instead of depending on whether the SEO team's question happened to be in the session's context.
+
+**Score:** 2
+
+#### Pull Request
+
+report-issue's reach test names measured SEO defects on indexed live pages
+
+Plugins: dkj-repo-workflow-bwj
+
+[PR #4431](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4431)
+
+---
+
+### DEPLOY: fix/4424-stranded-sweep-incomplete · 20261123-130628Z
+
+`check-stranded-sweep` and `check-unshipped-pr` no longer report `[INCOMPLETE]` for a pull request whose
+required check CI has not created yet. `gh pr checks --required` exits 1 with `no required checks
+reported` in that state, and the shared scan counted it as a failed read, so with several sweeps handing
+off at once about half the armed pull requests went unjudged on every run, and a rerun never helped. That
+answer is now judged as pending, so a required check that never appears turns into `[STUCK]` after the
+quiet window instead of going unjudged forever. Where something does stay unjudged, the `[INCOMPLETE]`
+line now says which cause hit (a failed read, the scan budget, or no number) and only suggests a rerun
+when the budget was the cause.
+
+**Score:** 3
+
+#### What makes this deploy extra special
+
+A consumer running `issues-sweep` gets step 1's hand-off check back: the `[STUCK]` report for a red or
+silent hand-off now reaches every armed pull request, where it used to skip the ones still waiting on CI.
+
+**Score:** 2
+
+#### Pull Request
+
+check-stranded-sweep judges a not-yet-reported required check as pending and names why a scan stopped
+
+Plugins: dkj-repo-workflow
+
+[PR #4425](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4425)
+
+---
+
+### DEPLOY: docs/4418-design-lessons-to-manuals · 20261123-125105Z
+
+The UX designer's and the graphic designer's manuals now carry three design lessons that had only lived in
+one machine's memory notes: the visual design is built in Figma the same professional way as a wireframe,
+both share the design system's one spacing and radius scale, and where the two disagree on structure the
+visual design adapts to the wireframe (#4418).
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+A visual design in Figma no longer starts from one-off frames or its own spacing scale, and no longer
+quietly overrides the tested wireframe's layout.
+
+**Score:** 2
+
+#### Pull Request
+
+Design lessons from local memory notes land in Uma's and Gwen's manuals
+
+Plugins: dkj-subagents-alpha
+
+[PR #4422](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4422)
+
+---
+
+### DEPLOY: docs/4415-tip-check-manual-outcome · 20261123-123536Z
+
+`tip-check` now weighs sharpening an existing specialist's manual as an outcome. A tip that adds a
+better question or habit to a manual is a Build of a manual line, not a Skip (#4415).
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+A tip that improves how a specialist already works is no longer thrown away as "we have it". It
+comes back as a concrete manual line to file.
+
+**Score:** 2
+
+#### Pull Request
+
+tip-check: sharpening an existing manual is an outcome too
+
+Plugins: dkj-subagents-alpha
+
+[PR #4421](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4421)
+
+---
+
+### DEPLOY: docs/4414-paula-stop-doing · 20261123-122049Z
+
+Paula's manual now has her name the highest-leverage items first in any plan she proposes and ask one
+question, *what do we stop or drop to make room?*, and `day-plan`'s morning proposal does the same (#4414).
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+A morning plan from `day-plan` now opens with the items that matter most and asks what to drop, so the
+day is not filled only by adding work.
+
+**Score:** 2
+
+#### Pull Request
+
+Paula's planning asks what to stop doing, not only what to add
+
+Plugins: dkj-repo-workflow, dkj-subagents-alpha
+
+[PR #4420](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4420)
+
+---
+
+### DEPLOY: feat/4402-go-live-command · 20261123-120723Z
+
+New `go-live` skill in dkj-repo-workflow-bwj, with a rules lib and a suite; `guard-live-theme` gains a
+rule 6; `live-preflight` gains `-ResultPath` (#4402).
+
+**Score:** 3
+
+#### What makes this deploy extra special
+
+In a store whose live theme deploys from a Git-connected branch, release day is one command once the
+owner has given the word: `go-live -Version X.Y.Z -AppDeploy` (or `-SkipAppDeploy`) with the store's
+live-push marker on that line. It runs the preflight, opens and merges the promotion PR after its
+required checks pass, polls the live theme until every promoted file matches the trunk by content hash,
+deploys the app or writes `hold` for it into the live-push record, cuts the release and tells the tasks,
+and stops at the first refusal with a line to resume from. Before, each of those steps was printed and
+handed back to a person; the promotion alone took three attempts to get past the guards. The live guard
+now refuses a go-live line without the marker.
+
+**Score:** 4
+
+#### Pull Request
+
+One go-live command from the owner's word to a verified, cut release
+
+Plugins: dkj-repo-workflow-bwj, dkj-subagents-shopify
+
+[PR #4438](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4438)
+
+---
+
+### DEPLOY: docs/4413-option-comparison-criteria · 20261123-115226Z
+
+Rebecca's manual now says that an option comparison names its criteria before it scores, gives each
+option's main risk, opportunity cost and long-term consequence, and ends with the recommended option and
+the criterion that decided it (#4413).
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+A comparison from the research specialist shows what it weighed, so the requester can disagree with a
+criterion instead of only with the verdict.
+
+**Score:** 2
+
+#### Pull Request
+
+Rebecca's manual: an option comparison names its criteria up front and weighs risk and opportunity cost
+
+Plugins: dkj-subagents-alpha
+
+[PR #4419](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4419)
+
+---
+
+### DEPLOY: fix/4427-merge-on-green-unknown-reread · 20261123-113615Z
+
+The merge-on-green sweep no longer gives up when it wakes right after a merge and GitHub is still
+computing mergeability: it waits a minute and reads the armed pull requests once more (#4427).
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+On a repo with several armed pull requests, each merge no longer costs an extra wait before the next one
+is picked up. It is on by default, so a consumer gets it with the release, without editing its workflow.
+
+**Score:** 2
+
+#### Pull Request
+
+merge-on-green: re-read once when every armed PR reads mergeable UNKNOWN right after a merge
+
+Plugins: dkj-repo-workflow
+
+[PR #4435](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4435)
+
+---
+
+### DEPLOY: docs/4410-tip-check-image-tips · 20261123-112440Z
+
+`tip-check` now says what to do when a post's tips are in its images: ask the owner for all the
+slides at once, or judge the caption and note that the slides were unread (#4410).
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+Checking a carousel post no longer stalls, and the owner no longer has to send ten separate
+screenshots. The skill asks for all the slides in one go.
+
+**Score:** 2
+
+#### Pull Request
+
+tip-check: what to do when a post's tips sit in its images
+
+Plugins: dkj-subagents-alpha
+
+[PR #4416](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4416)
+
+---
+
+### DEPLOY: fix/4405-guard-shell-syntax · 20261123-111109Z
+
+`guard-live-theme` now judges an authorised live push whose command line ends in shell syntax, such as
+`2>&1 | tail -15` or `> out.txt`, instead of crashing on it. Redirections and pipes are no longer read as
+pushed files, and an `--only` value holding a character no file name can hold is refused by name instead
+of surfacing as "PowerShell could not run this guard" (#4405).
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+A Shopify store's maintainer can pipe a live push's output (`2>&1 | tail`) without the guard blocking an
+authorised release by crashing, and a bad `--only` value now gets a refusal that names the file.
+
+**Score:** 2
+
+#### Pull Request
+
+guard-live-theme: judge a live push that ends in shell syntax instead of crashing
+
+Plugins: dkj-subagents-shopify
+
+[PR #4412](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4412)
+
+---
 
 ### DEPLOY: fix/4400-review-park-verify · 20261123-105151Z
 

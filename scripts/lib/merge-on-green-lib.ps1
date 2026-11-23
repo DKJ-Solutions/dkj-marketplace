@@ -541,10 +541,11 @@ function Get-MergeOnGreenPrVerdict {
         themselves.
 
         MERGEABLE='UNKNOWN' REFUSES, AND THAT IS NOT PESSIMISM. GitHub computes mergeability lazily
-        and reports UNKNOWN while it is still doing so, so the state means "ask again", which is
-        exactly what the scheduled sweep is for. Treating it as mergeable would
-        start ship-pr against a pull request that may be CONFLICTING, and ship-pr would then spend
-        its whole CI wait on a branch that can never merge.
+        and reports UNKNOWN while it is still doing so, so the state means "ask again". Treating it as
+        mergeable would start ship-pr against a pull request that may be CONFLICTING, and ship-pr would
+        then spend its whole CI wait on a branch that can never merge. The asking again is NOT left to the
+        schedule, which GitHub delivers hours late (#3807): the refusal carries MergeableUnknown, and the
+        picker re-reads the tracker once after a short wait (Get-MergeOnGreenUnknownWaitSeconds, #4427).
 
         A PENDING REQUIRED CHECK IS NOT A FINDING, and it is by far the commonest answer here: most
         sweeps land while something is still running. It refuses like every other non-pass outcome
@@ -626,6 +627,11 @@ function Get-MergeOnGreenPrVerdict {
     if ($Record.PSObject.Properties['mergeable']) { $mergeable = ([string]$Record.mergeable).Trim().ToUpperInvariant() }
     if ($mergeable -ne 'MERGEABLE') {
         $shown = if ($mergeable) { $mergeable } else { '(unreadable)' }
+        # MergeableUnknown IS SET ON THIS STATE ONLY (#4427): it is the one mergeable answer that clears by
+        # itself within seconds, and the picker's short re-read is keyed on it.
+        if ($mergeable -eq 'UNKNOWN') {
+            return [pscustomobject]@{ Eligible = $false; Reason = "mergeable is '$shown', not 'MERGEABLE'"; MergeableUnknown = $true }
+        }
         return [pscustomobject]@{ Eligible = $false; Reason = "mergeable is '$shown', not 'MERGEABLE'" }
     }
 
@@ -746,6 +752,48 @@ function Get-MergeOnGreenSettleWaitSeconds {
 
     $seconds = [int][math]::Ceiling((($remaining | Measure-Object -Maximum).Maximum) * 60) + $MarginSeconds
     return [math]::Min($seconds, $CapSeconds)
+}
+
+function Get-MergeOnGreenUnknownWaitSeconds {
+    <#
+    .SYNOPSIS
+        How many seconds a sweep that picked nothing should wait before re-reading the tracker once,
+        because GitHub was still computing mergeability -- 0 when that is not why (issue #4427).
+
+    .DESCRIPTION
+        WHY THIS WAIT EXISTS. A merge moves the trunk, and GitHub then recomputes mergeability for every
+        open pull request, reporting UNKNOWN meanwhile. The sweep is woken by CI completing, which is
+        often within seconds of a merge, so with several armed pull requests the whole set can read
+        UNKNOWN at once. Measured November 23, 2026, sweep run 45157536054: seven armed pull requests, all
+        UNKNOWN, picked=false. The schedule that was to ask again arrives hours late (#3807).
+
+        SHORT AND ONCE. UNKNOWN normally clears within seconds, so a fixed wait is enough and no remaining
+        time has to be computed. The picker takes this wait at most once per run, so a run can never wait
+        longer than CapSeconds for it.
+
+        NOTHING IS WAITED FOR WHEN SOMETHING IS ALREADY ELIGIBLE, for the reason the settle wait gives.
+
+    .PARAMETER Verdicts
+        The records the picker formed, each carrying Eligible and, where mergeable read UNKNOWN,
+        MergeableUnknown.
+
+    .PARAMETER CapSeconds
+        The wait. 0 or less disables it.
+
+    .OUTPUTS
+        [int] seconds, 0 for "do not wait".
+    #>
+    param(
+        $Verdicts,
+        [int]$CapSeconds
+    )
+
+    if ($CapSeconds -le 0) { return 0 }
+    $all = @(@($Verdicts) | Where-Object { $_ })
+    if (@($all | Where-Object { $_.PSObject.Properties['Eligible'] -and $_.Eligible }).Count -gt 0) { return 0 }
+    $unknown = @($all | Where-Object { $_.PSObject.Properties['MergeableUnknown'] -and $_.MergeableUnknown })
+    if ($unknown.Count -eq 0) { return 0 }
+    return $CapSeconds
 }
 
 function Get-MergeOnGreenStrandedVerdict {
