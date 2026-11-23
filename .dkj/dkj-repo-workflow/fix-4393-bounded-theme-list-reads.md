@@ -39,19 +39,34 @@
 
 ### PLAN
 
+The five `shopify theme list --json` reads #4384 left unbounded (archive-theme, backup-live-theme,
+push-preview twice, sweep-preview-themes) take `-TimeoutSeconds 60`, and one pure lib function words
+the timeout/login verdict so every read names the same remedy.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `Get-ShopifyLoginNote` in `shopify-cli-lib.ps1` (all three copies held identical)
+- [x] the five reads bounded and wired to it; the four mirrors under `dkj-subagents-shopify` re-copied
+- [x] four asserts in `shopify-cli.tests.ps1` on the note (clean, null, login, timeout)
 
 ### TEST
 
+- [x] `shopify-cli.tests.ps1`: 32 of 32 asserts pass locally; the rest runs in the gate
+
 ### DEPLOY: fix/4393-bounded-theme-list-reads
 
-**Score:**
+`archive-theme`, `backup-live-theme`, `push-preview` and `sweep-preview-themes` bound their
+`shopify theme list` read at 60 s, as `prepare-release` and `live-preflight` already do, and a timeout or
+the CLI's login prompt is named with the one command that logs back in (#4393).
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+A preview push, backup, archive or sweep on a machine whose Shopify login has expired now stops within a
+minute and says so, instead of hanging silently.
+
+**Score:** 3
 
 #### Pull Request
 
