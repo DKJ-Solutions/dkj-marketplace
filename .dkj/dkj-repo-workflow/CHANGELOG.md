@@ -2,7 +2,32 @@
 
 ## [Unreleased]
 
-**10 / 10 minor entries** <!-- pending-tally -->
+**11 / 11 minor entries** <!-- pending-tally -->
+
+### DEPLOY: fix/4384-bounded-theme-count · 20261123-015525Z
+
+`prepare-release` and `live-preflight` bound their `shopify theme list` read at 60 s, and a timeout or the
+CLI's `log in to Shopify` prompt becomes a verdict naming the fix: `run 'shopify theme list --store <store>'
+once to log in`. `Invoke-ShopifyCli` gains an opt-in `-TimeoutSeconds` for captured calls (#4384).
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+A release prep on a machine whose Shopify login has expired now says so within a minute instead of
+hanging silently for about eleven, and tells you the one command that logs back in.
+
+**Score:** 3
+
+#### Pull Request
+
+Theme-count read is bounded and names an expired Shopify login
+
+Plugins: dkj-repo-workflow-bwj, dkj-subagents-shopify
+
+[PR #4392](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4392)
+
+---
 
 ### DEPLOY: feat/4380-dossier-names-no-repeat · 20261123-014307Z
 
