@@ -574,7 +574,8 @@ listing is always the up-to-date enumeration: `inbound-behaviour`, `laziness-aut
 `lens-optional`, `browser-compatibility`, `webcontent-boundary`, `filecontent-boundary`,
 `changelog-entry-boundary`, `design-owner-boundary`,
 `storefront-preview-boundary`, `artifact-publishing-boundary`, `findings-become-issues`,
-`guard-exercised`, and `working-copy-boundary` — seventeen. Nothing checks that count against the
+`guard-exercised`, `working-copy-boundary`, and `deliverable-self-check` (the five producing specialists
+only, #4417) — eighteen. Nothing checks that count against the
 directory, which is how this sentence came to name twelve of them and later fourteen. The directory is the
 authority and this list is a convenience. This way changing a shared boundary
 costs one edit + one build, not a
