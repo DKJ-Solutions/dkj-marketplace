@@ -750,6 +750,25 @@ try {
     Assert-True ($r.Out -match 'held back .* wins\): 1') 'recbase: the path is held back -- the trunk wins, permanently'
     Assert-True ([System.IO.File]::ReadAllText((Join-Path $rec 'sections\both.liquid')) -eq 'trunk-b2') 'recbase: and live never overwrote the trunk on the way through'
 
+    # A CRLF BLOB UNDER core.autocrlf=true COMES BACK BYTE FOR BYTE (#4401). The restore once committed
+    # with a pathspec, which re-staged the path through the clean filter: a blob stored with CRLF came back
+    # as LF, and the branch "changing no file" put a whole-file diff on the trunk. The blob is committed
+    # with autocrlf off -- the shape a repo without .gitattributes inherits -- and the run sees it on.
+    $crlf = New-Consumer -Label 'reccrlf' -ThemeId '123456' -StoreDomain 'a-store.myshopify.com'
+    Add-FixtureCommit -Dir $crlf -Message 'sync: the floor' -Write @{ 'sections/both.liquid' = "b1`r`n" }
+    Add-FixtureCommit -Dir $crlf -Message 'fix: the trunk changes it too' -Write @{ 'sections/both.liquid' = "trunk-b2`r`nsecond`r`n" }
+    Invoke-Git -C $crlf config core.autocrlf true
+    $crlfMirror = New-Mirror -Label 'reccrlf' -Files @{
+        'sections/theme.liquid' = 'v1'
+        'sections/both.liquid'  = 'a third party changed it as well'
+    }
+    $r = Invoke-SyncWithFakeGh -Dir $crlf -Mirror $crlfMirror -Extra @('-ReconcileBase')
+    $crlfBranch = ([string](& git -C $crlf branch --list 'sync/live-*' --format='%(refname:short)')).Trim()
+    Assert-True ($crlfBranch -like 'sync/live-*') 'recbase/crlf: it wrote a sync branch'
+    Assert-True (@(& git -C $crlf log --format='%s' "main..$crlfBranch").Count -eq 2) 'recbase/crlf: both commits of the pair'
+    Assert-True (@(& git -C $crlf diff --name-only "main..$crlfBranch").Where({ $_ }).Count -eq 0) 'recbase/crlf: and the CRLF blob comes back byte for byte -- no file changes'
+    Assert-True ($r.Out -notmatch 'does not reproduce the trunk') 'recbase/crlf: so the byte check stays silent'
+
     # THE SQUASH WARNING, WHICH NOTHING REACHED UNTIL THIS CASE EXISTED. Get-PrMergeMethod is unanswered
     # in every other fixture, so $mergeMethod was always 'merge' and this whole arm never ran under the
     # gate -- which is how it shipped naming a seam function ('Get-ShopifySyncMergeMethod') that exists

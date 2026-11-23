@@ -762,6 +762,96 @@ $cutSectH11 Pull Request
         Assert-Match 'snippets/footer\.liquid' $notLive11 'live-push record: naming the file that did not go'
     }
 
+    # --- 10b. A branch merged through a side branch is still found (#4403) ---------------------------
+    # THE HOTFIX LANE: the branch is merged into 'live' first ('Merge pull request #201 from o/<branch>'),
+    # then 'live' reaches main through ONE back-flow merge ('Merge pull request #202 from o/live'). The
+    # branch's own merge is therefore NOT on main's first-parent line. It used to fall to 'unknown'
+    # (19 warnings in a real cut); now its merge is found in the full history and the record decides.
+    Write-Host ""
+    Write-Host "cut-release.ps1 -- an entry merged through a side branch is found in the full history (#4403)" -ForegroundColor Cyan
+    function New-HotfixLaneFixture([string]$Name) {
+        $r = New-CutFixture -Name $Name
+        Push-Location $r
+        try {
+            Invoke-NativeCapture -FilePath 'git' -Arguments @('tag', 'v1.4.0') | Out-Null
+            Invoke-NativeCapture -FilePath 'git' -Arguments @('checkout', '-b', 'live') | Out-Null
+            Invoke-NativeCapture -FilePath 'git' -Arguments @('checkout', '-b', 'feat/via-live') | Out-Null
+            Write-Utf8 (Join-Path $r 'sections\hotfix.liquid') "{{ 'hotfix' }}`n"
+            Invoke-NativeCapture -FilePath 'git' -Arguments @('add', '-A') | Out-Null
+            Invoke-NativeCapture -FilePath 'git' -Arguments @('commit', '--quiet', '-m', 'feat: hotfix section') | Out-Null
+            Invoke-NativeCapture -FilePath 'git' -Arguments @('checkout', 'live') | Out-Null
+            Invoke-NativeCapture -FilePath 'git' -Arguments @('merge', '--no-ff', '-m', 'Merge pull request #201 from o/feat/via-live', 'feat/via-live') | Out-Null
+            Invoke-NativeCapture -FilePath 'git' -Arguments @('checkout', 'main') | Out-Null
+            Invoke-NativeCapture -FilePath 'git' -Arguments @('merge', '--no-ff', '-m', 'Merge pull request #202 from o/live', 'live') | Out-Null
+        } finally { Pop-Location }
+        $eh = '#' * (Get-EntryHeadingLevel); $sh = '#' * (Get-EntrySectionLevel); $th = '#' * (Get-EntryTierSubLevel)
+        Write-Utf8 (Join-Path $r 'CHANGELOG.md') @"
+# Changelog
+
+Everything merged since the last release, furthest reach first.
+
+$(Get-ChangelogUnreleasedHeading)
+
+$eh ``feat/via-live`` changelog
+
+$sh Branch title
+
+Hotfix via live
+
+$sh Branch ID
+
+20260928-000003
+
+$sh Branch type
+
+feat
+
+$sh What does the change on this branch bring to main?
+
+Ships a hotfix section through the live lane.
+
+$sh Significance
+
+$th Tier 0
+
+The maintainers notice it.
+
+**Score:** 2
+
+$sh Pull Request
+
+[PR #201](https://example.test/201) - merged 2026-09-28
+"@
+        Push-Location $r
+        try {
+            Invoke-NativeCapture -FilePath 'git' -Arguments @('add', '-A') | Out-Null
+            Invoke-NativeCapture -FilePath 'git' -Arguments @('commit', '--quiet', '-m', 'fixture: pending entry for the hotfix lane') | Out-Null
+        } finally { Pop-Location }
+        return $r
+    }
+    foreach ($case in @(@{ Word = 'live'; Landed = $true }, @{ Word = 'hold'; Landed = $false })) {
+        $rootL = New-HotfixLaneFixture -Name ("hotfixlane-" + $case.Word)
+        $recL = Join-Path $FixtureDir ("hotfixlane-" + $case.Word + "-record.txt")
+        Write-Utf8 $recL ($case.Word + " sections/hotfix.liquid`n")
+        $rL = Invoke-Cut -Root $rootL -Arguments @('-Bump', 'patch', '-NoPush', '-SkipLint', '-SkipTests', '-LivePushRecord', $recL)
+        Assert-Equal 0 $rL.Code "side-branch merge ($($case.Word)): the cut succeeds"
+        Assert-True (-not (Test-Says -Text $rL.Out -Phrase 'commit found for feat/via-live')) "side-branch merge ($($case.Word)): no 'commit found' warning for the branch"
+        $bodyL = Join-Path $rootL '.dkj\dkj-repo-workflow\releases\github\1.x\1.4.1.md'
+        Assert-True (Test-Path -LiteralPath $bodyL) "side-branch merge ($($case.Word)): the GitHub body was written"
+        if (Test-Path -LiteralPath $bodyL) {
+            $bL = Get-Content -LiteralPath $bodyL -Raw
+            $landedL = ([regex]::Match($bL, '(?s)## What landed\r?\n(.*?)(?=## Not live yet|\z)')).Groups[1].Value
+            $notLiveL = ([regex]::Match($bL, '(?s)## Not live yet\r?\n(.*)\z')).Groups[1].Value
+            if ($case.Landed) {
+                Assert-Match 'Hotfix via live' $landedL 'side-branch merge (live): the entry is under What landed'
+                Assert-NotMatch 'Hotfix via live' $notLiveL 'side-branch merge (live): and not under Not live yet'
+            } else {
+                Assert-Match 'Hotfix via live' $notLiveL 'side-branch merge (hold): the entry is under Not live yet'
+                Assert-NotMatch 'Hotfix via live' $landedL 'side-branch merge (hold): and not under What landed'
+            }
+        }
+    }
+
     # --- 11. A malformed live-push record refuses before anything is written -------------------------
     Write-Host ""
     Write-Host "cut-release.ps1 -- a malformed live-push record refuses before anything is written" -ForegroundColor Cyan
