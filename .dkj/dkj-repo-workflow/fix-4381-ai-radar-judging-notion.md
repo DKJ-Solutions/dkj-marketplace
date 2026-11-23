@@ -41,17 +41,32 @@
 
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] The shipped `ai-radar` skill (`dkj-subagents-lifehub`) gains mode 3, the judging pass: collect the
+  unjudged items in Notion, hold each against the repo the settings page names, write the verdict on the
+  item, and file a gap in the shared plugins with its public core only.
+- [x] Retired the repo-local `.claude/skills/ai-radar/` and `scripts/dashboard/ai-radar.ps1`, which read a
+  `Brains/` folder the life hub no longer has, and their fixture block in `consumer-dashboard.tests.ps1`.
 
 ### TEST
 
+- [x] No other path references the retired skill or script (grep, release history excepted); the suites
+  `ship-pr` selects are the check.
+
 ### DEPLOY: fix/4381-ai-radar-judging-notion
 
-**Score:**
+The judging pass of the AI radar moves into the shipped `ai-radar` skill of `dkj-subagents-lifehub` as its
+third mode, reading the items where they now live, in Notion. The repo-local skill and
+`scripts/dashboard/ai-radar.ps1`, which still looked for a `Brains/` folder, are retired (#4381).
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+"Go through the AI radar" works again for a life hub kept in Notion. The skill finds the items still waiting
+for a verdict, holds each against the owner's own plugin repo, and writes the verdict on the item. The
+old local route refused, because the folder it read no longer exists.
+
+**Score:** 3
 
 #### Pull Request
 
