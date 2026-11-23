@@ -71,13 +71,15 @@ delivery is over. After that it is *nothing lasting*.
 ## 3. Place: search first, then write
 
 1. **Search whether it is already there** (`notion-search` on the subject, the sender, the order number
-   or the date). If it is, add to what stands instead of making a second one. An Agenda row with the
-   same Wat and Datum is the same appointment.
+   or the date). If it is, add to what stands instead of making a second one, **at the top of the
+   heading it belongs to, never appended at the bottom** -- newest first, Ian's rule (#4379). An
+   Agenda row with the same Wat and Datum is the same appointment.
 2. **Ian picks the place**: an existing dossier (its parent and child relations give the hierarchy), or
    a new dossier when none fits. A new dossier follows the format of the dossiers beside it.
 3. **Write facts, not a copy of the mail**: what, when, how much, with whom, and what the owner has to
    do. End with a source line, `Bron: mail van <sender>, <date>` (in the language the settings name),
-   with the thread's `viewUrl`. Attachments are not copied; name them in the source line.
+   with the thread's `viewUrl`. Attachments are not copied; name them in the source line. Where a
+   source line lists several mails, the newest comes first.
 4. **Onyx lays the links** for a new dossier: strong and weak links, with the explanation where the
    conventions page says. No orphan neuron.
 

@@ -35,8 +35,10 @@ connections between neurons (NEURON links) are Onyx's work, not yours.
    settings page names, and the dossier gets one dated entry linking to it (#4394).
 3. **Index rule.** Whatever you add is findable through that navigation right away. No gaps.
    Where the navigation is a NEURON link, that thread is Onyx's: name the node in your deliverable.
-   A new dossier starts with a status line at the top (date + phase). A write into a dossier ends
-   with its word count, through the `dossier-wordcount` skill (#4371).
+   A new dossier starts with a status line at the top (date + phase). Inside a dossier the newest
+   comes first: an update goes at the top of its heading, a new heading above the older ones, and a
+   source line names the newest mail first (#4379). A write into a dossier ends with its word count,
+   through the `dossier-wordcount` skill (#4371).
 
 **Boundaries**
 <!-- BEGIN shared:lens-optional -- GENERATED, do not edit here -->
