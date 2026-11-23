@@ -39,19 +39,49 @@
 
 ### PLAN
 
+Inbound #4386: a run starts only from a `stopwatch:` first line. Verified on pickup: the hook's cheap
+path exits on any payload without the literal `stopwatch:`. Add the slash command and an imperative
+phrase in the owner's own words, both decided in the pure lib.
+
+#### Unverified
+
+The slash route assumes the `UserPromptSubmit` payload carries the command as typed
+(`/dkj-repo-workflow:stopwatch-start <label>`); no live session confirmed it.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `stopwatch-lib.ps1`: `Get-StopwatchPromptSlashStart`, `Get-StopwatchPromptPhraseStart` and
+  `Get-StopwatchPromptStart` (marker, then slash, then phrase); `Invoke-StopwatchHookEvent` takes
+  `-PreparedLabels`, so a prepared card's label wins for the phrase.
+- [x] `stopwatch-hook.ps1`: cheap path widened to `(?i)stopwatch|time this`; calls the new start.
+- [x] New skill `stopwatch-start` (`disable-model-invocation: true`).
+- [x] Texts that said a run starts only from `stopwatch:`: the hub tile, the Stopwatch pages' prepared
+  and footer lines, the logbook lib, `stopwatch-prepare` (page and script), the Admin README.
 
 ### TEST
 
+- [x] `scripts/tests/stopwatch.tests.ps1`: 356 passed, 0 failed, with negative cases for a sentence
+  about the stopwatch, a question, a phrase on a later line and a phrase inside a pasted block.
+- [x] `check-plugin-integrity.ps1`: 0 errors.
+- [ ] The owner looks at the changed lines on Admin's Stopwatch overview, a prepared card's page and
+  the hub tile.
+
 ### DEPLOY: feat/4386-stopwatch-start-triggers
 
-**Score:**
+A Stopwatch run now starts in three ways: the `stopwatch:` first line, the slash command
+`/dkj-repo-workflow:stopwatch-start <label>`, or an imperative phrase in the owner's own words such as
+"use the stopwatch", "time this" or "gebruik de stopwatch" (#4386). Pasted text and a sentence about the
+stopwatch start nothing.
+
+**Score:** 3
 
 #### What makes this deploy extra special
 
-**Score:**
+Asking for the stopwatch the way you would say it ("prepare a release, use the stopwatch") now times
+that assignment. Before, it started nothing, and the only fix was another prompt that began with
+`stopwatch:`.
+
+**Score:** 3
 
 #### Pull Request
 

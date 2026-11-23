@@ -397,7 +397,7 @@ the machine) once. And a product's `Ports` must not overlap 4890-4899, which Adm
 **They time how long an assignment takes, from the prompt to the moment Claude is back on the trunk**, and
 both were the source repo's own pages until the owner moved them here
 ([#3470](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/3470), October 25, 2026). The
-**Stopwatch** times a prompt whose first line begins with `stopwatch:`, and every release cut even without
+**Stopwatch** times a prompt whose first line begins with `stopwatch:`, one that begins with `/dkj-repo-workflow:stopwatch-start`, or one that says "use the stopwatch" in the owner's own words (#4386), and every release cut even without
 one. The **Logbook** times every session that begins on a clean trunk, without anybody marking it. This plugin's `UserPromptSubmit` and `Stop` hooks
 record the runs (`hooks/stopwatch-hook.ps1`, `hooks/logbook-hook.ps1`), and the pages only read them. The
 one run a script starts is the cut's: `cut-release.ps1` starts a `release cut` run as it begins, unless a run

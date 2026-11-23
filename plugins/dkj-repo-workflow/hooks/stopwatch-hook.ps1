@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-    The Claude Code hook behind the Stopwatch (#3323): start a run when a prompt begins with `stopwatch:`, stop it
+    The Claude Code hook behind the Stopwatch (#3323): start a run when a prompt asks for one, stop it
     when Claude is back on the trunk, clean, with HEAD moved since the start.
 
 .DESCRIPTION
@@ -9,11 +9,13 @@
 
         powershell -NoProfile -ExecutionPolicy Bypass -File "${CLAUDE_PLUGIN_ROOT}/hooks/stopwatch-hook.ps1" -Hook Prompt
 
-    THE MARKER IS THE ONLY WAY A PROMPT STARTS A RUN (cut-release.ps1 starts its own, #3781): the Prompt hook reads the UserPromptSubmit JSON from stdin (only parses
-    its `prompt` field, never prints it) and a prompt whose first line begins with `stopwatch:` starts an Auto run
-    labelled with the rest of that line (Get-StopwatchPromptMarker, which reads a pasted prompt past its
-    `<pasted_content>` wrapper, #3336), discarding a run still going. The page is
-    read-only.
+    A PROMPT STARTS A RUN IN THREE WAYS (#4386; cut-release.ps1 starts its own, #3781): the Prompt hook reads the
+    UserPromptSubmit JSON from stdin (only parses its `prompt` field, never prints it) and a prompt that (1) has a
+    first line beginning with `stopwatch:`, or (2) begins with the slash command `/dkj-repo-workflow:stopwatch-start`
+    (or `/stopwatch-start`), or (3) says imperatively in the owner's own words to use the stopwatch ("use the
+    stopwatch", "time this", "gebruik de stopwatch"; pasted blocks do not count) starts an Auto run labelled as
+    Get-StopwatchPromptStart decides (the marker is read past a pasted prompt's `<pasted_content>` wrapper, #3336),
+    discarding a run still going. The page is read-only.
 
     The rules are Invoke-StopwatchHookEvent's in apps/admin/lib/stopwatch-lib.ps1 (pure, tested by
     scripts/tests/stopwatch.tests.ps1); this script only gathers what they need (the store, the checkout's
@@ -48,8 +50,8 @@ param(
 $ErrorActionPreference = 'Stop'
 try {
     # The UserPromptSubmit payload is JSON on stdin with the prompt in `prompt`. It is only parsed, never printed.
-    # It is read first, and a payload that does not contain the marker anywhere ends the hook before the lib is
-    # even loaded: nearly every prompt is unmarked, so that is the cheap path.
+    # It is read first, and a payload that mentions neither the stopwatch nor "time this" anywhere ends the hook
+    # before the lib is loaded (stopwatch-start is covered by stopwatch): nearly every prompt does, so that is the cheap path.
     $prompt = ''
     if ($Hook -eq 'Prompt') {
         $raw = ''
@@ -57,7 +59,7 @@ try {
             $reader = New-Object System.IO.StreamReader([Console]::OpenStandardInput(), (New-Object System.Text.UTF8Encoding($false)))
             $raw = $reader.ReadToEnd()
         }
-        if ($raw -notmatch 'stopwatch:') { exit 0 }
+        if ($raw -notmatch '(?i)stopwatch|time this') { exit 0 }
     }
     $root = if ($RepoRoot) { $RepoRoot } elseif ($env:CLAUDE_PROJECT_DIR) { $env:CLAUDE_PROJECT_DIR } else { (Get-Location).Path }
     $root = [System.IO.Path]::GetFullPath($root).TrimEnd('\', '/')
@@ -69,9 +71,9 @@ try {
     if ($store.Error) { exit 0 }
     $running = @($store.Runs | Where-Object { -not $_.End }) | Select-Object -Last 1
     if ($Hook -eq 'Prompt' -and $raw.Trim()) { try { $prompt = [string]($raw | ConvertFrom-Json).prompt } catch { $prompt = '' } }
-    # Nothing to decide, so no git: a Prompt needs the marker; a Stop an Auto run going.
+    # Nothing to decide, so no git: a Prompt needs a way to start a run (#4386); a Stop an Auto run going.
     $marker = $null
-    if ($Hook -eq 'Prompt') { $marker = Get-StopwatchPromptMarker -Prompt $prompt; if ($null -eq $marker) { exit 0 } }
+    if ($Hook -eq 'Prompt') { $marker = Get-StopwatchPromptStart -Prompt $prompt -PreparedLabels @($store.Prepared | ForEach-Object { [string]$_.Label }); if ($null -eq $marker) { exit 0 } }
     if ($Hook -eq 'Stop' -and (-not $running -or -not $running.Auto)) { exit 0 }
 
     $trunk = 'main'
@@ -100,7 +102,7 @@ try {
         if ($LASTEXITCODE -eq 0) { $commits = @(ConvertFrom-StopwatchCommitLog -Lines $out) }
     }
     $ErrorActionPreference = 'Stop'
-    $r = Invoke-StopwatchHookEvent -Hook $Hook -Runs $store.Runs -Now ([datetime]::UtcNow) -Branch $branch -Clean $clean -Head $head -Trunk $trunk -Prompt $prompt -Commits $commits
+    $r = Invoke-StopwatchHookEvent -Hook $Hook -Runs $store.Runs -Now ([datetime]::UtcNow) -Branch $branch -Clean $clean -Head $head -Trunk $trunk -Prompt $prompt -Commits $commits -PreparedLabels @($store.Prepared | ForEach-Object { [string]$_.Label })
     if ($r.Changed) {
         if ($store.Skipped) { Copy-Item -LiteralPath $StorePath -Destination "$StorePath.bak" -Force -ErrorAction SilentlyContinue }
         # The prepared labels are kept, less the one this prompt just started a run for (the run carries the card now).

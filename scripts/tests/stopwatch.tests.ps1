@@ -54,6 +54,39 @@ Assert-True ($h.Changed -and @($h.Runs).Count -eq 2 -and $h.Runs[0].Id -eq 'd1' 
 $h = Invoke-StopwatchHookEvent -Hook Prompt -Runs @($going) -Now (& $at 10) -Head '' -Prompt 'stopwatch: x'
 Assert-True (-not $h.Changed -and @($h.Runs).Count -eq 1 -and $h.Runs[0].Id -eq 'g1') 'a marked prompt with an unknown HEAD starts nothing and discards nothing'
 Assert-True (-not (Invoke-StopwatchHookEvent -Hook Prompt -Runs @($going) -Now (& $at 10) -Head 'aaa' -Prompt 'just a question').Changed) 'an unmarked prompt does nothing, a run going keeps going'
+Write-Host '-- the slash command and the owner''s phrase (#4386)' -ForegroundColor Cyan
+Assert-Equal 'Release prep' (Get-StopwatchPromptStart -Prompt '/dkj-repo-workflow:stopwatch-start Release prep') 'the full slash command starts a run labelled with the rest of its line'
+Assert-Equal 'Release prep' (Get-StopwatchPromptStart -Prompt "  /StopWatch-Start  Release prep  `nmore") 'the short command, any case, leading whitespace and a trailing gap are fine'
+Assert-Equal 'Fix the page' (Get-StopwatchPromptStart -Prompt "/dkj-repo-workflow:stopwatch-start`n`n  Fix the page`nand more") 'with no label on the command line, the next non-empty line is the label'
+Assert-Equal 'Assignment' (Get-StopwatchPromptStart -Prompt '/dkj-repo-workflow:stopwatch-start') 'a bare command is an Assignment'
+Assert-Equal 80 (Get-StopwatchPromptStart -Prompt ('/stopwatch-start ' + ('a' * 200))).Length 'a slash label is cut at the label maximum'
+Assert-True ($null -eq (Get-StopwatchPromptStart -Prompt '/stopwatch-startx foo') -and $null -eq (Get-StopwatchPromptStart -Prompt 'run /stopwatch-start foo') -and $null -eq (Get-StopwatchPromptStart -Prompt '/dkj-repo-workflow:stopwatch-hide foo')) 'a longer command name, a command not at the start and another command start nothing'
+Assert-Equal 'Marker wins' (Get-StopwatchPromptStart -Prompt "stopwatch: Marker wins`n/stopwatch-start other") 'the marker comes before the slash command'
+Assert-Equal 'prepare a new release' (Get-StopwatchPromptStart -Prompt 'prepare a new release. Use the stopwatch for this prompt') 'English: a sentence of its own is a phrase, the label is the rest'
+Assert-Equal 'bereid je voor op een nieuwe release' (Get-StopwatchPromptStart -Prompt 'bereid je voor op een nieuwe release. Gebruik voor deze prompt de stopwatch') 'Dutch: the owner''s own prompt starts a run'
+Assert-Equal 'fix the footer' (Get-StopwatchPromptStart -Prompt 'Use the stopwatch, fix the footer') 'a phrase first, joined by a comma'
+Assert-Equal 'fix the footer' (Get-StopwatchPromptStart -Prompt 'fix the footer, start the stopwatch') 'a phrase last, joined by a comma'
+Assert-Equal 'prepare a release' (Get-StopwatchPromptStart -Prompt 'prepare a release with the stopwatch') 'with the stopwatch at the end of the line'
+Assert-Equal 'maak een release' (Get-StopwatchPromptStart -Prompt 'maak een release met de stopwatch') 'met de stopwatch at the end of the line'
+Assert-Equal 'refactor the hook' (Get-StopwatchPromptStart -Prompt 'refactor the hook and time this') 'time this after and'
+Assert-Equal 'Assignment' (Get-StopwatchPromptStart -Prompt 'Start de stopwatch') 'a phrase alone leaves Assignment'
+Assert-Equal 'Assignment' (Get-StopwatchPromptStart -Prompt 'stopwatch aan') 'stopwatch aan alone'
+Assert-Equal 'doe iets' (Get-StopwatchPromptStart -Prompt 'doe iets, stopwatch aan') 'stopwatch aan after a comma'
+Assert-Equal 'go' (Get-StopwatchPromptStart -Prompt "USE THE STOPWATCH: go`nthe rest") 'the phrase is case-insensitive and only the first line is read'
+foreach ($about in 'make sure I can start the stopwatch in other ways', 'the stopwatch page is broken', 'I want to use the stopwatch page less', 'can I use the stopwatch?', 'why does the stopwatch not start', 'the page breaks when I time this out later', 'document how the stopwatch works', "fix the footer`nuse the stopwatch") {
+    Assert-True ($null -eq (Get-StopwatchPromptStart -Prompt $about)) "a sentence about the stopwatch starts nothing: $($about -replace "`n", ' / ')"
+}
+Assert-True ($null -eq (Get-StopwatchPromptStart -Prompt "<pasted_content id=`"3f0a`">`nplease use the stopwatch`n</pasted_content id=`"3f0a`">") -and $null -eq (Get-StopwatchPromptStart -Prompt "fix this`n<pasted_content id=`"3f0a`">`nuse the stopwatch`n</pasted_content>")) 'a phrase inside a pasted block does not count'
+Assert-Equal 'tidy up' (Get-StopwatchPromptStart -Prompt "<pasted_content id=`"3f0a`">`nsome log`n</pasted_content id=`"3f0a`">`ntidy up, use the stopwatch") 'a phrase outside the pasted block still does'
+Assert-Equal 'CSS comment change' (Get-StopwatchPromptStart -Prompt "<pasted_content id=`"3f0a`">`r`nstopwatch: CSS comment change`r`nthe rest`r`n</pasted_content id=`"3f0a`">") 'the marker is still read past the wrapper'
+Assert-Equal 'Release cut' (Get-StopwatchPromptStart -Prompt 'prepare the release cut, use the stopwatch' -PreparedLabels @('Other card', 'Release cut')) 'a prepared label found in the prompt, in any case, wins'
+Assert-Equal 'prepare the cut' (Get-StopwatchPromptStart -Prompt 'prepare the cut, use the stopwatch' -PreparedLabels @('Release cut')) 'a prepared label that is not in the prompt changes nothing'
+Assert-True ($null -eq (Get-StopwatchPromptStart -Prompt 'just mentions the release cut' -PreparedLabels @('release cut'))) 'a prepared label alone, without a phrase, starts nothing'
+$h = Invoke-StopwatchHookEvent -Hook Prompt -Runs @($going) -Now (& $at 10) -Head 'bbb' -Prompt '/dkj-repo-workflow:stopwatch-start Via command'
+Assert-True ($h.Changed -and $h.Label -eq 'Via command' -and @($h.Runs).Count -eq 1 -and $h.Runs[0].Label -eq 'Via command' -and $h.Runs[0].Auto -and $h.Runs[0].StartHead -eq 'bbb') 'the slash command starts an Auto run through the same path, discarding a run going'
+$h = Invoke-StopwatchHookEvent -Hook Prompt -Runs @() -Now (& $at 10) -Head 'bbb' -Prompt 'ship it. use the stopwatch' -PreparedLabels @('Ship it')
+Assert-True ($h.Changed -and $h.Label -eq 'Ship it' -and $h.Runs[0].Label -eq 'Ship it') 'a phrase starts a run, and a prepared card''s label wins'
+Assert-True (-not (Invoke-StopwatchHookEvent -Hook Prompt -Runs @() -Now (& $at 10) -Head '' -Prompt 'use the stopwatch').Changed) 'a phrase with an unknown HEAD starts nothing'
 $auto = @($going)
 $stop = { param($b, $c, $hd, $rs) Invoke-StopwatchHookEvent -Hook Stop -Runs $rs -Now (& $at 500) -Branch $b -Clean $c -Head $hd }
 $h = & $stop 'main' $true 'bbb' $auto
@@ -127,6 +160,20 @@ try {
     $out = '{"prompt":"just a question"}' | & powershell -NoProfile -ExecutionPolicy Bypass -File $hookScript -Hook Prompt -StorePath $hookStore 2>&1
     $exit = $LASTEXITCODE
     Assert-True ($exit -eq 0 -and -not $out -and @((Read-StopwatchStore -Path $hookStore).Runs).Count -eq 1 -and (Read-StopwatchStore -Path $hookStore).Runs[0].Id -eq $firstId) 'an unmarked prompt leaves the store alone'
+    $phraseStore = Join-Path $dir 'hook\phrase.json'
+    $out = '{"prompt":"prepare a new release. Use the stopwatch for this prompt"}' | & powershell -NoProfile -ExecutionPolicy Bypass -File $hookScript -Hook Prompt -StorePath $phraseStore 2>&1
+    $exit = $LASTEXITCODE
+    $ps2 = Read-StopwatchStore -Path $phraseStore
+    Assert-True ($exit -eq 0 -and -not $out -and @($ps2.Runs).Count -eq 1 -and $ps2.Runs[0].Label -eq 'prepare a new release') 'the hook script starts a run from the owner''s phrase, silently (#4386)'
+    $slashStore = Join-Path $dir 'hook\slash.json'
+    $out = '{"prompt":"/dkj-repo-workflow:stopwatch-start Release prep\nmore"}' | & powershell -NoProfile -ExecutionPolicy Bypass -File $hookScript -Hook Prompt -StorePath $slashStore 2>&1
+    $exit = $LASTEXITCODE
+    $ps3 = Read-StopwatchStore -Path $slashStore
+    Assert-True ($exit -eq 0 -and -not $out -and @($ps3.Runs).Count -eq 1 -and $ps3.Runs[0].Label -eq 'Release prep') 'the hook script starts a run from the slash command, silently (#4386)'
+    $aboutStore = Join-Path $dir 'hook\about.json'
+    $out = '{"prompt":"the stopwatch page is broken"}' | & powershell -NoProfile -ExecutionPolicy Bypass -File $hookScript -Hook Prompt -StorePath $aboutStore 2>&1
+    $exit = $LASTEXITCODE
+    Assert-True ($exit -eq 0 -and -not $out -and -not (Test-Path -LiteralPath $aboutStore)) 'a prompt that passes the cheap path but only talks about the stopwatch writes nothing (#4386)'
     $cheapStore = Join-Path $dir 'hook\cheap.json'
     $out = '{"prompt":"an ordinary prompt"}' | & powershell -NoProfile -ExecutionPolicy Bypass -File $hookScript -Hook Prompt -StorePath $cheapStore 2>&1
     $exit = $LASTEXITCODE

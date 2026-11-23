@@ -6,7 +6,7 @@
 .DESCRIPTION
     Adds the label to the `prepared` list of THIS machine's stopwatch.json, so Admin's /dev/stopwatch overview shows a
     "ready, not started" card for it. No run is created: the run still starts only when the owner sends a prompt whose
-    first line is `stopwatch: <label>`, and the run then lands on that card (the hook removes the prepared entry).
+    first line is `stopwatch: <label>` (or one that begins with /dkj-repo-workflow:stopwatch-start, or says "use the stopwatch"), and the run then lands on that card (the hook removes the prepared entry).
     The label is normalised exactly as a prompt's label is (ConvertTo-StopwatchLabel: control characters as spaces,
     trimmed, cut to the label maximum), so the card and the later prompt agree. A label that already has a card is
     not a problem: it is recorded, and its normal card shows until it has no run left.
@@ -63,6 +63,6 @@ if ($Remove) {
     Write-Host "[OK] withdrew the prepared card `"$norm`"."
 } else {
     Write-Host "[OK] prepared the card `"$norm`" on /dev/stopwatch: ready, no clock running."
-    Write-Host "     The owner starts it with a prompt whose first line is: stopwatch: $norm"
+    Write-Host "     The owner starts it with a prompt whose first line is: stopwatch: $norm  (or /dkj-repo-workflow:stopwatch-start $norm, or "use the stopwatch" in a prompt that names it)"
 }
 exit 0
