@@ -2,7 +2,33 @@
 
 ## [Unreleased]
 
-**13 / 13 minor entries** <!-- pending-tally -->
+**14 / 14 minor entries** <!-- pending-tally -->
+
+### DEPLOY: docs/4418-design-lessons-to-manuals · 20261123-125105Z
+
+The UX designer's and the graphic designer's manuals now carry three design lessons that had only lived in
+one machine's memory notes: the visual design is built in Figma the same professional way as a wireframe,
+both share the design system's one spacing and radius scale, and where the two disagree on structure the
+visual design adapts to the wireframe (#4418).
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+A visual design in Figma no longer starts from one-off frames or its own spacing scale, and no longer
+quietly overrides the tested wireframe's layout.
+
+**Score:** 2
+
+#### Pull Request
+
+Design lessons from local memory notes land in Uma's and Gwen's manuals
+
+Plugins: dkj-subagents-alpha
+
+[PR #4422](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4422)
+
+---
 
 ### DEPLOY: docs/4415-tip-check-manual-outcome · 20261123-123536Z
 
