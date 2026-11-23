@@ -2,7 +2,34 @@
 
 ## [Unreleased]
 
-**20 / 21 minor entries** <!-- pending-tally -->
+**20 / 22 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/4430-split-heavy-suites · 20261123-155401Z
+
+The two heaviest test suites no longer pin a CI shard each, and CI runs on six shards instead of five.
+`guard-live-theme.tests.ps1` (465s in CI) and `script-contract.tests.ps1` (429s) each took about as long as
+an ideal shard on their own, so the packer could not balance around them. Both are now two suites over a
+shared fixture file (`guard-live-theme-deploy.tests.ps1` and `script-contract-tables.tests.ps1` are the new
+halves), cut where measured time balances, with every assert preserved. That puts the heaviest file at
+about 274s, under the ~382s work bound over 24 lanes, so the sixth shard the #2304 note priced and
+declined at 141 suites now pays: about 76s off the bound for about 20s of provisioning. The split also
+restored one assert in the guard's group 9 that had never run, because it shared a line with another.
+
+**Score:** 3
+
+#### What makes this deploy extra special
+
+N/A: this repo's own CI and test suites, which no consumer runs or installs.
+
+**Score:** N/A
+
+#### Pull Request
+
+Split the two heaviest test suites and run CI on six shards
+
+[PR #4437](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4437)
+
+---
 
 ### DEPLOY: feat/4442-asana-review-followers · 20261123-143125Z
 
