@@ -2,7 +2,33 @@
 
 ## [Unreleased]
 
-**9 / 9 minor entries** <!-- pending-tally -->
+**10 / 10 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/4380-dossier-names-no-repeat · 20261123-014307Z
+
+Ian's manual carries a naming rule: a dossier he creates or renames repeats no word already higher in
+its path, two dossiers may share a name under different parents, and a proper name is never shortened
+to avoid the repeat (#4380).
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+In a life hub whose dossiers form a tree, new and renamed dossiers get short names the path explains
+(`Wedding › DJ`, not `Wedding › DJ wedding`), so paths stay readable without the owner renaming them by
+hand.
+
+**Score:** 2
+
+#### Pull Request
+
+dkj-subagents-lifehub: dossier names never repeat a word already in their path
+
+Plugins: dkj-subagents-lifehub
+
+[PR #4387](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4387)
+
+---
 
 ### DEPLOY: fix/4388-theme-limit-seam · 20261123-013008Z
 
