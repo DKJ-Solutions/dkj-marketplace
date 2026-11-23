@@ -2,7 +2,33 @@
 
 ## [Unreleased]
 
-**6 / 6 minor entries** <!-- pending-tally -->
+**7 / 7 minor entries** <!-- pending-tally -->
+
+### DEPLOY: fix/4405-guard-shell-syntax · 20261123-111109Z
+
+`guard-live-theme` now judges an authorised live push whose command line ends in shell syntax, such as
+`2>&1 | tail -15` or `> out.txt`, instead of crashing on it. Redirections and pipes are no longer read as
+pushed files, and an `--only` value holding a character no file name can hold is refused by name instead
+of surfacing as "PowerShell could not run this guard" (#4405).
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+A Shopify store's maintainer can pipe a live push's output (`2>&1 | tail`) without the guard blocking an
+authorised release by crashing, and a bad `--only` value now gets a refusal that names the file.
+
+**Score:** 2
+
+#### Pull Request
+
+guard-live-theme: judge a live push that ends in shell syntax instead of crashing
+
+Plugins: dkj-subagents-shopify
+
+[PR #4412](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4412)
+
+---
 
 ### DEPLOY: fix/4400-review-park-verify · 20261123-105151Z
 
