@@ -39,21 +39,36 @@
 
 ### PLAN
 
-Write the tip-check skill in dkj-subagents-alpha; name it in Rebecca's and Marlowe's manuals.
+Closes #4382. The owner's tips are saved by `ai-radar` (lifehub plugin), but the judging half is broken
+(#4381) and served one repo only. The owner placed the judging skill in the core team, where both
+specialists it needs live; the core team ships no script, so it is a procedure.
 
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `tip-check` skill in `dkj-subagents-alpha`: claim, what we have (cited path), is the problem ours, cost, advice, Marlowe's red-team, filing
+- [x] Rebecca's and Marlowe's manuals name it; the plugin description lists it
+- [x] The lifehub `ai-radar` skill points its verdict pass at `tip-check`
 
 ### TEST
 
+- [x] `check-plugin-integrity.ps1`: 0 errors (a cross-plugin link written absolute)
+
 ### DEPLOY: feat/4382-tip-check-skill
 
-**Score:**
+A new core-team skill, `tip-check`, owned by Rebecca with Marlowe red-teaming. Rebecca's and Marlowe's
+manuals and the plugin description name it, and the lifehub `ai-radar` skill hands its verdict pass to it.
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+Share a tip from your feed (a post, a link, a pasted text) and ask whether it is worth it: `tip-check`
+holds it against your own setup (your `.claude/`, your enabled plugins, and Claude Code's own features),
+cites what you already have, asks whether the problem actually occurs for you, counts the cost, and
+advises Build, Later or Skip. Marlowe then tries to prove that advice wrong before you see it. Gaps worth
+building are filed as a feature issue.
+
+**Score:** 3
 
 #### Pull Request
 
