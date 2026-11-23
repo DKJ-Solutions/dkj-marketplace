@@ -39,21 +39,37 @@
 
 ### PLAN
 
+Issue #4379 (feature-inbound): nothing in `dkj-subagents-lifehub` said where an update lands inside a
+dossier, so updates were appended at the bottom. Carry the owner's newest-first convention as Ian's rule
+and make each skill that writes into a dossier insert at the top of the matching heading.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] Ian's manual (`specialist-04-03-manual.md`): a hard rule, newest first inside a dossier.
+- [x] Ian's agent def: the same rule in his index step.
+- [x] `inbox-sweep`: an addition goes at the top of its heading; a source line names the newest mail first.
+- [x] `ai-radar`: a new item directly under the marker line, an addition at the top of its item.
+- [x] `agenda`: a present idea on a dossier page goes at the top of its heading.
 
 ### TEST
 
+- [x] Doc-only change; `ship-pr` runs the gates (integrity, suites) before the PR.
+
 ### DEPLOY: feat/4379-dossier-newest-first
 
-**Score:**
+Ian (04-03) now writes newest first inside a dossier: an update goes at the top of the heading it belongs
+to, a new heading above the older ones, and a source line names the newest mail or message first.
+`inbox-sweep`, `ai-radar` and `agenda` insert that way instead of appending (#4379).
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+A life hub owner opening a dossier now finds its latest state at the top instead of at the bottom of a
+growing page, for every update Ian or the lifehub skills write from the next release on.
+
+**Score:** 3
 
 #### Pull Request
 
 dkj-subagents-lifehub: newest first inside a dossier
-

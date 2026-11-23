@@ -31,7 +31,9 @@ Then fetch and read, before writing anything:
 
 An item belongs to its model family's page, directly under the marker line that page carries for new
 items. Write with `notion-update-page` (insert new text, only ever add to existing text), in exactly the
-format the page shows.
+format the page shows, and **newest first** (Ian's rule, #4379): a new item goes directly under that
+marker line, above the older items, and an addition to an existing item goes at the top of it, its
+newest source first.
 
 ## Mode 1: the inbox (the owner pastes something)
 
