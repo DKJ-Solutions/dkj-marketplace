@@ -239,7 +239,9 @@
     repo with a live stage, cutting after the push (push-then-cut).
 
     WHAT IT CHANGES, both documents from the one input, so the two cannot disagree the way they did at a
-    BWJ store's v1.3.0. Each entry's own changed paths are read from its 'merge: <branch> (#NN)' commit.
+    BWJ store's v1.3.0. Each entry's own changed paths are read from its 'merge: <branch> (#NN)' commit,
+    found on the first-parent line and then in the full history for a branch that reached the trunk
+    through a side branch (#4403).
     An entry that touched a 'hold' path is NOT LIVE: the GitHub body moves it from 'What landed' to
     'Not live yet', naming the held files, and the audience note leaves it out, so it goes into the note
     of the release that ships it. An entry whose merge commit cannot be found is reported by name and
@@ -1704,6 +1706,15 @@ $noteWithheldNote = Format-RetractionWithheldNote -Retractions $retractions -Rem
 # That is the branch's net change, a trunk merge into it included, and it
 # asks nothing of GitHub. An entry with no such commit (a squash) is 'unknown', named on the
 # console, and kept in both lists: dropping it would be a guess in the other direction.
+#
+# THE FIRST-PARENT LINE IS READ FIRST, AND THE FULL HISTORY ONLY FOR WHAT IT MISSED (#4403). A Git-connected
+# Shopify store can take a hotfix lane: a branch is merged into the deploy branch 'live' first
+# ('Merge pull request #1498 from <owner>/<branch>'), then reaches 'main' through ONE back-flow merge
+# ('Merge pull request #1510 from <owner>/live'). On main's first-parent line only the back-flow merge is
+# visible, so every such entry fell to 'unknown': a real cut warned 19 times and dropped them all from the
+# audience note. The second read has no --first-parent, so it sees the branch's own merge, whose diff
+# against ITS first parent is still that branch's net change. Its state is still decided by the record,
+# never defaulted to live. A failed second read keeps today's behaviour, the first-parent result.
 $entryStates = @{}
 $unknownEntries = @()
 if ($liveRecord) {
@@ -1719,8 +1730,22 @@ if ($liveRecord) {
             Write-Warning "live-push record: git log $baseTag..HEAD failed (exit $($logCap.ExitCode)), so no entry could be checked against the record."
         }
     }
+    $allLogLines = $null   # the full-history read, taken on first need so an ordinary cut pays nothing
     foreach ($e in $entries) {
-        $sha = Find-BranchMergeCommit -LogLines $logLines -Branch (Get-EntryDeclaredBranch -EntryText $e)
+        $entryBranch = Get-EntryDeclaredBranch -EntryText $e
+        $sha = Find-BranchMergeCommit -LogLines $logLines -Branch $entryBranch
+        if (-not $sha -and $entryBranch -and $logLines.Count -gt 0) {
+            if ($null -eq $allLogLines) {
+                $allLogLines = @()
+                $allCap = Invoke-NativeCapture -FilePath 'git' -Arguments @('log', '--merges', '--format=%H%x09%s', "$baseTag..HEAD")
+                if ($allCap.ExitCode -eq 0) {
+                    $allLogLines = @(($allCap.Output | Out-String) -split "`r?`n" | Where-Object { $_.Trim() })
+                } else {
+                    Write-Warning "live-push record: git log --merges $baseTag..HEAD failed (exit $($allCap.ExitCode)), so an entry merged through a side branch could not be checked against the record."
+                }
+            }
+            $sha = Find-BranchMergeCommit -LogLines $allLogLines -Branch $entryBranch
+        }
         $paths = $null
         if ($sha) {
             # core.quotePath=true holds the wire to ASCII and Convert-GitQuotedPath decodes it -- the repair

@@ -789,7 +789,8 @@ function Get-LiveStage {
 # Optional (#101): if this repo's PR template uses different marker text than the workshop's own,
 # or a PR should carry a default assignee/milestone, define any of these functions --
 # Get-PrDescriptionPlaceholder, Get-PrApprovalPattern, Get-PrAssignee, Get-PrMilestone, and
-# Get-PrOwnerLookPattern (the template box an owner's approved look answers, #3958) -- and
+# Get-PrOwnerLookPattern (the template box an owner's approved look answers, #3958),
+# Get-PrNotVisiblePattern (the "nothing a visitor can see" box the closing step's answer ticks, #4404) -- and
 # open-pr.ps1 picks them up automatically. Left undefined here on purpose: open-pr.ps1 falls back
 # to its own built-in defaults (this repo's current markers, no assignee/milestone, no owner-look
 # box) when any of these are absent, so a fresh consumer needs none of this to get started.
