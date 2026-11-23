@@ -1007,7 +1007,7 @@ function Get-ShopifyLiveDeployBranch { return 'live' }
     Assert-Equal 2 (Invoke-DegradedGuard -Command "$push --only assets/x.css $mk" -Root $m).Code 'no lib: an authorised live push is refused -- what it carries cannot be read'
 
     # --- rule 6: the go-live command (#4402) -----------------------------------------------------------
-    # One marker on the go-live line authorises the whole release; without it the line is refused, in a
+    # One marker on the go-live line lets it reach the person's confirmation prompt (#4436); without it the line is refused, in a
     # Git-connected repo and in one with no seams at all. Naming the file in a text tool is not running it.
     Write-Host "rule 6 -- the go-live command (#4402)" -ForegroundColor Cyan
     $gl = 'powershell -NoProfile -ExecutionPolicy Bypass -File "C:/x/dkj-repo-workflow-bwj/7.4.0/scripts/task/go-live.ps1" -Version 3.2.0 -AppDeploy'
@@ -1015,8 +1015,14 @@ function Get-ShopifyLiveDeployBranch { return 'live' }
     foreach ($root in @($conn, $bare)) {
         $label = if ($root -eq $conn) { 'connected' } else { 'no seams' }
         Assert-Equal 2 (Invoke-Guard -Command $gl -Root $root) "go-live ($label): refused without the marker"
-        Assert-Equal 0 (Invoke-Guard -Command "$gl # SWB-LIVE-PUSH-AUTHORIZED" -Root $root) "go-live ($label): allowed with the marker on the line"
+        Assert-Equal 0 (Invoke-Guard -Command "$gl # SWB-LIVE-PUSH-AUTHORIZED" -Root $root) "go-live ($label): passes the guard with the marker on the line"
+        # #4436: passing is not allowing -- the marker is session-composable, so the person is asked.
+        $asked = Get-GuardRefusal -Command "$gl # SWB-LIVE-PUSH-AUTHORIZED" -Root $root
+        Assert-True ($asked -match '"permissionDecision":"ask"') "go-live ($label): with the marker it ASKS the person rather than allowing (#4436)"
+        Assert-True ($asked -match 'promotion PR' -and $asked -match '#4436') "go-live ($label): the question names what it takes live"
     }
+    Assert-True ((Get-GuardRefusal -Command 'Get-Content scripts/task/go-live.ps1' -Root $conn) -notmatch 'permissionDecision') 'go-live: reading the script asks nothing (#4436)'
+    Assert-True ((Get-GuardRefusal -Command 'shopify theme push --theme 999 # SWB-LIVE-PUSH-AUTHORIZED' -Root $bare) -notmatch 'permissionDecision') 'a marked non-go-live command asks nothing: rule 3 and 5 stay marker-only (#4436)'
     $glBlocked = @(
         @{ n = 'a call operator and a quoted path'; c = "& 'C:\x\scripts\task\go-live.ps1' -Version 3.2.0 -SkipAppDeploy" },
         @{ n = 'a relative path';                    c = '.\scripts\task\go-live.ps1 -Version 3.2.0' },
