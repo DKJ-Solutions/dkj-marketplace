@@ -329,6 +329,9 @@
     alike. Without the seam the answer is not written and the run says so; with the seam and no matching
     line it warns. One line, and no double quote in it: this value crosses `powershell -File` from
     ship-pr, which does not escape one (#2405).
+    Related, with no parameter (#4404): when the repo defines the optional Get-PrNotVisiblePattern seam and
+    the branch document's closing step (Get-BranchClosingSteps) is answered "not visible" -- '- [~]' with a
+    reason, or '- [x] ... No -- <reason>' -- the matching template box is ticked with that reason the same way.
 
 .PARAMETER GatesOnly
     Run this repo's lint and test gates against the working tree and stop there -- no branch check, no
@@ -986,6 +989,23 @@ if ($OwnerLook) {
     if (Test-FunctionDefined 'Get-PrOwnerLookPattern') { $ownerLookPattern = [string](Get-PrOwnerLookPattern) }
     if (-not $ownerLookPattern) {
         Write-Host "-OwnerLook: this repo names no owner-look box (Get-PrOwnerLookPattern in scripts/repo-config.ps1), so the approval is not written into the PR body. It stands on the issue and in the branch document." -ForegroundColor DarkGray
+    }
+}
+
+# THE CLOSING STEP'S "NOT VISIBLE" ANSWER (#4404), resolved once for both body paths like the box above.
+# The session answers the repo's closing step (Get-BranchClosingSteps) in the branch document; without
+# this the template's "nothing a visitor can see" box stayed empty and the consumer's check went red.
+# Needs the seam naming the box; without it nothing is read and nothing is written.
+$notVisiblePattern = ''
+$notVisibleReason = ''
+if (Test-FunctionDefined 'Get-PrNotVisiblePattern') {
+    $notVisiblePattern = [string](Get-PrNotVisiblePattern)
+    if ($notVisiblePattern) {
+        $nvSteps = @(Get-SeamValue -Name 'Get-BranchClosingSteps' -Default @()) | Where-Object { $_ -is [string] -and $_.Trim() }
+        $nvDocPath = Join-Path $repoRoot (Resolve-BranchFilePath -Kind Cycle -RepoRoot $repoRoot)
+        if (@($nvSteps).Count -gt 0 -and (Test-Path -LiteralPath $nvDocPath)) {
+            $notVisibleReason = Get-ClosingStepNotVisibleAnswer -Content ([System.IO.File]::ReadAllText($nvDocPath, [System.Text.Encoding]::UTF8)) -Steps @($nvSteps)
+        }
     }
 }
 
@@ -2831,6 +2851,13 @@ if ($existingPr) {
         elseif (-not $look.Matched) { Write-Warning "-OwnerLook: no line of PR #$($existingPr.number)'s body matches Get-PrOwnerLookPattern ('$ownerLookPattern'), so the approval was not written there. Tick the box by hand before the merge if this repo's checks read it." }
     }
 
+    # THE CLOSING STEP'S "NOT VISIBLE" ANSWER (#4404): a different box from the owner's look, so both may apply.
+    if ($notVisibleReason) {
+        $nv = Set-PrOwnerLookAnswer -Body $newBody -Pattern $notVisiblePattern -Answer $notVisibleReason
+        if ($nv.Changed) { $newBody = $nv.Body; $edits += "the not-visible box" }
+        elseif (-not $nv.Matched) { Write-Warning "Closing step answered 'not visible', but no line of PR #$($existingPr.number)'s body matches Get-PrNotVisiblePattern ('$notVisiblePattern'), so the answer was not written there. Tick the box by hand before the merge if this repo's checks read it." }
+    }
+
     # THE GATE-BYPASS SECTION, AFTER THE REFRESH for #919's reason (#2361): the lines the body carried
     # before this run plus this run's own. Add-GateBypassLines is idempotent per line, so a body whose
     # section survived the refresh is a no-op and one whose section was swallowed gets it back.
@@ -3071,6 +3098,17 @@ if ($ownerLookPattern -and $Body) {
         Write-Host "owner look: the PR body's owner-look box is ticked and answered." -ForegroundColor DarkGray
     } elseif (-not $look.Matched) {
         Write-Warning "-OwnerLook: no line of the PR body matches Get-PrOwnerLookPattern ('$ownerLookPattern'), so the approval was not written there. Tick the box by hand before the merge if this repo's checks read it."
+    }
+}
+
+# The closing step's "not visible" answer (#4404), on the create path like the owner's look above.
+if ($notVisibleReason -and $Body) {
+    $nv = Set-PrOwnerLookAnswer -Body $Body -Pattern $notVisiblePattern -Answer $notVisibleReason
+    if ($nv.Changed) {
+        $Body = $nv.Body
+        Write-Host "not visible: the PR body's not-visible box is ticked with the closing step's reason." -ForegroundColor DarkGray
+    } elseif (-not $nv.Matched) {
+        Write-Warning "Closing step answered 'not visible', but no line of the PR body matches Get-PrNotVisiblePattern ('$notVisiblePattern'), so the answer was not written there. Tick the box by hand before the merge if this repo's checks read it."
     }
 }
 

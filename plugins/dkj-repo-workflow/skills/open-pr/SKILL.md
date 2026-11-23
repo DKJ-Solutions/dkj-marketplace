@@ -494,6 +494,13 @@ answer appended, on a new PR and on one already open, whether the body came from
 matching line it warns. `issues-sweep-reviews` and `issues-sweep` step 6 pass the approval they recorded.
 Keep it on one line with no double quote: it crosses `powershell -File` from `ship-pr`.
 
+**A closing step answered "not visible" ticks your template's not-visible box** (#4404). Name that box once
+with the optional `Get-PrNotVisiblePattern` in `scripts/repo-config.ps1`, a regex for the unticked line (for
+example `'^- \[ \] .*nothing a visitor can see'`). When the branch document's closing CREATE step
+(`Get-BranchClosingSteps`) reads `- [~] <step> <reason>` or `- [x] <step> No -- <reason>`, that box is ticked
+with the reason, on a new PR, on one already open and for a supplied `-Body`; a ticked step without a "No"
+means visible and ticks nothing. A reason found but no matching line warns. It is independent of `-OwnerLook`.
+
 **Renaming a heading in your template needs no configuration** — the rule below reads a position, not a
 name. One wrinkle worth knowing if you do rename one: a PR opened *before* the rename still holds the old
 heading in its published body. The script therefore falls back to the headings it has shipped before
