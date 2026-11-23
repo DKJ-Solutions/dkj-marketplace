@@ -2,7 +2,60 @@
 
 ## [Unreleased]
 
-**5 / 5 minor entries** <!-- pending-tally -->
+**7 / 7 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/4382-tip-check-skill · 20261123-004838Z
+
+A new core-team skill, `tip-check`, owned by Rebecca with Marlowe red-teaming. Rebecca's and Marlowe's
+manuals and the plugin description name it, and the lifehub `ai-radar` skill hands its verdict pass to it.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+Share a tip from your feed (a post, a link, a pasted text) and ask whether it is worth it: `tip-check`
+holds it against your own setup (your `.claude/`, your enabled plugins, and Claude Code's own features),
+cites what you already have, asks whether the problem actually occurs for you, counts the cost, and
+advises Build, Later or Skip. Marlowe then tries to prove that advice wrong before you see it. Gaps worth
+building are filed as a feature issue.
+
+**Score:** 3
+
+#### Pull Request
+
+tip-check skill in the core team
+
+Plugins: dkj-subagents-alpha, dkj-subagents-lifehub
+
+[PR #4390](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4390)
+
+---
+
+### DEPLOY: docs/4378-one-detail-one-place · 20261123-003436Z
+
+Ian's manual in `dkj-subagents-lifehub` gains the hard rule "one detail, one place": every detail lives
+in exactly one dossier, the deepest one it is about, and a parent dossier only introduces and links to its
+children (#4378).
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+In a life hub, a parent dossier no longer repeats its children's amounts, dates, balances or open points.
+Ian puts the detail in the child and a link in the parent, so the hub stops contradicting itself when
+a child is updated and a reader no longer has to guess which copy is true.
+
+**Score:** 3
+
+#### Pull Request
+
+dkj-subagents-lifehub: one detail, one place
+
+Plugins: dkj-subagents-lifehub
+
+[PR #4383](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4383)
+
+---
 
 ### DEPLOY: fix/4375-branch-doc-sibling-folder · 20261120-174529Z
 
