@@ -826,6 +826,14 @@ function Get-LivePushTrunkProblems([string]$Segment) {
     $path = $null
     for ($i = 0; $i -lt $tokens.Count; $i++) {
         if ($tokens[$i].StartsWith('#')) { break }
+        # SHELL SYNTAX IS NOT AN ARGUMENT OF THE PUSH (#4405). A trailing '2>&1 | tail -15' reached the
+        # bare-word arm below as two pushed files, and '2>&1' then made Test-Path THROW ("illegal characters
+        # in path"), so the guard crashed instead of judging. A control operator ends the push's own words;
+        # a redirection is skipped, together with its target when that stands as the next word. Only an
+        # UNQUOTED token is shell syntax -- a quoted '>' is a value, and the --only loop refuses it by name.
+        if ($tokens[$i] -match '^(\|\|?|&&?|;)$') { break }
+        if ($tokens[$i] -match '^(\d*|&)(>>?|<)$') { $i++; continue }
+        if ($tokens[$i] -match '^(\d*|&)(>>?|<)[^"'']') { continue }
         if ($tokens[$i] -match '[$`]') { return @("'$(Format-GuardPath $tokens[$i])' is expanded by the shell, so what it names cannot be read from here. Name each file literally.") }
         $t = $tokens[$i] -replace '["'']', ''
         $name = $t
@@ -891,6 +899,8 @@ function Get-LivePushTrunkProblems([string]$Segment) {
         if ($p -match '[^\x20-\x7E]') { $problems += "${shown}: a name outside ASCII, which cannot be handed to git unchanged from here"; continue }
         if ($p -match '[*?\[\]{}!,]') { $problems += "${shown}: a pattern, not a file -- name each file so each can be compared"; continue }
         if ($p.StartsWith('/') -or $p -match '^[A-Za-z]:' -or @($p -split '/') -contains '..') { $problems += "${shown}: outside the theme root"; continue }
+        # REFUSED BY NAME BEFORE Test-Path, which throws on these rather than answering (#4405).
+        if ($p.IndexOfAny([System.IO.Path]::GetInvalidPathChars()) -ge 0) { $problems += "${shown}: a character no file name can hold here (one of < > | `" or a control character)"; continue }
         $file = Join-Path $base $p
         if (Test-Path -LiteralPath $file -PathType Container) { $problems += "${shown}: a directory -- name each file so each can be compared"; continue }
         $tree = Invoke-GuardGit $base @('--literal-pathspecs', 'ls-tree', $ref, '--', $p)
