@@ -39,21 +39,33 @@
 
 ### PLAN
 
+`tip-check`'s findings and advice only asked whether to build something new, so a tip that could
+sharpen an existing specialist's manual ended up as Skip (#4415). Step 5 now asks that question before a
+Have it or Partly becomes a Skip, and step 4 says what such a line costs.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] Step 4: an on-demand manual line has close to no per-session cost
+- [x] Step 5: before a Have it or Partly becomes a Skip, ask whether the tip sharpens the owning specialist's manual; if it does, that is a Build of a manual line
 
 ### TEST
 
+- [x] Doc-only change; the gates `ship-pr` runs cover the links and the plugin integrity
+
 ### DEPLOY: docs/4415-tip-check-manual-outcome
 
-**Score:**
+`tip-check` now weighs sharpening an existing specialist's manual as an outcome. A tip that adds a
+better question or habit to a manual is a Build of a manual line, not a Skip (#4415).
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+A tip that improves how a specialist already works is no longer thrown away as "we have it". It
+comes back as a concrete manual line to file.
+
+**Score:** 2
 
 #### Pull Request
 
 tip-check: sharpening an existing manual is an outcome too
-

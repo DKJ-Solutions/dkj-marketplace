@@ -73,7 +73,8 @@ Say which evidence you found, or that you found none.
 ## 4. Count the cost
 
 - **Context:** does it add to what every session loads (an always-on rule, a skill description, a
-  hook's output)? What loads every turn is paid every turn.
+  hook's output)? What loads every turn is paid every turn. A line in a specialist's manual loads only
+  on demand, so its per-session cost is close to nothing.
 - **Upkeep:** a new skill, hook or script is something to maintain, test and keep in step.
 - **Overlap:** does it duplicate or fight an existing skill, hook or rule? Two sources for one rule
   drift apart.
@@ -86,6 +87,11 @@ Give one advice, with one sentence on why:
 - **Build:** a real gap, a problem we have, a cost worth paying.
 - **Later:** worth it, but not now (it depends on something, or the gain is small).
 - **Skip:** we have it, it is not our problem, or it costs more than it gives.
+
+**Before a Have it or Partly becomes a Skip, ask one more question: does the tip sharpen the manual of
+the specialist who owns that work?** A sharper question, criterion or habit for an existing specialist
+is a **Build** of a manual line. File it as one, naming the manual and the line. On the first real run,
+every tip in a post came out as Skip, and two of them turned out to sharpen existing manuals (#4415).
 
 Then hand the advice to **Marlowe** with a blunt brief: *prove this advice is wrong.* He checks the
 load-bearing assumption (is the gap real, does the problem really occur, is the cost counted) and
