@@ -193,6 +193,13 @@ try {
     Assert-Equal 0 (Invoke-Guard -Command "$push $mk" -Root $m) 'merged: a whole-theme push from a clean checkout equal to origin/main passes'
     Assert-Equal 0 (Invoke-Guard -Command "$push --only assets/gone.css $mk" -Root $m) 'merged: a deletion of a file the trunk does not hold either passes'
 
+    # SHELL SYNTAX AFTER THE PUSH IS NOT A PUSHED FILE (#4405). Measured in a consumer: a trailing
+    # '2>&1 | tail -15' made Test-Path throw on '2>&1', so an authorised push was blocked by a crash.
+    Assert-Equal 0 (Invoke-Guard -Command "$push --only assets/x.css 2>&1 | tail -15 $mk" -Root $m) 'shell: a trailing 2>&1 | tail is judged, not crashed on'
+    Assert-Equal 0 (Invoke-Guard -Command "$push --only assets/x.css > out.txt $mk" -Root $m) 'shell: and a redirection target is not read as a pushed file'
+    $refusal = Get-GuardRefusal -Command "$push --only `"assets/a<b.css`" $mk" -Root $m
+    Assert-True ($refusal -match 'assets/a<b\.css: a character no file name can hold') 'shell: a quoted value holding < is refused by name, not by a crash'
+    Assert-True ($refusal -notmatch 'could not run this guard') 'shell: and the refusal does not blame PowerShell'
     # LINE ENDINGS ARE NOT A DIFFERENCE, read the way sync-main reads them.
     [System.IO.File]::WriteAllText($css, "body { color: red; }`r`n", $Utf8NoBom)
     Assert-Equal 0 (Invoke-Guard -Command "$push --only assets/x.css $mk" -Root $m) 'merged: the same content with CRLF endings passes'

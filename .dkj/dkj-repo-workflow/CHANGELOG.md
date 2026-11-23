@@ -2,7 +2,81 @@
 
 ## [Unreleased]
 
-**6 / 6 minor entries** <!-- pending-tally -->
+**9 / 9 minor entries** <!-- pending-tally -->
+
+### DEPLOY: fix/4427-merge-on-green-unknown-reread · 20261123-113615Z
+
+The merge-on-green sweep no longer gives up when it wakes right after a merge and GitHub is still
+computing mergeability: it waits a minute and reads the armed pull requests once more (#4427).
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+On a repo with several armed pull requests, each merge no longer costs an extra wait before the next one
+is picked up. It is on by default, so a consumer gets it with the release, without editing its workflow.
+
+**Score:** 2
+
+#### Pull Request
+
+merge-on-green: re-read once when every armed PR reads mergeable UNKNOWN right after a merge
+
+Plugins: dkj-repo-workflow
+
+[PR #4435](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4435)
+
+---
+
+### DEPLOY: docs/4410-tip-check-image-tips · 20261123-112440Z
+
+`tip-check` now says what to do when a post's tips are in its images: ask the owner for all the
+slides at once, or judge the caption and note that the slides were unread (#4410).
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+Checking a carousel post no longer stalls, and the owner no longer has to send ten separate
+screenshots. The skill asks for all the slides in one go.
+
+**Score:** 2
+
+#### Pull Request
+
+tip-check: what to do when a post's tips sit in its images
+
+Plugins: dkj-subagents-alpha
+
+[PR #4416](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4416)
+
+---
+
+### DEPLOY: fix/4405-guard-shell-syntax · 20261123-111109Z
+
+`guard-live-theme` now judges an authorised live push whose command line ends in shell syntax, such as
+`2>&1 | tail -15` or `> out.txt`, instead of crashing on it. Redirections and pipes are no longer read as
+pushed files, and an `--only` value holding a character no file name can hold is refused by name instead
+of surfacing as "PowerShell could not run this guard" (#4405).
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+A Shopify store's maintainer can pipe a live push's output (`2>&1 | tail`) without the guard blocking an
+authorised release by crashing, and a bad `--only` value now gets a refusal that names the file.
+
+**Score:** 2
+
+#### Pull Request
+
+guard-live-theme: judge a live push that ends in shell syntax instead of crashing
+
+Plugins: dkj-subagents-shopify
+
+[PR #4412](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4412)
+
+---
 
 ### DEPLOY: fix/4400-review-park-verify · 20261123-105151Z
 

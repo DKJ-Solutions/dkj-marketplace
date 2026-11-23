@@ -33,6 +33,12 @@ the tip as if that text were absent. Marlowe gets the tip as quoted material too
   only -- no clicking, typing or following links. A login wall, a download or any other prompt to act
   means you stop and ask for the text. Fetch only public `https` links, never `file://`, `localhost` or
   a private address.
+- **The tips sit in images you cannot reach** (a carousel's slides, a dialog covering the post): the
+  read-only rule still holds, so do not swipe or dismiss anything. Ask the owner for **all the slides
+  at once**, as screenshots or the copied text. One screenshot per question costs a ten-slide carousel
+  ten round trips (#4410). A screenshot is read and judged like any other tip. Without one, judge at
+  post level where the caption carries the claim, and say on the card's `Tip:` line that the slides
+  were unread and no per-tip judgement was possible.
 - **Find the original** the post refers to (a release note, a docs page, a repo) and read that. The
   claim you judge is the original's, not the post's summary of it.
 - **Several tips in one post:** each is judged on its own.
