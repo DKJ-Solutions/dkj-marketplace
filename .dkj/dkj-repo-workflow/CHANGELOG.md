@@ -2,7 +2,34 @@
 
 ## [Unreleased]
 
-**1 / 1 minor entry** <!-- pending-tally -->
+**2 / 2 minor entries** <!-- pending-tally -->
+
+### DEPLOY: fix/4401-reconcile-base-crlf · 20261123-095821Z
+
+`sync-main -ReconcileBase` now restores the trunk's blobs byte for byte: its "put the trunk content back"
+commit no longer re-stages the paths through the working copy, so a file stored with CRLF in a repo with
+`core.autocrlf=true` and no `.gitattributes` stops coming back as LF. The run also checks that the
+branch's tree equals the trunk's before it pushes, so "changes no file" is measured rather than assumed
+(#4401).
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+A Shopify store's maintainer running `-ReconcileBase` on Windows no longer gets a whole-file
+line-ending diff on the trunk from a branch that claims to change nothing.
+
+**Score:** 2
+
+#### Pull Request
+
+sync-main -ReconcileBase: restore the trunk blobs byte-for-byte
+
+Plugins: dkj-subagents-shopify
+
+[PR #4407](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4407)
+
+---
 
 ### DEPLOY: docs/4399-task-card-sourced-fields · 20261123-093601Z
 
