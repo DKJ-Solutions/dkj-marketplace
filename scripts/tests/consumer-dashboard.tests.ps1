@@ -531,11 +531,13 @@ if ([System.Environment]::OSVersion.Platform -eq [System.PlatformID]::Win32NT -a
                 $null = & gh api graphql -f 'query=query { viewer { login } }' 2>&1; $ghExit = $LASTEXITCODE
                 $ghMs = $gs.ElapsedMilliseconds; $gs.Restart()
                 $null = & git --no-optional-locks -c core.fsmonitor=false -C $noup remote get-url origin 2>&1
+                $remoteExit = $LASTEXITCODE
                 $null = & git --no-optional-locks -c core.fsmonitor=false -C $noup status --porcelain 2>&1
+                $statusExit = $LASTEXITCODE
                 $gitMs = $gs.ElapsedMilliseconds; $gs.Restart()
                 $null = & powershell -NoProfile -ExecutionPolicy Bypass -Command 'exit 0' 2>&1
                 $psMs = $gs.ElapsedMilliseconds
-                Write-Host "  [TIMING #3932] from the test process: gh api graphql $ghMs ms (exit $ghExit), two git calls $gitMs ms, a bare powershell child $psMs ms"
+                Write-Host "  [TIMING #3932] from the test process: gh api graphql $ghMs ms (exit $ghExit), two git calls $gitMs ms (exits $remoteExit/$statusExit), a bare powershell child $psMs ms"
             }
             Assert-True ($page -match 'HTTP/1.1 200') 'the page is served with a checkout that has no upstream' $pageWhy
             Assert-True ($repoLinks.Count -ge 1 -and $repoPages -match 'HTTP/1.1 200' -and $repoPages -notmatch 'HTTP/1.1 404') 'every repo the group page links has a page of its own (#4113)'
