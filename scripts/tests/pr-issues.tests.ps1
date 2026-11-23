@@ -2796,6 +2796,33 @@ $onlyBlanks = Get-StaleCertificateVerdict -NewMainCommits @('', '   ', $null)
 Assert-Equal $false $onlyBlanks.Stale 'only blank/whitespace/null entries -> not stale'
 Assert-Equal 0      $onlyBlanks.Count 'with a count of zero'
 
+# --- Test-DisjointDocsOnlyCertificate: the second discount beside the fold one (issue #4432) -------
+Write-Host ""
+Write-Host "Test-DisjointDocsOnlyCertificate -- docs-only and disjoint keeps the certificate (issue #4432)" -ForegroundColor Cyan
+
+$dd = Test-DisjointDocsOnlyCertificate -PrPaths @('docs/a.md', 'README.MD') -GainedPaths @('scripts/x.ps1', 'docs/b.md')
+Assert-Equal $true $dd.Eligible 'all-.md PR paths, no shared file -> eligible'
+$dd = Test-DisjointDocsOnlyCertificate -PrPaths @('docs/a.md', 'scripts/x.ps1') -GainedPaths @('docs/b.md')
+Assert-Equal $false $dd.Eligible 'one non-.md PR path -> not eligible (whitelist, fail closed)'
+$dd = Test-DisjointDocsOnlyCertificate -PrPaths @('docs/a.md') -GainedPaths @('DOCS/A.md')
+Assert-Equal $false $dd.Eligible 'a gained commit touching the same file, case-insensitively -> not eligible'
+Assert-Equal 1 @($dd.SharedPaths).Count 'and the shared file is named'
+$dd = Test-DisjointDocsOnlyCertificate -PrPaths @('docs/a.md') -GainedPaths @()
+Assert-Equal $true $dd.Eligible 'an empty gained set is trivially disjoint'
+$dd = Test-DisjointDocsOnlyCertificate -PrPaths @() -GainedPaths @('docs/b.md')
+Assert-Equal $false $dd.Eligible 'an empty PR path set -> not eligible (an unread diff is not docs-only)'
+$dd = Test-DisjointDocsOnlyCertificate -PrPaths $null -GainedPaths $null
+Assert-Equal $false $dd.Eligible 'null on both sides -> not eligible'
+$dd = Test-DisjointDocsOnlyCertificate -PrPaths @('docs/a.md', 'a.md.bak') -GainedPaths @()
+Assert-Equal $false $dd.Eligible 'a path that merely contains .md is not a .md path'
+
+$nsp = @(Get-NameStatusPaths -Lines @("M`tdocs/a.md", "R100`told/x.md`tnew/x.md", "D`tscripts/gone.ps1", ''))
+Assert-Equal 4 $nsp.Count 'name-status parsing yields both sides of a rename and skips blanks'
+$dd = Test-DisjointDocsOnlyCertificate -PrPaths $nsp -GainedPaths @()
+Assert-Equal $false $dd.Eligible 'a deleted non-.md file disqualifies the PR'
+$dd = Test-DisjointDocsOnlyCertificate -PrPaths @('new/x.md') -GainedPaths @('old/x.md', 'new/x.md')
+Assert-Equal $false $dd.Eligible 'a gained rename whose new side is the PR file counts as shared'
+
 
 # --- ship-pr.ps1's step 3b: the wiring, as far as a suite without a live remote can reach it --------
 # THE ACTUAL git fetch/gh api/git log/refusal WIRING DRIVES A REAL REMOTE AND IS NOT COVERED HERE -- the
