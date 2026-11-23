@@ -2,7 +2,31 @@
 
 ## [Unreleased]
 
-**20 / 24 minor entries** <!-- pending-tally -->
+**20 / 25 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/4440-merged-result-verdict-job · 20261123-170959Z
+
+The unattended merge-on-green run now gets the #4432 docs-only lap discount too. `merge-on-green.yml`
+picks in its own job, then runs `check-plugin-integrity` and `check-always-on-budget` on `main` merged
+into the picked head in a separate job that holds no token and never runs a PR's non-Markdown change. The
+ship job hands that job's verdict to ship-pr, and step 3b under `-TrustedRoot` accepts it only for a PR
+its own trusted code judged docs-only and disjoint, and only for the exact head and `main` tip the
+verdict names. No verdict, a failed check or a moved `main` is the ordinary forward lap. A consumer's
+runner has no such job, so nothing changes there. (#4440)
+
+**Score:** 3
+
+#### What makes this deploy extra special
+
+N/A
+
+**Score:** N/A
+
+Plugins: dkj-repo-workflow
+
+[PR #4446](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4446)
+
+---
 
 ### DEPLOY: fix/3932-stub-gh-in-fixture · 20261123-164221Z
 
