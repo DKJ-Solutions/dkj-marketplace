@@ -70,6 +70,13 @@ $stub = @'
 $mode = if ($args.Count -gt 1) { [string]$args[1] } else { 'plain' }
 if ($mode -eq 'eap') {
     Write-Output ('EAP=' + $ErrorActionPreference)
+} elseif ($mode -eq 'sleep' -or $mode -eq 'loginwait') {
+    # #4384: the expired-login hang. The PID file lets the suite prove the process tree was killed.
+    Set-Content -LiteralPath $env:SHOPIFY_STUB_PIDFILE -Value $PID
+    if ($mode -eq 'loginwait') { & cmd.exe /c "echo To run this command, log in to Shopify. 1>&2" }
+    Start-Sleep -Seconds 120
+} elseif ($mode -eq 'login') {
+    & cmd.exe /c "echo To run this command, log in to Shopify. 1>&2"
 } else {
     Write-Output '{"themes":[{"id":123}]}'
     if ($mode -eq 'stderr') { & cmd.exe /c "echo hint-line-on-stderr 1>&2& echo. 1>&2" }
@@ -131,8 +138,45 @@ try {
     # THE STREAM IS A TEE, not an either/or: a caller that shows progress can still read the output back.
     $teed = Invoke-ShopifyCli -Arguments @('0', 'plain')
     Assert-True (($teed.Output | Out-String) -match '"id"\s*:\s*123') 'the streaming default still fills Output'
+
+    Write-Host ''
+    Write-Host 'the bounded read (#4384)'
+
+    $pidFile = Join-Path $stubDir 'stub.pid'
+    $env:SHOPIFY_STUB_PIDFILE = $pidFile
+
+    # A fast call with JSON on stdout and a hint on stderr: still parses, stderr stays out of Output.
+    $fast = Invoke-ShopifyCli -Arguments @('0', 'stderr') -Quiet -DiscardStderr -TimeoutSeconds 60
+    $fp = $null
+    try { $fp = ($fast.Output | Out-String) | ConvertFrom-Json } catch { $fp = $null }
+    Assert-Equal 123 $(if ($fp) { $fp.themes[0].id } else { 'did not parse' }) 'a bounded call with a stderr hint still parses'
+    Assert-True ((-not $fast.TimedOut) -and (-not $fast.LoginRequired) -and $fast.ExitCode -eq 0) 'and reports neither a timeout nor a login'
+    $failed = Invoke-ShopifyCli -Arguments @('3', 'plain') -Quiet -TimeoutSeconds 60
+    Assert-Equal 3 $failed.ExitCode 'a bounded call hands back the real exit code'
+
+    # The login diagnostic, fast-failing form.
+    $login = Invoke-ShopifyCli -Arguments @('1', 'login') -Quiet -DiscardStderr -TimeoutSeconds 60
+    Assert-True ($login.LoginRequired -and -not $login.TimedOut -and $login.ExitCode -eq 1) 'stderr saying log in to Shopify sets LoginRequired even under -DiscardStderr'
+
+    # The hang itself: waits for a login. Must come back, flagged, and the stub process must be gone.
+    $sw = [System.Diagnostics.Stopwatch]::StartNew()
+    $hung = Invoke-ShopifyCli -Arguments @('0', 'loginwait') -Quiet -DiscardStderr -TimeoutSeconds 8
+    $sw.Stop()
+    Assert-True ($hung.TimedOut -and $hung.LoginRequired) 'a call that waits for a login comes back TimedOut with LoginRequired'
+    Assert-True ($sw.Elapsed.TotalSeconds -lt 60) 'and does not hang'
+    $stubPid = 0
+    if (Test-Path -LiteralPath $pidFile) { $stubPid = [int](Get-Content -LiteralPath $pidFile -Raw).Trim() }
+    Assert-True ($stubPid -gt 0 -and -not (Get-Process -Id $stubPid -ErrorAction SilentlyContinue)) 'and the stub process is killed, not left running'
+
+    $slow = Invoke-ShopifyCli -Arguments @('0', 'sleep') -Quiet -DiscardStderr -TimeoutSeconds 5
+    Assert-True ($slow.TimedOut -and -not $slow.LoginRequired -and $slow.ExitCode -eq -1) 'a plain slow call is TimedOut without LoginRequired'
+
+    $threw = $false
+    try { Invoke-ShopifyCli -Arguments @('0', 'plain') -TimeoutSeconds 5 | Out-Null } catch { $threw = $true }
+    Assert-True $threw '-TimeoutSeconds without -Quiet is refused'
 }
 finally {
+    $env:SHOPIFY_STUB_PIDFILE = $null
     $env:PATH = $prevPath
     Remove-Item -LiteralPath $stubDir -Recurse -Force -ErrorAction SilentlyContinue
 }
