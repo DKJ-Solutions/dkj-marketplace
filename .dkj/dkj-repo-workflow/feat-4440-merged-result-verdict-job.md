@@ -73,6 +73,13 @@ job and both later jobs read it through `needs:`.
   touching `scripts/repo-config.ps1` it answered `skip` before running anything. That run caught a BOM
   from `Out-File -Encoding utf8` that would have turned every pass into no verdict.
 - [x] native-capture and trusted-tree-seam suites unchanged and green
+- [x] Review (Victor, Sebastian, Edith): no correctness or blocking security finding. Applied: the job
+  reads `--raw` modes and refuses a symlink or submodule named `*.md` (proved on a fixture: `skip`);
+  comments now say why step 3a stays off under `-TrustedRoot` (the sweep picks only green PRs, so 3a never
+  reads there), that the #2452 refused split is about data, not these jobs, and Sylvester's lens names
+  the two checkouts as the ship job's. Not taken: splitting the lint run from the verdict write (a
+  hijacked script could still reach a later step through `GITHUB_ENV` or the disk), and keeping a verdict
+  across a fold commit (a moved `main` is a lap, which is safe).
 
 ### DEPLOY: feat/4440-merged-result-verdict-job
 

@@ -199,9 +199,13 @@ jobs:
           if ("$(git rev-parse HEAD)".Trim() -ne $env:PICKED_SHA) { Out-Verdict 'skip' 'the checkout is not the picked commit' }
           $base = "$(git merge-base origin/main HEAD)".Trim()
           if ($LASTEXITCODE -ne 0 -or -not $base) { Out-Verdict 'skip' 'no merge base with origin/main' }
-          $status = @(git -c core.quotePath=false diff --name-status -M $base HEAD)
+          # --raw, so the MODES are read too: a symlink (120000) or a submodule (160000) named *.md is not a
+          # Markdown file, and refusing it keeps "only the trunk's scripts run here" true by construction.
+          $status = @(git -c core.quotePath=false diff --raw -M $base HEAD)
           if ($LASTEXITCODE -ne 0 -or $status.Count -eq 0) { Out-Verdict 'skip' 'the PR diff could not be read' }
           foreach ($line in $status) {
+            $meta = @((($line -split "`t")[0]) -split ' ')
+            if ($meta.Count -lt 2 -or $meta[0] -match '120000|160000' -or $meta[1] -match '^(120000|160000)$') { Out-Verdict 'skip' 'the PR changes a symlink or a submodule' }
             foreach ($p in @(($line -split "`t") | Select-Object -Skip 1)) {
               if (-not $p.EndsWith('.md', [System.StringComparison]::OrdinalIgnoreCase)) { Out-Verdict 'skip' 'the PR changes a path that is not .md' }
             }
@@ -267,7 +271,8 @@ jobs:
       # for the residual exposure that choice still carries (GH_TOKEN in the step's process environment,
       # inherited by every child process of it, same as every other step in this file already accepts for
       # its `gh` calls). That process does read PR-controlled DATA (the branch document, the PR body) as
-      # text, and a job split to keep the token away from it was measured and refused on #2452; what
+      # text, and a job split to keep the token away from THAT DATA was measured and refused on #2452 (the
+      # pick and merged-result jobs above are a different split: they keep CODE away from it, #4440); what
       # guards it instead is scripts/tests/trusted-tree-seam.tests.ps1, which refuses the enumerated
       # string-to-code primitives (its header lists them) in the code this step runs, child scripts
       # included -- a syntactic guard against one being ADDED, since that code comes from trusted-main.

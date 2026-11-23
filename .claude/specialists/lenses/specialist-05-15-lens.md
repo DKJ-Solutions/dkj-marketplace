@@ -399,7 +399,8 @@ infrastructure.
   - **`workflow_run` runs the default branch's copy** of the file, so it cannot be proved on its own PR,
     **and runs with secrets for a fork's PR**, so the job reads nothing out of the event and the picker
     refuses a cross-repository head outright.
-  - **The trusted-tree shape (#2437, from #2338)**: two checkouts, `trusted-main` and `pr-branch`, both
+  - **The trusted-tree shape (#2437, from #2338)**: in the ship job, two checkouts, `trusted-main` and
+    `pr-branch` (the pick and the token-free `merged-result` check run as jobs of their own, #4440), both
     `persist-credentials: false`; `ship-pr.ps1` runs from `trusted-main`, with `CLAUDE_PROJECT_DIR` on
     `pr-branch`. `-TrustedRoot` (forwarded as `-SeamRoot`) forces `-SkipLint`/`-SkipTests` structurally,
     uses no worktree, and the push credential is the `GIT_CONFIG_KEY_n`/`_VALUE_n`/`_COUNT` env triplet,

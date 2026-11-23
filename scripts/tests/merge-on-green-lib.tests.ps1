@@ -720,6 +720,7 @@ Assert-True ($mrJob -match 'PICKED_SHA:\s*\$\{\{\s*needs\.pick\.outputs\.sha\s*\
 # NOTHING THE PR WROTE AS CODE RUNS: the non-.md refusal comes before the merge and before either check.
 $mdAt = $mrJob.IndexOf("EndsWith('.md'"); $mergeAt = $mrJob.IndexOf('merge --no-edit'); $lintAt = $mrJob.IndexOf('-File scripts/lint/check-plugin-integrity.ps1')
 Assert-True ($mdAt -gt 0 -and $mdAt -lt $mergeAt -and $mergeAt -lt $lintAt) 'a PR touching any non-.md path is answered skip before anything is merged or run'
+Assert-True ($mrJob -match 'diff --raw -M' -and $mrJob -match "120000\|160000") 'it reads the modes, so a symlink or submodule named *.md is refused too'
 Assert-True ($mrJob -match '-File scripts/lint/check-always-on-budget\.ps1') 'and both cross-file checks run on the merged result'
 # A BOM ON THE FIRST KEY WOULD TURN EVERY PASS INTO NO VERDICT: Windows PowerShell's Out-File utf8 writes one.
 Assert-True ($mrJob -notmatch '\|\s*Out-File' -and $mrJob -match 'UTF8Encoding \$false') 'its outputs are written without a BOM'

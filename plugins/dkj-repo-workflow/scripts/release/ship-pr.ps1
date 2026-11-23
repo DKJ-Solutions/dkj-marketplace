@@ -2104,7 +2104,9 @@ function Get-EarlyStaleReading {
         # ISSUE #4432: THE SECOND DISCOUNT, ELIGIBILITY ONLY. A docs-only PR disjoint from every counted gained
         # commit is not worth an early forward; step 3b owns the decision (it adds the local cross-file checks
         # on the merged result, which this poll deliberately does not run). A read that fails leaves $verdict
-        # stale, i.e. the early forward as before.
+        # stale, i.e. the early forward as before. NOT UNDER -TrustedRoot, and that costs nothing: this poll
+        # reads only while required checks are unfinished, and the merge-on-green sweep picks a PR only once
+        # they are green, so an unattended run never reaches here; its discount is step 3b's (#4440).
         if ($verdict.Stale -and $Pr -and -not $TrustedRoot) {
             $disjoint = Get-DisjointDocsVerdict -Pr $Pr -Commits @($verdict.Commits)
             if ($disjoint.Eligible) {
