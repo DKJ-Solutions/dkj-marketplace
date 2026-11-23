@@ -873,10 +873,32 @@ function Format-ShopifyAppDeployCommand {
     return "shopify app deploy --path $(ConvertTo-ShopifyAppRootText -AppRoot $AppRoot) --allow-updates"
 }
 
+function Resolve-ShopifyThemeLimit {
+    <#
+        Pure: the store's theme limit from what the consumer's Get-ShopifyThemeLimit seam answered, as an int.
+        A positive whole number is taken as stated; unanswered ($null or ''), zero, negative, fractional or
+        text answers all read as Shopify's 20, the one default every caller shares so none re-implements it
+        (#4388).
+
+        WHY A SEAM AND NOT A CONSTANT (#4388). 20 was measured in one consumer (#4157) and was hardcoded for
+        every store. Shopify's help center (https://help.shopify.com/manual/online-store/themes/adding-themes)
+        gives 20 themes for Basic, Grow and Advanced and 100 for Shopify Plus, so a Plus store holding 43
+        themes was told it was full. The store knows its plan; this repo cannot.
+    #>
+    param([AllowNull()]$Answer = $null)
+    if ($null -eq $Answer) { return 20 }
+    $text = ([string]$Answer).Trim()
+    if ($text -match '^\d{1,6}$') {
+        $n = [int]$text
+        if ($n -gt 0) { return $n }
+    }
+    return 20
+}
+
 function Get-ThemeSweepOrder {
     <#
-        Pure: whether the spent-preview sweep must run BEFORE the backup, as { SweepFirst; Full; Count;
-        Limit; Free; Message }. Count below 0 means the theme list was not read: SweepFirst is then $false
+        Pure: whether the spent-preview sweep must run BEFORE the backup, as { SweepFirst; Full;
+        LimitExceeded; Count; Limit; Free; Message }. Count below 0 means the theme list was not read: SweepFirst is then $false
         and Message says the count is unknown, so a caller can never read silence as room.
 
         WHY (#4157, November 16, 2026). Measured in a consumer: the store held 20 themes, Shopify's
@@ -888,8 +910,14 @@ function Get-ThemeSweepOrder {
 
         NEAR COUNTS, NOT ONLY FULL. The backup takes one slot before it rotates the previous one out, and
         prepare-release runs days before the day, while preview pushes keep adding themes. So within
-        -Margin free slots (default 2) the sweep moves forward too. The limit is Shopify's 20, the same
+        -Margin free slots (default 2) the sweep moves forward too. The default limit is Shopify's 20, the same
         default Get-ThemeSlotVerdict states; this lib is mirrored into a plugin that cannot load that one.
+        Callers pass the store's own limit, read through Resolve-ShopifyThemeLimit (#4388).
+
+        A COUNT ABOVE THE LIMIT PROVES THE LIMIT IS WRONG (#4388). A store cannot hold more themes than its
+        limit allows, so Count -gt Limit means the configured limit is not this store's: LimitExceeded is
+        $true, Full and SweepFirst are $false (nothing is refused and no sweep is ordered on a wrong number),
+        and the Message names the seam to answer. Count -eq Limit stays Full.
     #>
     param(
         [Parameter(Mandatory = $true)][int]$Count,
@@ -897,8 +925,12 @@ function Get-ThemeSweepOrder {
         [int]$Margin = 2
     )
     if ($Count -lt 0) {
-        return [pscustomobject]@{ SweepFirst = $false; Full = $false; Count = $Count; Limit = $Limit; Free = -1
+        return [pscustomobject]@{ SweepFirst = $false; Full = $false; LimitExceeded = $false; Count = $Count; Limit = $Limit; Free = -1
             Message = "the store's theme count could not be read, so whether the sweep must come before the backup is unknown." }
+    }
+    if ($Count -gt $Limit) {
+        return [pscustomobject]@{ SweepFirst = $false; Full = $false; LimitExceeded = $true; Count = $Count; Limit = $Limit; Free = 0
+            Message = "the store holds $Count themes, more than the configured limit of $Limit allows, so the limit is not this store's. Answer Get-ShopifyThemeLimit in scripts/repo-config.ps1 (20 for Basic, Grow and Advanced, 100 for Shopify Plus); until then the theme-slot check is not trusted." }
     }
     $free = [Math]::Max(0, $Limit - $Count)
     $full = $Count -ge $Limit
@@ -910,5 +942,5 @@ function Get-ThemeSweepOrder {
     } else {
         "$Count/$Limit themes, $free free: the sweep stays aftercare, after the push."
     }
-    return [pscustomobject]@{ SweepFirst = $first; Full = $full; Count = $Count; Limit = $Limit; Free = $free; Message = $message }
+    return [pscustomobject]@{ SweepFirst = $first; Full = $full; LimitExceeded = $false; Count = $Count; Limit = $Limit; Free = $free; Message = $message }
 }

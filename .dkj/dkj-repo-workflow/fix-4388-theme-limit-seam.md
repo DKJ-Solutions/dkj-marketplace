@@ -39,19 +39,43 @@
 
 ### PLAN
 
+Inbound #4388: `Get-ThemeSlotVerdict` and `Get-ThemeSweepOrder` default `-Limit 20` and no caller
+passes one, so a Shopify Plus store at 43 themes is called full and its live backup is refused.
+Verified on pickup: every caller relies on that default. Shopify's help center gives 20 themes for
+Basic/Grow/Advanced and 100 for Plus. Whether development themes count toward the library limit is
+not settled by any source found, so role counting is left as it is (counting all roles errs strict).
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] Optional seam `Get-ShopifyThemeLimit` (default 20), read through one helper
+  `Resolve-ShopifyThemeLimit` in `live-push-rules.ps1`; passed by `backup-live-theme`,
+  `live-preflight` and `prepare-release`.
+- [x] A count above the limit proves the limit wrong: `LimitExceeded`, not `Full`, no refusal and no
+  sweep order, a message naming the seam. `Count -eq Limit` stays Full.
+- [x] Mirrors kept byte-identical (`Get-SharedScriptPairs`), seam rows in the Shopify README and the
+  `live-preflight` skill.
 
 ### TEST
 
+- [x] `theme-lifecycle-rules`: 218 pass; `live-push-rules`: 227 pass; `dkj-repo-workflow-bwj`: 1088
+  asserts pass; `check-plugin-integrity` and `check-script-contract`: 0 errors. The full gate runs in
+  `ship-pr`.
+
 ### DEPLOY: fix/4388-theme-limit-seam
 
-**Score:**
+The theme slot checks read the store's theme limit from a new optional seam, `Get-ShopifyThemeLimit`
+in `scripts/repo-config.ps1` (20 unless answered; 100 on Shopify Plus), and a store already holding
+more themes than the limit is reported as a wrong limit instead of refused as full (#4388).
+
+**Score:** 3
 
 #### What makes this deploy extra special
 
-**Score:**
+A Shopify Plus store with more than 20 themes no longer has its live backup refused, and is no longer
+told to delete themes before a push. Answer `Get-ShopifyThemeLimit` with 100 in such a store to get
+the right free-slot count back.
+
+**Score:** 4
 
 #### Pull Request
 

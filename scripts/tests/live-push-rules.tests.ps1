@@ -494,6 +494,28 @@ $soUnknown = Get-ThemeSweepOrder -Count -1
 Assert-True (-not $soUnknown.SweepFirst -and $soUnknown.Message.Contains('could not be read')) 'an unread list is said to be unknown, never read as room'
 Assert-True (Get-ThemeSweepOrder -Count 5 -Limit 5 -Margin 0).Full 'the limit and the margin are parameters'
 Assert-True (-not (Get-ThemeSweepOrder -Count 4 -Limit 5 -Margin 0).SweepFirst) '...and a margin of 0 moves the sweep only when full'
+# THE LIMIT IS THE STORE'S, NOT A CONSTANT (#4388): 43 themes on a 100-theme (Shopify Plus) store is room, and
+# a count above the configured limit proves the limit is wrong rather than that the store is full.
+$soPlus = Get-ThemeSweepOrder -Count 43 -Limit 100
+Assert-True (-not $soPlus.Full -and -not $soPlus.SweepFirst -and -not $soPlus.LimitExceeded) '43 themes with a limit of 100: not full, no sweep first'
+$soOver = Get-ThemeSweepOrder -Count 43 -Limit 20
+Assert-True ($soOver.LimitExceeded -and -not $soOver.Full -and -not $soOver.SweepFirst) '43 themes with a limit of 20: LimitExceeded, not Full, no sweep ordered'
+Assert-True ($soOver.Message.Contains('Get-ShopifyThemeLimit') -and $soOver.Message.Contains('100')) '...and the message names the seam to answer and Shopify Plus'
+Assert-True ((Get-ThemeSweepOrder -Count 20 -Limit 20).Full -and -not (Get-ThemeSweepOrder -Count 20 -Limit 20).LimitExceeded) '20/20 stays Full as before'
+Assert-True (-not (Get-ThemeSweepOrder -Count 18).LimitExceeded) 'a count below the limit is never LimitExceeded'
+Assert-Equal 20 (Resolve-ShopifyThemeLimit) 'an unanswered theme-limit seam reads as 20'
+Assert-Equal 20 (Resolve-ShopifyThemeLimit -Answer $null) '...a null answer too'
+Assert-Equal 20 (Resolve-ShopifyThemeLimit -Answer '') '...an empty answer too'
+Assert-Equal 20 (Resolve-ShopifyThemeLimit -Answer 'plus') '...a text answer too'
+Assert-Equal 20 (Resolve-ShopifyThemeLimit -Answer 0) '...zero too'
+Assert-Equal 20 (Resolve-ShopifyThemeLimit -Answer -5) '...a negative number too'
+Assert-Equal 20 (Resolve-ShopifyThemeLimit -Answer '12.5') '...a fraction too'
+Assert-Equal 100 (Resolve-ShopifyThemeLimit -Answer 100) 'a positive integer is taken as stated'
+Assert-Equal 100 (Resolve-ShopifyThemeLimit -Answer ' 100 ') '...as text too'
+foreach ($tlSrc in @('scripts\task\live-preflight.ps1', 'scripts\task\backup-live-theme.ps1')) {
+    $tlText = [System.IO.File]::ReadAllText((Join-Path $RepoRoot $tlSrc))
+    Assert-True ($tlText.Contains('Get-ShopifyThemeLimit') -and $tlText.Contains('Resolve-ShopifyThemeLimit -Answer $seam.ThemeLimit')) "$tlSrc reads the theme limit through the one helper"
+}
 $pfSrc = [System.IO.File]::ReadAllText((Join-Path $RepoRoot 'scripts\task\live-preflight.ps1'))
 Assert-True ($pfSrc.IndexOf('Get-ThemeSweepOrder -Count') -gt 0 -and $pfSrc.IndexOf('Get-ThemeSweepOrder -Count') -lt $pfSrc.IndexOf('[7/9] backup')) 'live-preflight reads the sweep order before its backup step'
 
