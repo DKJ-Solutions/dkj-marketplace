@@ -130,16 +130,23 @@ $A = @{
 . (Join-Path $PSScriptRoot '..\lib\plugin-payload-lib.ps1')
 . (Join-Path $PSScriptRoot '..\lib\go-live-rules.ps1')
 
+# A relative -LivePushRecord means the caller's directory, so it is resolved before the move to the root.
+if ($A.Record -and -not [System.IO.Path]::IsPathRooted($A.Record)) { $A.Record = Join-Path (Get-Location).Path $A.Record }
+
 $repoRoot = Resolve-BwjRepoRoot -Override ''
 Set-Location -LiteralPath $repoRoot
 $script:PluginPayloadRepoRoot = $repoRoot
 
+# Paths off the record and the tree reach the console: control characters go (an ESC repaints the terminal).
+function Format-Shown([string]$Text) { return ([string]$Text -replace '[\x00-\x1F\x7F]', '?') }
+
 function Stop-GoLive {
     param([string]$Step, [string]$Message, [string]$ResumeFrom = '')
     Write-Host ''
-    Write-Host "REFUSED at $Step -- $Message" -ForegroundColor Red
+    Write-Host "REFUSED at $Step -- $(Format-Shown $Message)" -ForegroundColor Red
     if ($ResumeFrom -and $script:recordPath) {
-        Write-Host 'Everything up to the merge is done. Fix what refused, then run the rest with this line, adding the' -ForegroundColor Yellow
+        $done = if ($ResumeFrom -eq 'verify') { 'The promotion may have merged.' } else { 'Everything up to the merge is done.' }
+        Write-Host "$done Fix what refused, then run the rest with this line, adding the" -ForegroundColor Yellow
         Write-Host 'marker your repo states for a live push (go-live prints no marker; the word is yours):' -ForegroundColor Yellow
         Write-Host "  $(Format-GoLiveResumeLine -From $ResumeFrom -RecordPath $script:recordPath -Version $script:version -AppSwitch $script:appSwitch)"
     }
@@ -206,7 +213,7 @@ if (Test-Runs 'preflight') {
     Write-Step 'preflight' 'live-preflight, unchanged -- every gate, the drift and write-back reads, the backup.'
     try { $preflight = Resolve-PluginScript -Plugin 'dkj-subagents-shopify' -RelativePath 'scripts\task\live-preflight.ps1' }
     catch { Stop-GoLive 'preflight' $_.Exception.Message }
-    $resultPath = Join-Path ([System.IO.Path]::GetTempPath()) ("go-live-preflight-{0}.json" -f [guid]::NewGuid().ToString('N').Substring(0, 8))
+    $resultPath = Join-Path ([System.IO.Path]::GetTempPath()) ("go-live-preflight-{0}.json" -f [guid]::NewGuid().ToString('N'))
     $pfArgs = @('-ResultPath', $resultPath, '-BackupTimeoutMinutes', [string]$A.BackupMin)
     if ($A.SinceTag) { $pfArgs += @('-SinceTag', $A.SinceTag) }
     if ($A.BackupExisting) { $pfArgs += @('-BackupVerifyExisting', $A.BackupExisting) }
@@ -222,14 +229,15 @@ if (Test-Runs 'preflight') {
     if (-not $pf.Connected -or -not $pf.Promotion) { Stop-GoLive 'preflight' 'live-preflight composed no promotion, so there is nothing for go-live to take live.' }
     if (-not $pf.RecordPath -or -not $pf.PromotedSha) { Stop-GoLive 'preflight' 'live-preflight wrote no live-push record, so the cut would have no input. Nothing was promoted.' }
     $script:recordPath = [string]$pf.RecordPath
-    $promotedSha = [string]$pf.PromotedSha
+    $promotedSha = ([string]$pf.PromotedSha).ToLower()
     $appChanged = [bool]$pf.AppDeploy
     if ($pf.Store) { $store = [string]$pf.Store }
+    Write-Host "  live-push record: $(Format-Shown $script:recordPath)"
 } else {
     try { $promotion = Get-LivePushRecordPromotion -Text (Get-Content -LiteralPath $script:recordPath -Raw) }
     catch { Stop-GoLive 'start' $_.Exception.Message }
     if (-not $promotion) { Stop-GoLive 'start' 'the record names no promotion, so it is not a go-live record.' }
-    $promotedSha = $promotion.Sha
+    $promotedSha = ([string]$promotion.Sha).ToLower()
     $parsed = ConvertFrom-LivePushRecord -Text (Get-Content -LiteralPath $script:recordPath -Raw)
     $appChanged = @(@($parsed.Live) + @($parsed.Hold) | Where-Object { Test-GoLiveUnderAppRoot -Path $_ -AppRoot $appRoot }).Count -gt 0
     # A resume has to stand on a promotion that DID merge.
@@ -237,13 +245,17 @@ if (Test-Runs 'preflight') {
     $anc = Invoke-Native { git -C $repoRoot merge-base --is-ancestor $promotedSha "origin/$deploy" }
     if ($anc.Code -ne 0) { Stop-GoLive 'start' "the record's promoted commit $promotedSha is not on origin/$deploy -- the promotion never merged, so there is nothing to resume." }
 }
+# A full sha only: it reaches git and gh as an argument, so nothing option-shaped may stand there.
+if ($promotedSha -cnotmatch '\A[0-9a-f]{40}\z') { Stop-GoLive 'start' 'the promoted commit is not a full 40-character sha.' }
 if (-not ($store -cmatch '\A[A-Za-z0-9][A-Za-z0-9.-]*\z')) { Stop-GoLive 'start' 'Get-ShopifyThemeEstateStore is not a store domain, so the live theme cannot be read.' }
 $app = Get-GoLiveAppDecision -AppRoot $appRoot -AppDeploy:$A.AppDeploy -SkipAppDeploy:$A.SkipAppDeploy -AppChanged $appChanged
 
 # === 2-4 promote, checks, merge ======================================================================
 if (Test-Runs 'promote') {
     Write-Step 'promote' "the promotion PR, $trunk into $deploy."
-    $existing = Invoke-Native { gh pr list --base $deploy --head $trunk --state open --json number -q '.[0].number' } -Compact
+    # THIS REPO'S OWN BRANCH ONLY: a fork's PR from a branch also named '$trunk' must never be reused and
+    # admin-merged (Sebastian's review of #4402), so a cross-repository PR is skipped.
+    $existing = Invoke-Native { gh pr list --base $deploy --head $trunk --state open --json number,isCrossRepository -q '.[] | select(.isCrossRepository == false) | .number' } -Compact
     $pr = [string](@($existing.Lines) | Select-Object -First 1)
     if ($pr -notmatch '^\d+$') {
         $title = "promote: $trunk to $deploy for v$($script:version)"
@@ -257,9 +269,22 @@ if (Test-Runs 'promote') {
         Write-Host "  reusing the open promotion PR #$pr"
     }
 
-    Write-Step 'checks' "the required checks on #$pr, up to $($A.CheckMin) minute(s). The merge bypasses the deploy ruleset, so this wait is that gate."
+    # THE PR MUST CARRY THE PREFLIGHT'S COMMIT. Its head is the trunk, which moves: a push after the
+    # preflight would otherwise go live unchecked and unrecorded (both reviews of #4402).
+    $head = Invoke-Native { gh pr view $pr --json headRefOid -q .headRefOid } -Compact
+    if (([string](@($head.Lines) | Select-Object -First 1)).ToLower() -ne $promotedSha) {
+        Stop-GoLive 'promote' "#$pr's head is not the commit the preflight verified ($promotedSha) -- the trunk moved after it. Nothing was merged; run go-live again."
+    }
+
+    # THE CONTEXTS THE DEPLOY BRANCH REQUIRES, read from its rules, because 'gh pr checks' lists only checks
+    # that have reported: a required check that has not started is absent, not pending (Victor's review).
+    $rulesRead = Invoke-Native { gh api "repos/{owner}/{repo}/rules/branches/$deploy" }
+    $required = if ($rulesRead.Code -eq 0) { Get-GoLiveRequiredContexts -RulesJson ((@($rulesRead.Lines)) -join "`n") } else { $null }
+    if ($null -eq $required) { Stop-GoLive 'checks' "the rules on '$deploy' could not be read (gh api exited $($rulesRead.Code)), so which checks the merge must wait for is unknown. Nothing was merged." }
+    $requiredShown = if (@($required).Count -gt 0) { (@($required) | ForEach-Object { Format-Shown $_ }) -join ', ' } else { 'none' }
+
+    Write-Step 'checks' "the required checks on #$pr ($requiredShown), up to $($A.CheckMin) minute(s). The merge bypasses the deploy ruleset, so this wait is that gate."
     $deadline = (Get-Date).AddMinutes($A.CheckMin)
-    $graceUntil = (Get-Date).AddSeconds(90)
     $state = 'pending'
     while ($true) {
         $prev = $ErrorActionPreference; $ErrorActionPreference = 'Continue'
@@ -267,23 +292,31 @@ if (Test-Runs 'promote') {
         $text = ($raw -join "`n")
         $checks = $null
         $jsonStart = $text.IndexOf('[')
-        if ($jsonStart -ge 0) { try { $checks = @($text.Substring($jsonStart) | ConvertFrom-Json) } catch { $checks = $null } }
-        if ($null -ne $checks) { $state = Get-GoLiveCheckState -Checks $checks }
-        elseif ($text -match '(?i)no (required )?checks reported') { $state = 'none' }
+        # foreach, not @(): 5.1's ConvertFrom-Json returns a JSON array as one object.
+        if ($jsonStart -ge 0) { try { $parsedChecks = ConvertFrom-Json -InputObject $text.Substring($jsonStart); $checks = @(foreach ($x in $parsedChecks) { $x }) } catch { $checks = $null } }
+        if ($null -ne $checks) { $state = Get-GoLiveCheckState -Checks $checks -Required $required }
+        elseif ($text -match '(?i)no (required )?checks reported') { $state = Get-GoLiveCheckState -Checks @() -Required $required }
         else { $state = 'pending' }   # an unreadable answer is waited on, never merged over
-        if ($state -eq 'none' -and (Get-Date) -lt $graceUntil) { $state = 'pending' }
         if ($state -ne 'pending') { break }
         if ((Get-Date) -ge $deadline) { Stop-GoLive 'checks' "the required checks on #$pr did not settle within $($A.CheckMin) minute(s). The PR is open and unmerged; run go-live again once they have." }
         Start-Sleep -Seconds 20
     }
     if ($state -eq 'fail') { Stop-GoLive 'checks' "a required check on #$pr failed. The PR is open and unmerged; fix the trunk and run go-live again." }
-    Write-Host $(if ($state -eq 'none') { '  NOTE: the deploy branch requires no check on this PR.' } else { '  every required check passed.' })
+    Write-Host $(if ($state -eq 'none') { "  NOTE: '$deploy' requires no status check, so there is nothing to wait for." } else { '  every required check passed.' })
 
     Write-Step 'merge' "#$pr into $deploy -- a merge commit, the admin bypass, the branch kept. This is what goes live."
-    $merged = Invoke-Native { gh pr merge $pr --merge --admin }
+    # --match-head-commit: GitHub refuses the merge if the head moved after the check above.
+    $merged = Invoke-Native { gh pr merge $pr --merge --admin --match-head-commit $promotedSha }
     $view = Invoke-Native { gh pr view $pr --json state -q .state } -Compact
-    if ((@($view.Lines) | Select-Object -First 1) -ne 'MERGED') { Stop-GoLive 'merge' "#$pr is not merged (gh pr merge exited $($merged.Code)). Nothing went live." }
+    $viewState = [string](@($view.Lines) | Select-Object -First 1)
+    if ($viewState -ne 'MERGED') {
+        if ($view.Code -ne 0) {
+            Stop-GoLive 'merge' "#$pr's state could not be read after the merge (gh pr merge exited $($merged.Code)). Look at #${pr}: if it merged, the line below carries on from the verify." -ResumeFrom 'verify'
+        }
+        Stop-GoLive 'merge' "#$pr is not merged (gh pr merge exited $($merged.Code)). Nothing went live."
+    }
     Write-Host "  merged. Shopify now syncs '$deploy' to the live theme."
+    Write-Host "  If this run stops from here on, it resumes: $(Format-GoLiveResumeLine -From 'verify' -RecordPath $script:recordPath -Version $script:version -AppSwitch $script:appSwitch)"
 }
 
 # === 5 verify ========================================================================================
@@ -297,19 +330,31 @@ if (Test-Runs 'verify') {
             $r = Invoke-Native { git -C $repoRoot rev-parse --verify -q "$($promotedSha):$p" } -Compact
             $expected[$p] = if ($r.Code -eq 0) { [string](@($r.Lines) | Select-Object -First 1) } else { '' }
         }
-        $dir = Join-Path ([System.IO.Path]::GetTempPath()) ("go-live-verify-{0}" -f [guid]::NewGuid().ToString('N').Substring(0, 8))
+        # A GLOB-SHAPED PATH CANNOT BE PULLED LITERALLY: '--only' reads it as a pattern, so
+        # 'templates/product.[handle].json' would match some other file or none. It is named, not compared.
+        $globbed = @($paths | Where-Object { Test-GoLiveGlobPath $_ })
+        $pullable = @($paths | Where-Object { -not (Test-GoLiveGlobPath $_) })
+        foreach ($p in $globbed) { [void]$expected.Remove($p) }
+        $dir = Join-Path ([System.IO.Path]::GetTempPath()) ("go-live-verify-{0}" -f [guid]::NewGuid().ToString('N'))
         $deadline = (Get-Date).AddMinutes($A.VerifyMin)
-        $mismatch = @($paths)
+        $mismatch = @($pullable)
+        $pulledOnce = $false
         try {
-            while ($true) {
+            while ($pullable.Count -gt 0) {
                 if (Test-Path -LiteralPath $dir) { Remove-Item -LiteralPath $dir -Recurse -Force }
                 New-Item -ItemType Directory -Force -Path $dir | Out-Null
-                $cli = @('theme', 'pull', '--store', $store, '--theme', $liveId, '--path', $dir)
-                foreach ($p in $paths) { $cli += @('--only', $p) }
-                $pull = Invoke-ShopifyCli -Arguments $cli -Quiet
-                if ($pull.ExitCode -eq 0) {
+                # IN CHUNKS: one '--only' per path, and a few hundred overrun the Windows command line.
+                $pullFailed = 0
+                foreach ($chunk in @(Split-GoLiveChunks -Paths $pullable -Size 40)) {
+                    $cli = @('theme', 'pull', '--store', $store, '--theme', $liveId, '--path', $dir)
+                    foreach ($p in @($chunk.Paths)) { $cli += @('--only', $p) }
+                    $pull = Invoke-ShopifyCli -Arguments $cli -Quiet
+                    if ($pull.ExitCode -ne 0) { $pullFailed = $pull.ExitCode; break }
+                }
+                if ($pullFailed -eq 0) {
+                    $pulledOnce = $true
                     $actual = @{}
-                    foreach ($p in $paths) {
+                    foreach ($p in $pullable) {
                         $f = Join-Path $dir ($p -replace '/', '\')
                         if (Test-Path -LiteralPath $f -PathType Leaf) {
                             $h = Invoke-Native { git -C $repoRoot hash-object "--path=$p" -- $f } -Compact
@@ -318,9 +363,9 @@ if (Test-Runs 'verify') {
                     }
                     $mismatch = @(Compare-GoLiveTheme -Expected $expected -Actual $actual)
                     if ($mismatch.Count -eq 0) { break }
-                    Write-Host "  $($mismatch.Count) of $($paths.Count) not live yet; polling again."
+                    Write-Host "  $($mismatch.Count) of $($pullable.Count) not live yet; polling again."
                 } else {
-                    Write-Host "  theme pull exited $($pull.ExitCode); polling again."
+                    Write-Host "  theme pull exited $pullFailed; polling again."
                 }
                 if ((Get-Date) -ge $deadline) { break }
                 Start-Sleep -Seconds 30
@@ -328,12 +373,19 @@ if (Test-Runs 'verify') {
         } finally {
             Remove-Item -LiteralPath $dir -Recurse -Force -ErrorAction SilentlyContinue
         }
+        # NO PULL EVER SUCCEEDED: nothing was compared, so there is nothing a person could have accepted.
+        if ($pullable.Count -gt 0 -and -not $pulledOnce) {
+            Stop-GoLive 'verify' "no 'shopify theme pull' of the live theme succeeded in $($A.VerifyMin) minute(s), so nothing was verified -- check the CLI login and the store, then resume." -ResumeFrom 'verify'
+        }
+        if ($globbed.Count -gt 0) {
+            Write-Host "  NOTE: $($globbed.Count) path(s) read as a pattern by 'theme pull --only', so not compared -- read them on live: $((@($globbed | ForEach-Object { Format-Shown $_ })) -join ', ')" -ForegroundColor Yellow
+        }
         if ($mismatch.Count -gt 0) {
-            $shown = (@($mismatch | Select-Object -First 10) -join ', ') + $(if ($mismatch.Count -gt 10) { " ... and $($mismatch.Count - 10) more" } else { '' })
+            $shown = (@($mismatch | Select-Object -First 10 | ForEach-Object { Format-Shown $_ }) -join ', ') + $(if ($mismatch.Count -gt 10) { " ... and $($mismatch.Count - 10) more" } else { '' })
             if (-not $A.AcceptUnverified) {
                 Stop-GoLive 'verify' "after $($A.VerifyMin) minute(s) the live theme does not hold the promoted content of: $shown. Read those on live; where they are live in a form Shopify rewrote, resume with -AcceptUnverified." -ResumeFrom 'verify'
             }
-            Write-Host "  NOTE (-AcceptUnverified): not matched by hash, accepted by a person: $shown" -ForegroundColor Yellow
+            Write-Host "  NOTE (-AcceptUnverified): $($mismatch.Count) not matched by hash, accepted by a person: $shown" -ForegroundColor Yellow
         } else {
             Write-Host '  every promoted file is on the live theme.'
         }

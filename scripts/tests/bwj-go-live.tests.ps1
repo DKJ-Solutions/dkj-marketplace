@@ -73,6 +73,14 @@ Assert-Equal 'pending' (Get-GoLiveCheckState -Checks @((New-Check 'pass'), (New-
 Assert-Equal 'fail' (Get-GoLiveCheckState -Checks @((New-Check 'pending'), (New-Check 'fail'))) 'a failure wins over pending'
 Assert-Equal 'fail' (Get-GoLiveCheckState -Checks @((New-Check 'cancel'))) 'a cancelled check fails'
 Assert-Equal 'pending' (Get-GoLiveCheckState -Checks @((New-Check 'mystery'))) 'an unknown bucket is waited on, never merged over'
+Assert-Equal 'pending' (Get-GoLiveCheckState -Checks @() -Required @('Shopify theme check')) 'a required check that has not reported is pending, not none'
+Assert-Equal 'pending' (Get-GoLiveCheckState -Checks @((New-Check 'pass')) -Required @('other')) 'a required context missing from the reported checks is pending'
+Assert-Equal 'pass' (Get-GoLiveCheckState -Checks @([pscustomobject]@{ name = 'Shopify theme check'; bucket = 'pass' }) -Required @('shopify theme check')) 'a required context that passed (any case) passes'
+$rulesJson = '[{"type":"pull_request"},{"type":"required_status_checks","parameters":{"required_status_checks":[{"context":"Shopify theme check"},{"context":"lint"}]}}]'
+Assert-Equal 'Shopify theme check,lint' ((Get-GoLiveRequiredContexts -RulesJson $rulesJson) -join ',') 'the required contexts are read off the branch rules'
+$noRules = Get-GoLiveRequiredContexts -RulesJson '[]'   # assigned first, as go-live does
+Assert-True (($null -ne $noRules) -and (@($noRules).Count -eq 0)) 'no rules: an empty list, not $null'
+Assert-True ($null -eq (Get-GoLiveRequiredContexts -RulesJson 'not json')) 'an unreadable answer is $null, never "none required"'
 
 Write-Host 'the verify paths and the comparison' -ForegroundColor Cyan
 $v = @(Get-GoLiveVerifyPaths -Live @('sections/a.liquid', 'extensions/fn/src/run.js', 'extensions-old/x.liquid') -AppRoot 'extensions')
@@ -83,6 +91,14 @@ Assert-Equal 0 @(Compare-GoLiveTheme -Expected $exp -Actual @{ 'sections/a.liqui
 Assert-Equal 'sections/a.liquid' ((Compare-GoLiveTheme -Expected $exp -Actual @{ 'sections/a.liquid' = 'def' }) -join ',') 'a different id is a mismatch'
 Assert-Equal 'snippets/gone.liquid' ((Compare-GoLiveTheme -Expected $exp -Actual @{ 'sections/a.liquid' = 'abc'; 'snippets/gone.liquid' = 'abc' }) -join ',') 'a deleted file still on live is a mismatch'
 Assert-Equal 'sections/a.liquid' ((Compare-GoLiveTheme -Expected $exp -Actual @{}) -join ',') 'a file missing from the pull is a mismatch'
+
+Assert-True (Test-GoLiveGlobPath 'templates/product.[handle].json') 'a bracketed template name is glob-shaped'
+Assert-True (-not (Test-GoLiveGlobPath 'sections/a-b_c.liquid')) 'an ordinary path is not'
+$chunks = @(Split-GoLiveChunks -Paths @(1..95 | ForEach-Object { "s/$_.liquid" }) -Size 40)
+Assert-Equal '40,40,15' (($chunks | ForEach-Object { @($_.Paths).Count }) -join ',') 'the pull list is split in chunks of 40'
+$one = @(Split-GoLiveChunks -Paths @('a/b', 'c/d') -Size 40)
+Assert-Equal 1 $one.Count 'two paths are one chunk -- not flattened into two'
+Assert-Equal 2 @($one[0].Paths).Count 'and that chunk holds both'
 
 Write-Host 'the record, when the app deploy is skipped' -ForegroundColor Cyan
 $rec = "# live-push record`n# promoted abcdef1 to live`nlive sections/a.liquid`nlive extensions/fn/run.js`nhold extensions/fn/old.js`nlive extensions-old/x.liquid`n"
@@ -95,16 +111,20 @@ Assert-Equal ($rec -replace 'live extensions/fn/run\.js', 'hold extensions/fn/ru
 
 Write-Host 'the resume line' -ForegroundColor Cyan
 $line = Format-GoLiveResumeLine -From 'cut' -RecordPath 'C:\Temp\live-push-record-x.txt' -Version 'v3.2.0' -AppSwitch '-SkipAppDeploy'
-Assert-Equal 'go-live.ps1 -Version 3.2.0 -ResumeFrom cut -LivePushRecord "C:\Temp\live-push-record-x.txt" -SkipAppDeploy' $line 'the resume line names step, record, version and switch'
+Assert-Equal "go-live.ps1 -Version 3.2.0 -ResumeFrom cut -LivePushRecord 'C:\Temp\live-push-record-x.txt' -SkipAppDeploy" $line 'the resume line names step, record, version and switch'
 Assert-True ($line -notmatch 'AUTHORIZED') 'and never a marker'
-Assert-True ((Format-GoLiveResumeLine -From 'cut' -RecordPath 'C:\a$(calc).txt') -notmatch 'calc') 'an unsafe record path is left out'
+Assert-True ((Format-GoLiveResumeLine -From 'verify' -RecordPath 'C:\Users\DAVEK_~2\AppData\Local\Temp\r.txt') -match [regex]::Escape("-LivePushRecord 'C:\Users\DAVEK_~2\AppData\Local\Temp\r.txt'")) 'an 8.3 TEMP path is kept (Victor''s review)'
+Assert-True ((Format-GoLiveResumeLine -From 'cut' -RecordPath 'C:\a$(calc).txt') -match [regex]::Escape("'C:\a`$(calc).txt'")) 'a dollar sign is inert inside the single quotes'
+Assert-True ((Format-GoLiveResumeLine -From 'cut' -RecordPath "C:\it's.txt") -match [regex]::Escape("'C:\it''s.txt'")) 'a quote in the path is doubled'
+Assert-True ((Format-GoLiveResumeLine -From 'cut' -RecordPath "C:\a`nb.txt") -notmatch 'LivePushRecord') 'a path with a control character is left out'
 
 Write-Host 'the script' -ForegroundColor Cyan
 $src = [System.IO.File]::ReadAllText($Script)
 Assert-True ($src -notmatch '(?i)LIVE-PUSH-AUTHORIZED[''"]') 'go-live composes no marker string'
 Assert-True ($src -notmatch 'Get-ShopifyLivePushMarker') 'go-live never reads the marker seam'
 Assert-True ($src -notmatch 'gh pr merge[^\r\n]*--delete-branch') 'the promotion merge never deletes its head branch'
-Assert-True ($src -match 'gh pr merge \$pr --merge --admin') 'the promotion merges as a merge commit'
+Assert-True ($src -match 'gh pr merge \$pr --merge --admin --match-head-commit \$promotedSha') 'the promotion merges as a merge commit, only at the preflight''s commit'
+Assert-True ($src -match 'isCrossRepository == false') 'a fork''s PR is never reused'
 foreach ($f in @($LibPath, $Script)) {
     $bytes = [System.IO.File]::ReadAllBytes($f)
     Assert-True (-not ($bytes | Where-Object { $_ -gt 127 })) "$(Split-Path -Leaf $f) is pure ASCII"

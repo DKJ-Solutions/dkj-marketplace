@@ -52,11 +52,14 @@ Scope: a Git-connected store only; a CLI-push store is refused and keeps live-pr
 - [x] go-live-rules.ps1: step order, app-deploy switch, check states, verify paths, hash compare, record hold rewrite, resume line
 - [x] go-live.ps1: preflight -> promote -> checks -> merge -> verify -> app -> cut -> notify, stop at the first refusal, -ResumeFrom past the merge
 - [x] docs: the go-live skill page, the extension README row, live-preflight's page
+- [x] Victor's review: chunked verify pulls, glob-shaped paths named not compared, no-pull-ever refused under -AcceptUnverified too, resume line keeps 8.3/non-ASCII record paths, required contexts read off the deploy branch's rules, head sha checked before merge, resumable from a merge whose state could not be read, relative record path resolved from the caller
+- [x] Sebastian's review: rule 6 reads substitutions inside text-tool segments, does not exempt git (read-only subcommands only, no alias), wider spellings; hooks.json fails closed on a go-live line; merge with --match-head-commit, fork PRs never reused, full-sha validation, console strip. B3/B4 (renamed copy, session-composable marker) filed as #4436 for the owner
 
 ### TEST
 
-- [x] bwj-go-live.tests.ps1: 41 pass
-- [x] guard-live-theme.tests.ps1: 425 pass, rule 6 included
+- [x] bwj-go-live.tests.ps1: 56 pass
+- [x] guard-live-theme.tests.ps1: 435 pass, rule 6 and the review's bypasses included
+- [x] hook-fail-closed.tests.ps1: 52 pass, the go-live line fails closed
 - [x] check-plugin-integrity: 0 errors
 
 ### DEPLOY: feat/4402-go-live-command

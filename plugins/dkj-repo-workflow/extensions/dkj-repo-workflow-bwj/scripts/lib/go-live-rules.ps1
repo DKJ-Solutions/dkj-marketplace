@@ -73,15 +73,48 @@ function Get-GoLiveAppDecision {
     return [pscustomobject]@{ Ok = $true; Mode = 'hold'; Message = "the app deploy is skipped: its files are written as 'hold' in the live-push record, so the cut and notify-live treat them as not live." }
 }
 
+function Get-GoLiveRequiredContexts {
+    <#
+        The status-check contexts the deploy branch requires, from 'gh api repos/{owner}/{repo}/rules/branches/<b>'
+        (every active ruleset rule on the branch). $null when the answer cannot be read -- which a caller must
+        not read as "none required".
+    #>
+    param([AllowEmptyString()][string]$RulesJson)
+    # Windows PowerShell 5.1's ConvertFrom-Json hands a JSON array back as ONE object, so @() around it
+    # holds one element; 'foreach' over the parsed value enumerates the rules themselves.
+    try { $parsed = ConvertFrom-Json -InputObject ([string]$RulesJson) } catch { return $null }
+    $rules = @(foreach ($x in $parsed) { $x })
+    $out = New-Object System.Collections.Generic.List[string]
+    foreach ($r in $rules) {
+        if ($null -eq $r -or [string]$r.type -ne 'required_status_checks') { continue }
+        foreach ($c in @($r.parameters.required_status_checks)) {
+            $ctx = ([string]$c.context).Trim()
+            if ($ctx -and -not $out.Contains($ctx)) { $out.Add($ctx) }
+        }
+    }
+    return , [string[]]@($out)
+}
+
 function Get-GoLiveCheckState {
     <#
         One state for the required checks, from 'gh pr checks --required --json name,bucket': 'fail' when any
         check failed or was cancelled, 'pending' while any is still running, 'pass' when every one passed or
         was skipped, 'none' when there are none. A bucket this does not know reads as pending, so an unknown
         state is waited on rather than merged over.
+
+        -Required names the contexts the deploy branch's rules require. 'gh pr checks' lists only checks that
+        have REPORTED, so a required one that has not started yet is absent rather than pending (Victor's
+        review of #4402): each required context missing from -Checks reads as pending, never as 'none'.
     #>
-    param([AllowNull()][AllowEmptyCollection()][object[]]$Checks = @())
+    param(
+        [AllowNull()][AllowEmptyCollection()][object[]]$Checks = @(),
+        [AllowNull()][AllowEmptyCollection()][string[]]$Required = @()
+    )
     $all = @(@($Checks) | Where-Object { $null -ne $_ })
+    $names = @($all | ForEach-Object { ([string]$_.name).Trim().ToLower() })
+    foreach ($ctx in @($Required)) {
+        if ($ctx -and ($names -notcontains ([string]$ctx).Trim().ToLower())) { return 'pending' }
+    }
     if ($all.Count -eq 0) { return 'none' }
     $buckets = @($all | ForEach-Object { ([string]$_.bucket).Trim().ToLower() })
     if (@($buckets | Where-Object { $_ -in @('fail', 'cancel') }).Count -gt 0) { return 'fail' }
@@ -107,6 +140,26 @@ function Get-GoLiveVerifyPaths {
         [AllowEmptyString()][string]$AppRoot = ''
     )
     return @(@($Live) | Where-Object { $_ -and -not (Test-GoLiveUnderAppRoot -Path $_ -AppRoot $AppRoot) })
+}
+
+function Test-GoLiveGlobPath {
+    <# A path 'theme pull --only' would read as a glob, not literally ('templates/product.[handle].json'). #>
+    param([string]$Path)
+    return ([string]$Path) -match '[\[\]{}*?!]'
+}
+
+function Split-GoLiveChunks {
+    <#
+        The verify paths in groups of -Size, one 'theme pull' each: one '--only' per path, and a few hundred
+        of them overrun the Windows command line through the shopify.cmd shim (Victor's review of #4402).
+    #>
+    # Each chunk is an object with a Paths array: a bare string[] per chunk is flattened by @() in the
+    # caller whenever there is only one, and the pull would then run once per path.
+    param([AllowNull()][AllowEmptyCollection()][string[]]$Paths = @(), [int]$Size = 40)
+    $all = @(@($Paths) | Where-Object { $_ })
+    for ($i = 0; $i -lt $all.Count; $i += $Size) {
+        [pscustomobject]@{ Paths = [string[]]@($all[$i..([Math]::Min($i + $Size, $all.Count) - 1)]) }
+    }
 }
 
 function Compare-GoLiveTheme {
@@ -150,7 +203,9 @@ function Format-GoLiveResumeLine {
     <#
         The go-live line to run again from -From, for a person to add the marker to. It never carries the
         marker -- the line a person authorises is theirs to write, the rule live-preflight keeps for the push.
-        Every value is validated before it is printed, and an unsafe one leaves its parameter out.
+        Every value is validated before it is printed. The record path is single-quoted with any quote
+        doubled, so a TEMP under an 8.3 name ('DAVEK_~2') or a non-ASCII user folder still resumes; only a
+        path with a control character is left out (Victor's review of #4402).
     #>
     param(
         [Parameter(Mandatory)][string]$From,
@@ -161,7 +216,7 @@ function Format-GoLiveResumeLine {
     $parts = @('go-live.ps1')
     if (Test-GoLiveVersion $Version) { $parts += "-Version $(([string]$Version).Trim().TrimStart('v'))" }
     if ($From -in (Get-GoLiveResumeSteps)) { $parts += "-ResumeFrom $From" }
-    if ($RecordPath -cmatch '\A[A-Za-z0-9:\\/._ -]+\z') { $parts += "-LivePushRecord `"$RecordPath`"" }
+    if ($RecordPath -and $RecordPath -notmatch '[\x00-\x1F\x7F]') { $parts += "-LivePushRecord '$($RecordPath -replace "'", "''")'" }
     if ($AppSwitch -in @('-AppDeploy', '-SkipAppDeploy')) { $parts += $AppSwitch }
     return ($parts -join ' ')
 }

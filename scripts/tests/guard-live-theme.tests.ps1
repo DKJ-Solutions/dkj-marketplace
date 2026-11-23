@@ -1013,18 +1013,31 @@ function Get-ShopifyLiveDeployBranch { return 'live' }
         @{ n = 'a call operator and a quoted path'; c = "& 'C:\x\scripts\task\go-live.ps1' -Version 3.2.0 -SkipAppDeploy" },
         @{ n = 'a relative path';                    c = '.\scripts\task\go-live.ps1 -Version 3.2.0' },
         @{ n = 'after a semicolon';                  c = "cd C:\repo; $gl" },
-        @{ n = 'inside a bash -c wrapper';           c = "bash -c `"$($gl -replace '"', '')`"" }
+        @{ n = 'inside a bash -c wrapper';           c = "bash -c `"$($gl -replace '"', '')`"" },
+        # Sebastian's review of #4402: each of these passed the first cut.
+        @{ n = 'a substitution inside echo';         c = 'echo $(powershell -File go-live.ps1 -Version 1.0.0 -AppDeploy)' },
+        @{ n = 'a backtick substitution inside cat'; c = 'cat x `powershell -File go-live.ps1 -Version 1.0.0`' },
+        @{ n = 'a git alias on the line';            c = 'git -c alias.x="!powershell -File go-live.ps1 -Version 1.0.0" x' },
+        @{ n = 'git config writing an alias';        c = "git config alias.g '!powershell -File scripts/go-live.ps1'" },
+        @{ n = 'a comma-joined argument';            c = "powershell '-File',go-live.ps1 -Version 1.0.0" },
+        @{ n = 'a trailing dot Windows strips';      c = 'powershell -File .\go-live.ps1. -Version 1.0.0' },
+        @{ n = 'upper case';                         c = 'powershell -File .\GO-LIVE.PS1 -Version 1.0.0' }
     )
     foreach ($case in $glBlocked) { Assert-Equal 2 (Invoke-Guard -Command $case.c -Root $conn) "go-live blocked: $($case.n)" }
     $glMentions = @(
         @{ n = 'reading the script';          c = 'Get-Content scripts/task/go-live.ps1' },
         @{ n = 'grepping for it';             c = 'grep -n Stop-GoLive go-live.ps1' },
         @{ n = 'staging it in git';           c = 'git add plugins/x/scripts/task/go-live.ps1' },
+        @{ n = 'a git log of it';             c = 'git -C repo log --oneline -- scripts/task/go-live.ps1' },
         @{ n = 'a heredoc body naming it';    c = "cat > notes.md <<'EOF'${LF}run go-live.ps1 -AppDeploy${LF}EOF" },
         @{ n = 'a different script name';     c = 'powershell -File scripts/task/go-live-check.ps1' }
     )
     foreach ($case in $glMentions) { Assert-Equal 0 (Invoke-Guard -Command $case.c -Root $conn) "go-live mention passes: $($case.n)" }
+    # In a repo without a deploy branch, so rule 5's local-write check does not answer first.
+    Assert-Equal 0 (Invoke-Guard -Command 'git commit -m "feat: add go-live.ps1"' -Root $bare) 'go-live mention passes: a commit message naming it'
     Assert-True ((Get-GuardRefusal -Command $gl -Root $conn) -match '-AppDeploy or -SkipAppDeploy') 'go-live refusal names the app-deploy switch'
+    # Towards checking, stated: a command that is not a text tool and only NAMES the file is refused too.
+    Assert-Equal 2 (Invoke-Guard -Command 'Test-Path scripts/task/go-live.ps1' -Root $conn) 'go-live: a non-text command naming the file is refused (the stated false positive)'
 
     # And the rest of rule 3 is untouched: a preview push is not measured at all.
     [System.IO.File]::WriteAllText($css, "body { color: blue; }`n", $Utf8NoBom)

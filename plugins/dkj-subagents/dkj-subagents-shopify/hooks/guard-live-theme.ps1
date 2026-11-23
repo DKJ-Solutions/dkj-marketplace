@@ -781,18 +781,42 @@ if ($DEPLOY_BRANCH -and $libLoaded) {
 # in every repo, because the chain it starts is a live deploy whether the store pushes or promotes.
 #
 # WHAT COUNTS: a segment that names 'go-live.ps1' as a word -- a path ending in it, quoted or not, run by
-# 'powershell -File', '&' or a bare call. The segment list is $segments, so a text tool leading the
-# segment (cat, grep, git, Get-Content) is handling the name, not running it, and passes, as do heredoc and
-# here-string bodies. Degraded, the whole payload is the segment, which refuses any mention: towards checking.
+# 'powershell -File', '&', a bare call, a comma-joined argument list, or followed by the dot or space
+# Windows strips. A text tool leading the segment (cat, grep, Get-Content) is handling the name, and passes,
+# as do heredoc and here-string bodies. Degraded, the whole payload is the segment: towards checking.
 #
-# THE RESIDUAL LIMIT, STATED: a script path held in a variable ('& $p') never shows the name, the same
-# limit rule 3 states for a command in a variable.
-foreach ($segment in $segments) {
-    if ($segment -notmatch '(?i)(^|[\s\\/"''&(=])go-live\.ps1(?=$|[\s"'';)|&])') { continue }
-    if ($authorised) {
-        [Console]::Error.WriteLine('guard-live-theme: go-live allowed (authorisation marker present) -- it promotes, deploys the app as its line says, and cuts the release.')
-        continue
+# THREE HOLES THE TEXT-TOOL EXEMPTION WOULD OPEN, closed here (Sebastian's review of #4402):
+#   - a command substitution inside a text-tool segment RUNS: 'echo $(... go-live.ps1 ...)', a backtick
+#     pair or '<(...)'. So the name inside one, anywhere in the stripped command, is matched too;
+#   - git can run a program through an alias ('git -c alias.x="!powershell -File go-live.ps1" x',
+#     'git config alias.g ...'), so 'git' is NOT exempt for this rule -- the list rule 5 reads, which
+#     drops it -- and a git segment naming the file passes only under a read-or-stage subcommand
+#     ($GO_LIVE_GIT_READS) with no alias on the line.
+#
+# THE RESIDUAL LIMITS, STATED: a script path held in a variable or assembled from parts ('& $p',
+# '"go-"+"live.ps1"'), an -EncodedCommand, and a renamed copy of the script never show the name -- the same
+# limit rule 3 states for a command in a variable. A copy is the one a string match cannot close at all.
+$GO_LIVE_NAME = '(?i)(^|[\s\\/"''&(=,+`])go-live\.ps1(?=$|[\s"'';)|&,.*`])'
+$GO_LIVE_GIT_READS = @('add', 'rm', 'mv', 'log', 'diff', 'show', 'status', 'blame', 'grep', 'commit', 'restore', 'checkout', 'ls-files', 'cat-file', 'stash')
+$goLiveSegments = if ($libLoaded) { Get-GuardSegments -Command $cmd -TextTools @($TEXT_TOOLS | Where-Object { $_ -ne 'git' }) } else { $segments }
+$goLiveHits = @()
+foreach ($segment in $goLiveSegments) {
+    if ($segment -notmatch $GO_LIVE_NAME) { continue }
+    if ($libLoaded) {
+        $t = Get-SegmentTokens $segment
+        $lead = if ($t.Count -gt 0) { (($t[0] -replace '.*[\\/]', '') -replace '\.exe$', '').ToLower() } else { '' }
+        if ($lead -eq 'git' -and $segment -notmatch '(?i)alias\.') {
+            $k = 1
+            while ($k -lt $t.Count -and $t[$k].StartsWith('-')) { if ($t[$k] -in @('-C', '-c', '--git-dir', '--work-tree')) { $k += 2 } else { $k++ } }
+            if ($k -lt $t.Count -and $t[$k].ToLower() -in $GO_LIVE_GIT_READS) { continue }
+        }
     }
+    $goLiveHits += $segment
+}
+if ($scan -match '(?i)\$\([^)]*go-live\.ps1|<\([^)]*go-live\.ps1|`[^`\r\n]*go-live\.ps1[^`\r\n]*`') { $goLiveHits += 'substitution' }
+if ($goLiveHits.Count -gt 0 -and $authorised) {
+    [Console]::Error.WriteLine('guard-live-theme: go-live allowed (authorisation marker present) -- it promotes, deploys the app as its line says, and cuts the release.')
+} elseif ($goLiveHits.Count -gt 0) {
     Deny "the go-live command is blocked: it takes a release live end to end -- the promotion PR opened and merged, the app deployed or held, the release cut -- and none of those steps can be seen by this guard once the script runs. The owner's word for this release is the marker '# $MARKER' on this exact command line, together with -AppDeploy or -SkipAppDeploy."
 }
 
