@@ -39,19 +39,32 @@
 
 ### PLAN
 
+#4414: no planning artefact asks what to *stop*. Verified on pickup: Paula's manual and the `day-plan`
+skill hold no "stop doing", "lever" or "highest impact"; `day-plan` step 2 only adds items.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] Paula's manual: a hard rule that every plan she proposes names the one or two highest-leverage
+  items first and asks one question, *what do we stop or drop to make room?*
+- [x] `day-plan`: the morning proposal (step 2) does the same, in two lines.
 
 ### TEST
 
+- [x] Docs only; the gates `ship-pr` runs cover links and integrity.
+
 ### DEPLOY: docs/4414-paula-stop-doing
 
-**Score:**
+Paula's manual now has her name the highest-leverage items first in any plan she proposes and ask one
+question, *what do we stop or drop to make room?*, and `day-plan`'s morning proposal does the same (#4414).
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+A morning plan from `day-plan` now opens with the items that matter most and asks what to drop, so the
+day is not filled only by adding work.
+
+**Score:** 2
 
 #### Pull Request
 
