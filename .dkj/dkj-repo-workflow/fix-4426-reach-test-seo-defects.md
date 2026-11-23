@@ -39,21 +39,41 @@
 
 ### PLAN
 
+Inbound #4426: `report-issue`'s reach test ("in doubt, leave it off", with a tier-0 worked example)
+let a session file four top brand pages serving no H1 as tier 0, while a lesser heading defect in the
+same session got `minor`. Name the SEO case in the reach-label row and in the matching paragraph of
+`WORKFLOW-portable.md`.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `skills/report-issue/SKILL.md`: the reach-label row names a measured SEO defect on indexed live
+  pages (H1/headings, canonicals, structured data, indexability) as passing the test, with the SEO team
+  named in `## Why <reach label>`; "in doubt, leave it off" is kept for defects nobody outside
+  development meets.
+- [x] `WORKFLOW-portable.md`: the same case in the reach-reason paragraph, with the measurement.
 
 ### TEST
 
+- [x] Doc-only change; the gates `ship-pr` runs cover links and integrity.
+
 ### DEPLOY: fix/4426-reach-test-seo-defects
 
-**Score:**
+A store session filing a measured SEO defect on indexed live pages (a missing H1, a wrong canonical,
+broken structured data, a page that cannot be indexed) now gives it the reach label and names the
+store's SEO team in `## Why <reach label>`, instead of reading it as developer-only and filing it tier
+0 without an Asana card. [`report-issue`](../../plugins/dkj-repo-workflow/extensions/dkj-repo-workflow-bwj/skills/report-issue/SKILL.md)
+and [`WORKFLOW-portable.md`](../../plugins/dkj-repo-workflow/extensions/dkj-repo-workflow-bwj/WORKFLOW-portable.md)
+name the case (#4426).
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+A store's SEO defects on live pages now reach its Asana board and business worklist consistently,
+instead of depending on whether the SEO team's question happened to be in the session's context.
+
+**Score:** 2
 
 #### Pull Request
 
 report-issue's reach test names measured SEO defects on indexed live pages
-

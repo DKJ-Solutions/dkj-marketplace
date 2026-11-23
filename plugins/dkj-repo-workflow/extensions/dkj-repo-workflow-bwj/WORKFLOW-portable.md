@@ -211,7 +211,13 @@ exists and whether the work reaches the business-facing worklist, so a label giv
 noise on the management board, and a label with no written reason cannot be checked afterwards. Measured
 in `smartwatchbanden`: 35 issues filed with `minor` between November 1 and 13, 2026, and not one body said
 why. "Visible on the storefront" alone does not answer it, because the test is whether the reader notices
-the **defect**. An issue that gains the label later gets the section in the same move. **The plugin's
+the **defect**. **A measured SEO defect on indexed live pages passes it** -- missing or broken H1s and
+headings, canonicals, structured data, indexability -- because the store's SEO team notices it, and the
+section names that team ([#4426](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4426)). Measured
+in `smartwatchbanden` on November 23, 2026, in one session's SEO check of the brand pages: a wrong H2 on
+the brand hub was filed with `minor`, while four top brand pages serving no H1 at all were filed tier 0,
+because "developer-only" read true where the SEO team's question was not in the session's context. An
+issue that gains the label later gets the section in the same move. **The plugin's
 `guard-reach-reason` hook holds this**: it refuses a `gh issue create` or `gh issue edit` that adds the
 reach label on an admitted repo where the body the call leaves has no such section, and lets a body it
 cannot read through with a warning. **What slips past the hook is caught at the next session start**
