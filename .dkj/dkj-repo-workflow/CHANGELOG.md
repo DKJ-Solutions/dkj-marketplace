@@ -2,7 +2,36 @@
 
 ## [Unreleased]
 
-**17 / 18 minor entries** <!-- pending-tally -->
+**18 / 19 minor entries** <!-- pending-tally -->
+
+### DEPLOY: fix/4436-go-live-ask-prompt · 20261123-140324Z
+
+A `go-live.ps1` line carrying the live-push marker is no longer let through by `guard-live-theme` on the
+marker alone: the guard returns a confirmation request, so Claude Code asks the person before the
+promotion, the app deploy and the release cut run. The marker is a comment a session can write itself,
+and on this one line it authorised three outward acts at once. Without the marker the line is still
+refused; an ordinary live push or promotion keeps its marker-only rule
+([`go-live`](../../plugins/dkj-repo-workflow/extensions/dkj-repo-workflow-bwj/skills/go-live/SKILL.md),
+#4436).
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+Release day now ends in one question the store owner answers themselves, which the session cannot
+answer for them.
+
+**Score:** 2
+
+#### Pull Request
+
+guard-live-theme asks the person before a go-live, instead of allowing on the marker alone
+
+Plugins: dkj-repo-workflow-bwj, dkj-subagents-shopify
+
+[PR #4439](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4439)
+
+---
 
 ### DEPLOY: fix/4429-refresh-suite-durations · 20261123-134921Z
 
