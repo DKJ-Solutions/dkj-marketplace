@@ -66,7 +66,9 @@ Per followed source on the sources page:
 5. **Move *last processed* on** to the newest version or date you read, even when nothing belonged.
 
 **Give no verdict during a check.** Every new item gets the verdict for a new item; judging it needs a
-look at the owner's own setup, which is a separate pass the main page describes.
+look at the owner's own setup, which is a separate pass the main page describes. That pass is the
+[`tip-check`](https://github.com/DKJ-Solutions/dkj-marketplace/blob/main/plugins/dkj-subagents/dkj-subagents-alpha/skills/tip-check/SKILL.md) skill of the core team (#4382):
+hand it the items still awaiting a verdict, and record the finding and advice it returns as the item's verdict, in the main page's own terms.
 
 ## Close
 
