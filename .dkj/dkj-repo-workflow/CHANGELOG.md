@@ -2,7 +2,30 @@
 
 ## [Unreleased]
 
-**20 / 23 minor entries** <!-- pending-tally -->
+**20 / 24 minor entries** <!-- pending-tally -->
+
+### DEPLOY: fix/3932-stub-gh-in-fixture · 20261123-164221Z
+
+`consumer-dashboard.tests.ps1` no longer fails on CI on the Consumers overview (#3932). The fixture server ran the
+real `gh`, whose first call took 16.5 s on a busy runner and pushed the page past the 15 s receive timeout; it now
+runs a stub that fails at once, so the group never reaches outside its fixture -- locally it no longer reads the
+real GitHub organisation either. The diagnostic wait and timing lines are gone; the Server-Timing header stays.
+
+**Score:** 3
+
+#### What makes this deploy extra special
+
+N/A: a test fixture of this repo; nothing a plugin user installs changes.
+
+**Score:** N/A
+
+#### Pull Request
+
+The Consumers fixture server runs a stub gh, so the overview no longer waits on a cold gh
+
+[PR #4445](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4445)
+
+---
 
 ### DEPLOY: fix/3932-overview-server-timing · 20261123-162729Z
 
