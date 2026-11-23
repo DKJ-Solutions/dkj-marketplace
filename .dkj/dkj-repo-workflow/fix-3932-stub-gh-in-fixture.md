@@ -39,19 +39,35 @@
 
 ### PLAN
 
+#4444's Server-Timing header named the cause on its own CI run (45214738882): `gh;dur=16517` of a 16649 ms
+overview, every other step about 120 ms together, and the same gh call from the test process 69 ms a moment
+later. The fixture server ran the real gh -- and locally, logged in, the real GitHub API.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] group 3 starts its server with a stub `gh.cmd` first on PATH that exits 4 at once, as an unauthenticated gh does
+- [x] the 90 s wait, the `[TIMING #3932]` lines and the CI-only timing block are removed, as the issue asked once the cause was named
+- [x] a new assert: the overview says GitHub could not be read, which proves the stub was the gh the server ran
 
 ### TEST
 
+- [x] `consumer-dashboard.tests.ps1` locally: 258 passed, 0 failed, with a logged-in gh on this machine
+- [x] lint + all suites via `open-pr.ps1`
+
 ### DEPLOY: fix/3932-stub-gh-in-fixture
 
-**Score:**
+`consumer-dashboard.tests.ps1` no longer fails on CI on the Consumers overview (#3932). The fixture server ran the
+real `gh`, whose first call took 16.5 s on a busy runner and pushed the page past the 15 s receive timeout; it now
+runs a stub that fails at once, so the group never reaches outside its fixture -- locally it no longer reads the
+real GitHub organisation either. The diagnostic wait and timing lines are gone; the Server-Timing header stays.
+
+**Score:** 3
 
 #### What makes this deploy extra special
 
-**Score:**
+N/A: a test fixture of this repo; nothing a plugin user installs changes.
+
+**Score:** N/A
 
 #### Pull Request
 
