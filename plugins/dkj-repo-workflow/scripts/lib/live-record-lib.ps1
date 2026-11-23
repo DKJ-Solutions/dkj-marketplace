@@ -216,7 +216,8 @@ function ConvertFrom-LivePushRecord {
 function Find-BranchMergeCommit {
     <#
     .SYNOPSIS
-        The sha of the 'merge: <branch> (#NN)' commit that landed $Branch, from first-parent log lines
+        The sha of the 'merge: <branch> (#NN)' commit that landed $Branch, from log lines (the first-parent line,
+        or the full history for a branch merged through a side branch, #4403)
         shaped '<sha><TAB><subject>'. '' when there is none.
 
     .DESCRIPTION

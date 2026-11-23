@@ -96,7 +96,10 @@
 
 .PARAMETER Verify
     With -Tag: read only. Answers whether THIS tag still holds the issue -- exit 0 when it does,
-    exit 1 when it does not. The resume step of a sweep turns on it, and it writes nothing.
+    exit 1 when it does not. The resume step of a sweep turns on it, and it writes nothing. A tag that PARKED
+    the issue for review (-Park awaiting-review-dev or -client) released its claim and so holds nothing, yet
+    it also answers [OK] while the review label stands, nobody else holds a marker and the latest park
+    comment's hidden parked-tag marker is this tag (issue #4400).
 
 .PARAMETER Release
     With -Tag: drop this tag's claim -- its marker comment and its assignee, and nothing else. The
@@ -139,6 +142,9 @@
     its own claim. A park is a tracker write like a claim. Measured November 8, 2026: four sweeps parked
     the same issues within three minutes, each with a comment of its own, because a park took no claim
     and so had no read-back to lose. A lost race now costs a claim and writes no label and no comment.
+    With an awaiting-review-* label the comment also carries a hidden "<!-- parked-tag: <tag> -->" marker,
+    because the release leaves nobody holding the issue and step 6's -Verify would otherwise refuse the
+    tag that built it (issue #4400).
 
 .PARAMETER Reason
     With -Park: what the issue waits on, the "<what>" of the parking comment. For awaiting-pull it names
@@ -525,7 +531,10 @@ function Invoke-ClaimPark {
         [void](& $release)
         exit 1
     }
-    $parkBody = Format-ParkComment -Reason $Reason -Decider $Decider
+    # A REVIEW PARK NAMES ITS TAG (#4400): the claim is released just below, and step 6's -Verify answers from
+    # markers still held, so without this the tag that built the branch is told "nobody holds it".
+    $parkedTag = if ($Park -like 'awaiting-review-*') { [string]$claimTag.Tag } else { '' }
+    $parkBody = Format-ParkComment -Reason $Reason -Decider $Decider -ParkedTag $parkedTag
     $parkNote = Invoke-NativeCapture -FilePath 'gh' -Arguments (@('issue', 'comment', $number) + $repoArgs + @('--body', $parkBody)) -Utf8 `
                                      -TimeoutSeconds $NativeCaptureNetworkTimeoutSeconds
     $noteLanded = ($parkNote -and (Test-NativeExitMeasured -Capture $parkNote) -and $parkNote.ExitCode -eq 0)
@@ -1319,6 +1328,15 @@ if ($Tag) {
     if ($Verify) {
         if ($tagVerdict.Code -eq 'already-yours') {
             Write-Host "[OK] #$number is held by this tag ($($claimTag.Tag)) -- resuming it is resuming your own work." -ForegroundColor Green
+            Write-Host "     $($facts.url)"
+            exit 0
+        }
+        # A REVIEW PARK RELEASED ITS CLAIM, so the tag that built and parked the branch holds nothing here
+        # (#4400). Its park comment recorded the tag; the issue must still carry a review label and nobody
+        # else may hold a marker. Get-ReviewParkVerdict carries the four conditions.
+        $reviewLabels = @(Get-IssueLabelNames -Issue $facts)
+        if (Get-ReviewParkVerdict -Tag $claimTag.Tag -Labels $reviewLabels -ClaimRecords $claimRecords -ParkRecords @(Get-ReviewParkRecords -Json $viewJson)) {
+            Write-Host "[OK] #$number was parked for review by this tag ($($claimTag.Tag)) -- resuming it is resuming your own work." -ForegroundColor Green
             Write-Host "     $($facts.url)"
             exit 0
         }

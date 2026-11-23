@@ -131,6 +131,12 @@
     Turn a push-list path that still ends on sync-main's reconciliation base (#3145) from a refusal into a
     note, after a person has decided the trunk's version should replace live's there. Never a default.
 
+.PARAMETER ResultPath
+    Also write the run's outcome to this file as JSON (#4402): Allowed, Connected, DeployBranch, Trunk,
+    PromotedSha, RecordPath, AppRoot and Store. dkj-repo-workflow-bwj's go-live reads it, so the chain
+    goes on from the same facts this run printed rather than from a parse of its console. It carries no
+    marker and no command, so boundary 2 holds: what is authorised stays on the go-live line.
+
 .PARAMETER RootOverride
     Fixture root, so a suite can drive this against a scratch tree instead of a real store.
 
@@ -167,9 +173,23 @@ param(
     [string]$BackupVerifyExisting = '',
     [switch]$AcceptRejectedWriteBacks,
     [switch]$AcceptOwedReconciliation,
+    [string]$ResultPath = '',
     [string]$RootOverride = ''
 )
 $ErrorActionPreference = 'Stop'
+
+# THE RESULT FILE (#4402), written at both exits of the verdict. A failed write warns and never changes the
+# verdict: the person reading the console has everything, and go-live refuses a run whose file is missing.
+function Write-PreflightResult {
+    param([hashtable]$Fields)
+    if (-not $ResultPath) { return }
+    try {
+        $json = ([pscustomobject]$Fields | ConvertTo-Json -Compress)
+        [System.IO.File]::WriteAllText($ResultPath, $json, (New-Object System.Text.UTF8Encoding($false)))
+    } catch {
+        Write-Warning "the result file could not be written to $ResultPath -- go-live cannot carry on from this run."
+    }
+}
 
 # THE SOURCE-REPO GUARD: refuses this script when it is a released copy running in the repo that
 # maintains it. Guarded dot-source, so a tree without the lib behaves as before.
@@ -1040,6 +1060,7 @@ Write-Host ''
 if (-not $verdict.Allowed) {
     Write-Host $verdict.Summary -ForegroundColor Red
     Write-Host 'Nothing was pushed, nothing was promoted and nothing was authorised. Fix what refused and run this again.'
+    Write-PreflightResult -Fields @{ Allowed = $false }
     exit 1
 }
 
@@ -1131,6 +1152,14 @@ if ($pushCommand -or $deleteCommand -or $promotionCommand -or $appCommand) {
         Write-Host "    notify-live.ps1 ... -LivePushRecord `"$recordPath`""
     } catch {
         Write-Warning "the live-push record could not be written to $recordPath ($(Format-SafeProseToken -Value $_.Exception.Message)). The cut can still run, but without it every merged entry reads as live."
+        $recordPath = ''
     }
+}
+$resultRecord = if ((Get-Variable -Name recordPath -ErrorAction SilentlyContinue) -and $recordPath -and (Test-Path -LiteralPath $recordPath -PathType Leaf)) { $recordPath } else { '' }
+$resultSha = if ((Get-Variable -Name headFull -ErrorAction SilentlyContinue) -and $headFull) { $headFull } else { '' }
+Write-PreflightResult -Fields @{
+    Allowed = $true; Connected = [bool]$connected; DeployBranch = [string]$deployBranch; Trunk = [string]$trunk
+    PromotedSha = [string]$resultSha; RecordPath = [string]$resultRecord; AppRoot = [string]$appRoot; Store = [string]$store
+    Promotion = [bool]$promotionCommand; AppDeploy = [bool]$appCommand
 }
 exit 0
