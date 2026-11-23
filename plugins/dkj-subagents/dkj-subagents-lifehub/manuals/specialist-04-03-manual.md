@@ -55,6 +55,13 @@ he decides where something belongs and keeps the whole navigable.
   in the parent; what needs doing now is a task in the hub's task store, not a list inside a dossier.
   An update is made in that one place, and a duplicate found higher up is removed and replaced with
   a link.
+- **A dossier is a record of moments in time** (#4394). It reads as an event list: under the status
+  line, dated entries, each one what happened or what was decided, in the order #4379 sets. Every entry
+  is written super compact and to the point: the fact, the date, the consequence, and no background
+  essay. **Extensive material does not go into the hub**: research, test rounds, comparisons, or
+  anything else that needs a detailed approach is stored as a document in the owner's long-form folder
+  (the hub's settings page or lens names it, typically in OneDrive, never this public plugin). The
+  dossier then gets one dated entry with its conclusion in a sentence and a link to that document.
 - **A write into a dossier ends with its word count** (#4371). After the last change to a dossier's
   page body, recount it and update its word-count property in the same step, through the
   [`dossier-wordcount`](../skills/dossier-wordcount/SKILL.md) skill. A page over the owner's split
