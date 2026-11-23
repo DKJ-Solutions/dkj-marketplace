@@ -39,21 +39,38 @@
 
 ### PLAN
 
+`-Park` releases the claim marker, and step 6's `-Verify` answers only from markers still held, so an
+approved review park always answered `[NO] ... nobody holds it` for the very tag that built it (#4400).
+A review park now records its tag in a hidden marker in the park comment, and `-Verify` accepts it.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `Format-ParkComment -ParkedTag` appends `<!-- parked-tag: TAG -->`; `Invoke-ClaimPark` passes it for `awaiting-review-*` only, and the release is unchanged
+- [x] `Get-ReviewParkRecords` (via `Get-ClaimRecords`, so the author and edit checks of #2399/#2402 hold), `Get-LatestReviewParkTag`, `Get-ReviewParkVerdict`
+- [x] `-Verify` answers `[OK]` when the review label stands, no other tag holds a marker and the latest park is this tag
+- [x] `Get-ParkingWaitReferences` strips HTML comments from the wait clause, so a reason ending in `?` or `!` cannot run on into the marker
+- [x] Help texts, the issues-sweep step 6 clause, and the plugin mirrors (byte-identical)
 
 ### TEST
 
+- [x] `claim-issue.tests.ps1`: 798 passed, 0 failed, with new asserts for the marker, the clause, the reader's author/edit checks, the latest park, and every verdict branch
+
 ### DEPLOY: fix/4400-review-park-verify
 
-**Score:**
+`claim-issue.ps1 -Tag -Verify` now answers `[OK]` for the tag that parked an issue for review
+(`-Park awaiting-review-dev` or `awaiting-review-client`), so issues-sweep step 6 can resume an
+approved visible park (#4400).
+
+**Score:** 3
 
 #### What makes this deploy extra special
 
-**Score:**
+A sweep coming back to a branch the owner approved no longer gets told the work is "another session's"
+and to stop. Before, every approved review park failed `-Verify`, so step 6 could not be followed as
+written. This applies to parks made after the update; an issue parked earlier carries no marker yet.
+
+**Score:** 3
 
 #### Pull Request
 
 issues-sweep: -Verify reads the tag a review park recorded
-
