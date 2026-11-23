@@ -39,19 +39,34 @@
 
 ### PLAN
 
+The owner's rule from #4394: Notion is a record of moments in time. The order (newest first) is
+#4379's, still on its own branch, so this one names it and does not restate it.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] Ian's manual: a hard rule -- a dossier is a compact, dated event list; extensive material goes to the owner's long-form folder, with one linking entry
+- [x] Ian's agent def: the same rule in his working method, one sentence
 
 ### TEST
 
+- [x] Lint and suites, through open-pr's gate
+
 ### DEPLOY: feat/4394-dossier-event-list
 
-**Score:**
+Ian's manual and agent def in `dkj-subagents-lifehub` now say what a dossier is: a record of moments in
+time, read as a compact event list of dated entries (what happened or was decided, and its consequence).
+Research, test rounds, comparisons and other extensive material no longer go into the hub. They are
+stored as a document in the owner's long-form folder, which the hub's settings page or lens names
+(typically OneDrive), and the dossier gets one dated entry with the conclusion and a link. The entry
+order is #4379's and is not restated here.
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+A life-hub owner's dossiers stay short and scannable, and long research gets a home outside Notion.
+
+**Score:** 3
 
 #### Pull Request
 
