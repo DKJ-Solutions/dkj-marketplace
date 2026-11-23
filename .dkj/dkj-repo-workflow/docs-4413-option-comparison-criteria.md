@@ -39,19 +39,35 @@
 
 ### PLAN
 
+#4413, found during a `tip-check` run: Rebecca's manual covers option comparisons but says nothing
+about what the options are compared on. I checked this when I picked it up: a grep for criteria,
+trade-off and opportunity cost in `specialist-03-07-manual.md` finds only the one line in the intro
+that mentions "a comparison of options".
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] Rebecca's manual: a hard rule that an option comparison states its criteria first, gives the
+  risk, opportunity cost and long-term consequence of each option, and ends with the recommendation
+  and the criterion that decided it.
 
 ### TEST
 
+- [x] Docs only. The gates `ship-pr` runs cover links and integrity.
+
 ### DEPLOY: docs/4413-option-comparison-criteria
 
-**Score:**
+Rebecca's manual now says that an option comparison names its criteria before it scores, gives each
+option's main risk, opportunity cost and long-term consequence, and ends with the recommended option and
+the criterion that decided it (#4413).
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+A comparison from the research specialist shows what it weighed, so the requester can disagree with a
+criterion instead of only with the verdict.
+
+**Score:** 2
 
 #### Pull Request
 
