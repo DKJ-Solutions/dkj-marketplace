@@ -39,19 +39,33 @@
 
 ### PLAN
 
+Inbound #4399: a bulk move of dossier next steps into task cards gave cards a deadline and generic SMART
+answers the owner never set. Verified on pickup: no manual or skill in `dkj-subagents-lifehub` carries
+the rule; `inbox-sweep` says "a deadline if there is one", `agenda` already uses the action's moment.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] Ian's manual: a hard rule that a task card's Deadline and SMART answers come from the owner or a
+  source, and stay empty otherwise.
+- [x] `inbox-sweep`: one paragraph after the sort table pointing at that rule.
 
 ### TEST
 
+- [x] Docs only; the gates `ship-pr` runs cover links and integrity.
+
 ### DEPLOY: docs/4399-task-card-sourced-fields
 
-**Score:**
+Ian's manual now says that a task card's Deadline and SMART answers come from the owner or a source (a
+mail, a letter, an official date) and stay empty otherwise, and `inbox-sweep` points at it (#4399).
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+A life hub's task cards no longer get a deadline or a generic SMART answer the writer made up, so a card
+does not land in the overdue column on a date the owner never set.
+
+**Score:** 2
 
 #### Pull Request
 
