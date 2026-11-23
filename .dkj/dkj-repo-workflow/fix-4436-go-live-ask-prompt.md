@@ -39,19 +39,45 @@
 
 ### PLAN
 
+Decision on #4436 (davekokbwj, November 23, 2026, recorded on the issue): the live-push marker is a
+shell comment the session can compose itself, and since #4402 one marker on the `go-live.ps1` line
+authorises the promotion PR, the app deploy and the release cut together. So rule 6 of
+`guard-live-theme` keeps requiring the marker, and with it returns PreToolUse `permissionDecision: ask`
+instead of allowing, so Claude Code puts the line to the person. Rules 3 and 5 stay marker-only.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `guard-live-theme.ps1`: rule 6 sets the ask reason; every allow exit goes through a new
+  `Exit-Allow`, so a later rule still refuses with exit 2 and only a command that passes everything
+  becomes the prompt. Header rule 6 updated.
+- [x] `guard-live-theme.tests.ps1` rule 6: with the marker the guard asks and names what it takes
+  live; reading the script and a marked non-go-live command ask nothing.
+- [x] `go-live` skill page: the marker is required, and with it the guard still asks.
 
 ### TEST
 
+- [x] Smoke run of the guard against an empty project dir: no marker exit 2; marker exit 0 with
+  `{"hookSpecificOutput":{"permissionDecision":"ask",...}}` on stdout; `Get-Content` of the script and
+  `git status` exit 0 with empty stdout. The full suite runs in `ship-pr`'s gate.
+
 ### DEPLOY: fix/4436-go-live-ask-prompt
 
-**Score:**
+A `go-live.ps1` line carrying the live-push marker is no longer let through by `guard-live-theme` on the
+marker alone: the guard returns a confirmation request, so Claude Code asks the person before the
+promotion, the app deploy and the release cut run. The marker is a comment a session can write itself,
+and on this one line it authorised three outward acts at once. Without the marker the line is still
+refused; an ordinary live push or promotion keeps its marker-only rule
+([`go-live`](../../plugins/dkj-repo-workflow/extensions/dkj-repo-workflow-bwj/skills/go-live/SKILL.md),
+#4436).
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+Release day now ends in one question the store owner answers themselves, which the session cannot
+answer for them.
+
+**Score:** 2
 
 #### Pull Request
 
