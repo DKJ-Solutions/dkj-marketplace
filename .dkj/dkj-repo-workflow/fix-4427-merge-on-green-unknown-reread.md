@@ -39,19 +39,37 @@
 
 ### PLAN
 
+Issue #4427: a merge-on-green sweep woken within seconds of a merge read all seven armed PRs as
+`mergeable: UNKNOWN` (GitHub recomputing after the trunk moved) and ended `picked=false`, leaning on a
+schedule #3807 measured as arriving hours late. Repair: mark the UNKNOWN refusal, and have the picker
+re-read the tracker once after a short wait, before the existing settle wait.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `Get-MergeOnGreenPrVerdict` marks an UNKNOWN refusal with `MergeableUnknown` (Reason unchanged)
+- [x] New pure `Get-MergeOnGreenUnknownWaitSeconds` in `merge-on-green-lib.ps1`
+- [x] `pick-merge-on-green.ps1` re-reads once on UNKNOWN (`-WaitForUnknownSeconds`, default 60, 0 = off), before the settle wait
+- [x] Plugin mirrors of both files synced; `merge-on-green.yml` wait-budget comment updated
 
 ### TEST
 
+- [x] `merge-on-green-lib.tests.ps1`: 350 pass, 0 fail -- new asserts for the marker, the wait function and the wiring
+
 ### DEPLOY: fix/4427-merge-on-green-unknown-reread
 
-**Score:**
+The merge-on-green sweep no longer gives up when it wakes right after a merge and GitHub is still
+computing mergeability: it waits a minute and reads the armed pull requests once more (#4427).
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+On a repo with several armed pull requests, each merge no longer costs an extra wait before the next one
+is picked up. It is on by default, so a consumer gets it with the release, without editing its workflow.
+
+**Score:** 2
 
 #### Pull Request
+
+merge-on-green: re-read once when every armed PR reads mergeable UNKNOWN right after a merge
 
