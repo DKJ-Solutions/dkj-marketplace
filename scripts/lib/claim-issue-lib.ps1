@@ -3223,6 +3223,9 @@ function Get-ParkingWaitReferences {
         if ($m.Success) { $clause = $m.Groups['w'].Value }
     }
     if ($clause) {
+        # A HIDDEN MARKER IS NOT PART OF WHAT IS AWAITED (#4400): a review park's parked-tag marker follows the
+        # reason, and a reason ending in '?' or '!' would otherwise run on into it and read its machine/account as a branch.
+        $clause = $clause -replace '(?s)<!--.*?-->', ' '
         $clause = ([regex]::Split($clause, '(?<=\S)[.;:]\s|\s--\s|\s\(|\r?\n'))[0]
         $crossRepo = '(?<![\w./-])(?<repo>[A-Za-z0-9][\w.-]*/[\w.-]*[A-Za-z0-9_])#(?<n>\d+)'
         foreach ($x in [regex]::Matches($clause, $crossRepo)) {
@@ -3460,7 +3463,11 @@ function Format-ParkComment {
         .OUTPUTS
             The comment body, a single string.
     #>
-    param([Parameter(Mandatory = $true)][string]$Reason, [AllowNull()][AllowEmptyString()][string]$Decider = '')
+    param(
+        [Parameter(Mandatory = $true)][string]$Reason,
+        [AllowNull()][AllowEmptyString()][string]$Decider = '',
+        [AllowNull()][AllowEmptyString()][string]$ParkedTag = ''
+    )
     # ONE LINE (Sebastian, #3907): a reason pasted with line breaks would post a comment of several paragraphs.
     $r = ($Reason -replace '\s+', ' ').Trim()
     $r = $r -replace '^(?i:waiting on)\s+', ''
@@ -3468,7 +3475,85 @@ function Format-ParkComment {
     $body = 'Parked by a sweep: waiting on ' + $r
     $d = ([string]$Decider).Trim() -replace '^@', ''
     if ($d) { $body += " Decider: @$d." }
+    # A REVIEW PARK RECORDS WHO BUILT IT (#4400). -Park releases the claim marker, so hours later the approval's
+    # -Verify finds nobody holding the issue and refuses the tag that parked it. The hidden marker AFTER the
+    # sentences keeps the "waiting on" clause untouched; Get-ReviewParkRecords reads it with the claim marker's
+    # own author and edit checks.
+    $t = ([string]$ParkedTag).Trim()
+    if ($t) { $body += " <!-- parked-tag: $t -->" }
     return $body
+}
+
+function Get-ReviewParkRecords {
+    <#
+        .SYNOPSIS
+            The parked-tag markers on an issue (#4400): which tag parked it for review, from a
+            `gh issue view --json comments` payload.
+
+        .DESCRIPTION
+            THE SAME DISCIPLINE AS A CLAIM MARKER, because it is read by the same function: Get-ClaimRecords
+            with the marker name 'parked-tag' drops a marker whose author is not its tag's account (#2399),
+            drops an edited comment (#2402), skips malformed records and never returns the body.
+
+        .OUTPUTS
+            Records (Tag, Author, CreatedAt, Id) in the order the tracker returned them. Empty for none.
+    #>
+    param([string]$Json)
+    return @(Get-ClaimRecords -Json $Json -Marker @('parked-tag'))
+}
+
+function Get-LatestReviewParkTag {
+    <#
+        .SYNOPSIS
+            The tag of the MOST RECENT review park (#4400), or '' when there is none.
+
+        .DESCRIPTION
+            ONLY THE LAST PARK COUNTS: an issue parked, resumed by one tag and parked again by another is
+            now that other tag's. Latest by createdAt; on a tie (or a missing timestamp) the later record in
+            the tracker's order wins.
+    #>
+    param([AllowNull()][object[]]$Records = @())
+    $latest = $null
+    foreach ($r in @(@($Records) | Where-Object { $_ })) {
+        if ($null -eq $latest -or [string]$r.CreatedAt -ge [string]$latest.CreatedAt) { $latest = $r }
+    }
+    if ($null -eq $latest) { return '' }
+    return [string]$latest.Tag
+}
+
+function Get-ReviewParkVerdict {
+    <#
+        .SYNOPSIS
+            Whether -Verify may answer [OK] for an issue this tag parked for review and then released (#4400).
+
+        .DESCRIPTION
+            -Park RELEASES THE CLAIM, so the claim verdict alone reads "nobody holds it" for the tag that
+            built the branch. Three things must all hold: the issue carries awaiting-review-dev or
+            awaiting-review-client NOW, nobody else holds a claim marker, and the latest parked-tag record
+            is this tag. Anything else leaves the [NO] unchanged.
+
+        .PARAMETER ClaimRecords
+            Get-ClaimRecords' answer for the issue.
+
+        .PARAMETER ParkRecords
+            Get-ReviewParkRecords' answer for the issue.
+
+        .OUTPUTS
+            $true when this tag's own review park may be resumed; else $false.
+    #>
+    param(
+        [string]$Tag,
+        [AllowNull()][string[]]$Labels = @(),
+        [AllowNull()][object[]]$ClaimRecords = @(),
+        [AllowNull()][object[]]$ParkRecords = @()
+    )
+    $mine = ([string]$Tag).Trim()
+    if (-not $mine) { return $false }
+    $parkedForReview = @(@($Labels) | Where-Object { [string]$_ -ieq 'awaiting-review-dev' -or [string]$_ -ieq 'awaiting-review-client' }).Count -gt 0
+    if (-not $parkedForReview) { return $false }
+    $others = @(@($ClaimRecords) | Where-Object { $_ -and ([string]$_.Tag).Trim() -ine $mine })
+    if ($others.Count -gt 0) { return $false }
+    return ((Get-LatestReviewParkTag -Records $ParkRecords) -ieq $mine)
 }
 
 function Test-DeciderLogin {

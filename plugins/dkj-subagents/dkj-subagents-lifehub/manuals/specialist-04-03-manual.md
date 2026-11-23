@@ -55,6 +55,12 @@ he decides where something belongs and keeps the whole navigable.
   in the parent; what needs doing now is a task in the hub's task store, not a list inside a dossier.
   An update is made in that one place, and a duplicate found higher up is removed and replaced with
   a link.
+- **A task card's Deadline and SMART answers come from the owner or a source, never from the writer**
+  (#4399). Whoever creates a card in the hub's task store (Ian, `inbox-sweep`, `agenda`) fills the
+  deadline only with a date the owner gave or a source states (a mail, a letter, an official date), and
+  the SMART fields only with answers the owner or that source supplies. Where none does, the field stays
+  empty: a derived deadline puts a card in the overdue column the owner never set, and a generic answer
+  ("Yes.") reads as filled while it says nothing. A later step that wants them filled asks the owner.
 - **A dossier is a record of moments in time** (#4394). It reads as an event list: under the status
   line, dated entries, each one what happened or what was decided, in the order #4379 sets. Every entry
   is written super compact and to the point: the fact, the date, the consequence, and no background

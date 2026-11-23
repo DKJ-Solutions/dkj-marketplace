@@ -2084,6 +2084,40 @@ Write-Host ''
 Assert-True ((Format-ParkComment -Reason 'the choice of X' -Decider 'alejandro-x') -ceq 'Parked by a sweep: waiting on the choice of X. Decider: @alejandro-x.') 'a decider is a sentence after the clause'
 Assert-True ((Format-ParkComment -Reason 'the choice of X' -Decider '@alejandro-x') -ceq 'Parked by a sweep: waiting on the choice of X. Decider: @alejandro-x.') 'with or without its @'
 Assert-True ((Format-ParkComment -Reason 'the choice of X' -Decider '') -ceq 'Parked by a sweep: waiting on the choice of X.') 'no decider leaves the comment as before'
+# --- a review park records its tag, so -Verify can answer for it (#4400) ---
+Assert-True ((Format-ParkComment -Reason 'the owner''s look' -ParkedTag 'box/some-dev') -ceq 'Parked by a sweep: waiting on the owner''s look. <!-- parked-tag: box/some-dev -->') 'the marker follows the sentence, only with -ParkedTag'
+Assert-True ((Format-ParkComment -Reason 'the owner''s look' -ParkedTag '') -ceq (Format-ParkComment -Reason 'the owner''s look')) 'no tag leaves the comment as before'
+Assert-True ((Format-ParkComment -Reason 'X' -Decider 'a-dev' -ParkedTag 'box/some-dev') -ceq 'Parked by a sweep: waiting on X. Decider: @a-dev. <!-- parked-tag: box/some-dev -->') 'the marker comes after the decider sentence'
+$tagRefs = Get-ParkingWaitReferences -Comments @([pscustomobject]@{ body = (Format-ParkComment -Reason '#12''s pull request' -ParkedTag 'box/some-dev') })
+Assert-True (@($tagRefs.Issues).Count -eq 1 -and @($tagRefs.Branches).Count -eq 0) 'the marker is outside the clause stale-park reads (no branch read out of the tag)'
+$askRefs = Get-ParkingWaitReferences -Comments @([pscustomobject]@{ body = (Format-ParkComment -Reason '#12''s pull request?' -ParkedTag 'box/some-dev') })
+Assert-True (@($askRefs.Issues).Count -eq 1 -and @($askRefs.Branches).Count -eq 0 -and @($askRefs.Repos).Count -eq 0) 'a reason ending in "?" does not run on into the marker either'
+$mk = { param($body, $author, $at, $edited) [pscustomobject]@{ body = $body; author = [pscustomobject]@{ login = $author }; createdAt = $at; includesCreatedEdit = $edited; id = "c-$at" } }
+$pj = @{ comments = @(
+    (& $mk 'Parked by a sweep: waiting on X. <!-- parked-tag: box/first-dev -->' 'first-dev' '2026-11-01T10:00:00Z' $false),
+    (& $mk 'Parked by a sweep: waiting on X. <!-- parked-tag: box/some-dev -->' 'some-dev' '2026-11-02T10:00:00Z' $false),
+    (& $mk 'Parked by a sweep: waiting on X. <!-- parked-tag: box/forged -->' 'someone-else' '2026-11-03T10:00:00Z' $false),
+    (& $mk 'Parked by a sweep: waiting on X. <!-- parked-tag: box/edited -->' 'edited' '2026-11-04T10:00:00Z' $true),
+    (& $mk 'Picked up by box/some-dev -- an automated sweep. <!-- claim-tag: box/some-dev -->' 'some-dev' '2026-11-05T10:00:00Z' $false)
+) } | ConvertTo-Json -Depth 6
+$parkRecs = @(Get-ReviewParkRecords -Json $pj)
+Assert-True ($parkRecs.Count -eq 2) 'the reader drops a forged author, an edited comment and a claim marker'
+Assert-True ((Get-LatestReviewParkTag -Records $parkRecs) -ceq 'box/some-dev') 'the latest park counts'
+Assert-True (@($parkRecs | Where-Object { $_.PSObject.Properties['Body'] }).Count -eq 0) 'the body is never returned'
+Assert-True (@(Get-ReviewParkRecords -Json '').Count -eq 0 -and @(Get-ReviewParkRecords -Json 'not json').Count -eq 0) 'empty and malformed input read as no park'
+Assert-True ((Get-LatestReviewParkTag -Records @()) -ceq '') 'no record is no tag'
+$ownClaim = @([pscustomobject]@{ Tag = 'box/some-dev'; Author = 'some-dev'; CreatedAt = ''; Id = '' })
+$rivalClaim = @([pscustomobject]@{ Tag = 'box/rival'; Author = 'rival'; CreatedAt = ''; Id = '' })
+Assert-True (Get-ReviewParkVerdict -Tag 'box/some-dev' -Labels @('awaiting-review-dev') -ClaimRecords @() -ParkRecords $parkRecs) 'verify: the tag that parked it, label standing, nobody holding'
+Assert-True (Get-ReviewParkVerdict -Tag 'box/some-dev' -Labels @('bug', 'awaiting-review-client') -ClaimRecords @() -ParkRecords $parkRecs) 'verify: the client review label counts too'
+Assert-True (-not (Get-ReviewParkVerdict -Tag 'box/first-dev' -Labels @('awaiting-review-dev') -ClaimRecords @() -ParkRecords $parkRecs)) 'verify: an earlier park of another tag does not count'
+Assert-True (-not (Get-ReviewParkVerdict -Tag 'box/some-dev' -Labels @('awaiting-decision-dev') -ClaimRecords @() -ParkRecords $parkRecs)) 'verify: another parking label is no review park'
+Assert-True (-not (Get-ReviewParkVerdict -Tag 'box/some-dev' -Labels @() -ClaimRecords @() -ParkRecords $parkRecs)) 'verify: no label, the review is over'
+Assert-True (-not (Get-ReviewParkVerdict -Tag 'box/some-dev' -Labels @('awaiting-review-dev') -ClaimRecords $rivalClaim -ParkRecords $parkRecs)) 'verify: another tag holding a claim refuses'
+Assert-True (Get-ReviewParkVerdict -Tag 'box/some-dev' -Labels @('awaiting-review-dev') -ClaimRecords $ownClaim -ParkRecords $parkRecs) 'verify: its own marker does not block'
+Assert-True (-not (Get-ReviewParkVerdict -Tag 'box/some-dev' -Labels @('awaiting-review-dev') -ClaimRecords @() -ParkRecords @())) 'verify: no park record refuses'
+Assert-True (-not (Get-ReviewParkVerdict -Tag '' -Labels @('awaiting-review-dev') -ClaimRecords @() -ParkRecords $parkRecs)) 'verify: no tag refuses'
+Assert-True ($body -match 'Format-ParkComment -Reason \$Reason -Decider \$Decider -ParkedTag \$parkedTag' -and $body -match "\`$Park -like 'awaiting-review-\*'") 'the park passes its tag only for a review label'
 $deciderRefs = Get-ParkingWaitReferences -Comments @([pscustomobject]@{ body = (Format-ParkComment -Reason '#12''s pull request' -Decider 'some-dev') })
 Assert-True (@($deciderRefs.Issues).Count -eq 1) 'the decider sentence is outside the clause stale-park reads'
 Assert-True (Test-DeciderLogin -Login 'DaveKJohn') 'a login passes'
