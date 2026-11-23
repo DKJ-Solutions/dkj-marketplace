@@ -41,17 +41,29 @@
 
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] Ian's manual (`specialist-04-03-manual.md`) carries "one detail, one place" under his hard rules:
+  a detail lives in the deepest dossier it is about, a parent introduces and links, a stray detail gets
+  a child of its own, open work is a task, and a duplicate higher up is replaced with a link.
 
 ### TEST
 
+- [x] Prose-only change to a manual; the gates `ship-pr` runs (plugin integrity, the suites) are the check.
+
 ### DEPLOY: docs/4378-one-detail-one-place
 
-**Score:**
+Ian's manual in `dkj-subagents-lifehub` gains the hard rule "one detail, one place": every detail lives
+in exactly one dossier, the deepest one it is about, and a parent dossier only introduces and links to its
+children (#4378).
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+In a life hub, a parent dossier no longer repeats its children's amounts, dates, balances or open points.
+Ian puts the detail in the child and a link in the parent, so the hub stops contradicting itself when
+a child is updated and a reader no longer has to guess which copy is true.
+
+**Score:** 3
 
 #### Pull Request
 
