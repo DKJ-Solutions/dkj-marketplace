@@ -39,21 +39,32 @@
 
 ### PLAN
 
+The first real `tip-check` run hit an Instagram carousel whose tips sat on the slides, behind a consent
+dialog that the read-only rule rightly forbids dismissing (#4410). Step 1 now names the fallback the same
+run measured: ask for every slide at once, or judge at post level and say the slides were unread.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `tip-check` step 1: a bullet for tips that sit in unreachable images, covering the all-slides screenshot ask, the post-level fallback and the card note. The no-click rule is unchanged
 
 ### TEST
 
+- [x] Doc-only change; the gates `ship-pr` runs cover the links and the plugin integrity
+
 ### DEPLOY: docs/4410-tip-check-image-tips
 
-**Score:**
+`tip-check` now says what to do when a post's tips are in its images: ask the owner for all the
+slides at once, or judge the caption and note that the slides were unread (#4410).
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+Checking a carousel post no longer stalls, and the owner no longer has to send ten separate
+screenshots. The skill asks for all the slides in one go.
+
+**Score:** 2
 
 #### Pull Request
 
 tip-check: what to do when a post's tips sit in its images
-
