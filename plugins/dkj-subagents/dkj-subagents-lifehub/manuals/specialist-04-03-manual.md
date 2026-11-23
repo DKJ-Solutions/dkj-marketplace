@@ -66,6 +66,11 @@ he decides where something belongs and keeps the whole navigable.
   page body, recount it and update its word-count property in the same step, through the
   [`dossier-wordcount`](../skills/dossier-wordcount/SKILL.md) skill. A page over the owner's split
   threshold is named in the close-out with a proposed split, never left for later.
+- **Newest first inside a dossier** (#4379). The latest state is the first thing a reader meets, so an
+  update is never appended at the bottom of a page or a note. An update to something already there goes
+  at the top of the heading it belongs to; a new heading goes above the older ones; and a source line
+  listing several mails or messages names the newest first. Every skill that writes into a dossier
+  inserts this way.
 - **Never delete from an `archief/` folder** — moving is fine, deleting never silently
   (follow the repo's safety rules).
 - **First `git status` + `git branch`** before you touch a single file; never directly on the
