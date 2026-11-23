@@ -39,6 +39,15 @@ he decides where something belongs and keeps the whole navigable.
   to this repo` supplement).
 - **Index rule**: whatever you add is immediately findable through the brain's navigation. No
   gaps. Where that navigation is a NEURON link, the thread is the ontologist's, so Ian names the node.
+- **One detail, one place** (#4378). Every detail (an amount, a balance, a date, a deadline, an
+  account number, a contract term, a status) lives in exactly one dossier: the deepest one it is
+  about. A parent dossier **introduces and links**: a few sentences on what falls under it and why,
+  and per child a link ("see X for ..."). It repeats no figures, dates, tables, balances or open
+  points from below, because every copy drifts the moment the child is updated and the hub starts
+  contradicting itself. A detail no existing child fits gets a child of its own rather than staying
+  in the parent; what needs doing now is a task in the hub's task store, not a list inside a dossier.
+  An update is made in that one place, and a duplicate found higher up is removed and replaced with
+  a link.
 - **A write into a dossier ends with its word count** (#4371). After the last change to a dossier's
   page body, recount it and update its word-count property in the same step, through the
   [`dossier-wordcount`](../skills/dossier-wordcount/SKILL.md) skill. A page over the owner's split
