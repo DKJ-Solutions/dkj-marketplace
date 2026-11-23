@@ -287,6 +287,7 @@
                                       "bwj-theme-refs.tests.ps1",
                                       "bwj-page-publish.tests.ps1",
                                       "bwj-test-lib.tests.ps1",
+                                      "bwj-go-live.tests.ps1",
                                       "closed-message-sessioncheck.tests.ps1",
                                       "filed-with-stamp.tests.ps1",
                                       "guard-asana-mirror.tests.ps1",

@@ -2,7 +2,37 @@
 
 ## [Unreleased]
 
-**10 / 10 minor entries** <!-- pending-tally -->
+**11 / 11 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/4402-go-live-command · 20261123-120723Z
+
+New `go-live` skill in dkj-repo-workflow-bwj, with a rules lib and a suite; `guard-live-theme` gains a
+rule 6; `live-preflight` gains `-ResultPath` (#4402).
+
+**Score:** 3
+
+#### What makes this deploy extra special
+
+In a store whose live theme deploys from a Git-connected branch, release day is one command once the
+owner has given the word: `go-live -Version X.Y.Z -AppDeploy` (or `-SkipAppDeploy`) with the store's
+live-push marker on that line. It runs the preflight, opens and merges the promotion PR after its
+required checks pass, polls the live theme until every promoted file matches the trunk by content hash,
+deploys the app or writes `hold` for it into the live-push record, cuts the release and tells the tasks,
+and stops at the first refusal with a line to resume from. Before, each of those steps was printed and
+handed back to a person; the promotion alone took three attempts to get past the guards. The live guard
+now refuses a go-live line without the marker.
+
+**Score:** 4
+
+#### Pull Request
+
+One go-live command from the owner's word to a verified, cut release
+
+Plugins: dkj-repo-workflow-bwj, dkj-subagents-shopify
+
+[PR #4438](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4438)
+
+---
 
 ### DEPLOY: docs/4413-option-comparison-criteria · 20261123-115226Z
 
