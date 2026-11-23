@@ -2,7 +2,34 @@
 
 ## [Unreleased]
 
-**7 / 7 minor entries** <!-- pending-tally -->
+**8 / 8 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/4394-dossier-event-list · 20261123-010425Z
+
+Ian's manual and agent def in `dkj-subagents-lifehub` now say what a dossier is: a record of moments in
+time, read as a compact event list of dated entries (what happened or was decided, and its consequence).
+Research, test rounds, comparisons and other extensive material no longer go into the hub. They are
+stored as a document in the owner's long-form folder, which the hub's settings page or lens names
+(typically OneDrive), and the dossier gets one dated entry with the conclusion and a link. The entry
+order is #4379's and is not restated here.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+A life-hub owner's dossiers stay short and scannable, and long research gets a home outside Notion.
+
+**Score:** 3
+
+#### Pull Request
+
+dkj-subagents-lifehub: a dossier is a compact, dated event list -- extensive material lives in OneDrive
+
+Plugins: dkj-subagents-lifehub
+
+[PR #4396](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4396)
+
+---
 
 ### DEPLOY: feat/4382-tip-check-skill · 20261123-004838Z
 
