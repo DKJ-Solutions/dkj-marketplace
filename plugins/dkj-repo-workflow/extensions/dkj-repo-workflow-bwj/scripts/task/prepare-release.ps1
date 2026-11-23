@@ -590,11 +590,13 @@ if (-not $SkipDriftArg -and $store) {
         } catch { $themeCount = -1 }
     }
 }
-$sweepOrder = Get-ThemeSweepOrder -Count $themeCount
+$sweepOrder = Get-ThemeSweepOrder -Count $themeCount -Limit (Resolve-ShopifyThemeLimit -Answer (Get-Seam 'Get-ShopifyThemeLimit' $null))
 if ($SkipDriftArg -or -not $store) {
     Add-Step -Name 'theme slots' -State 'skip' -Detail "the store's theme count was not read$(if ($SkipDriftArg) { ' (-SkipDrift)' } else { ' (no store domain)' }), so the runbook keeps the sweep after the push. live-preflight counts again on the day."
 } elseif ($themeCount -lt 0) {
     Add-Step -Name 'theme slots' -State 'skip' -Detail "$(if ($themeCountNote) { "$themeCountNote " })$($sweepOrder.Message) live-preflight counts again on the day."
+} elseif ($sweepOrder.LimitExceeded) {
+    Add-Step -Name 'theme slots' -State 'attention' -Detail "$($sweepOrder.Message) live-preflight counts again on the day."
 } elseif ($sweepOrder.SweepFirst) {
     Add-Step -Name 'theme slots' -State 'attention' -Detail "$($sweepOrder.Message) The runbook puts the sweep first."
 } else {

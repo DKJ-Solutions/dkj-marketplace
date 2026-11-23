@@ -2,7 +2,113 @@
 
 ## [Unreleased]
 
-**5 / 5 minor entries** <!-- pending-tally -->
+**9 / 9 minor entries** <!-- pending-tally -->
+
+### DEPLOY: fix/4388-theme-limit-seam · 20261123-013008Z
+
+The theme slot checks read the store's theme limit from a new optional seam, `Get-ShopifyThemeLimit`
+in `scripts/repo-config.ps1` (20 unless answered; 100 on Shopify Plus), and a store already holding
+more themes than the limit is reported as a wrong limit instead of refused as full (#4388).
+
+**Score:** 3
+
+#### What makes this deploy extra special
+
+A Shopify Plus store with more than 20 themes no longer has its live backup refused, and is no longer
+told to delete themes before a push. Answer `Get-ShopifyThemeLimit` with 100 in such a store to get
+the right free-slot count back.
+
+**Score:** 4
+
+#### Pull Request
+
+Theme slot checks read the store's theme limit from a consumer seam instead of hardcoding 20
+
+Plugins: dkj-repo-workflow-bwj, dkj-subagents-shopify
+
+[PR #4395](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4395)
+
+---
+
+### DEPLOY: feat/4394-dossier-event-list · 20261123-010425Z
+
+Ian's manual and agent def in `dkj-subagents-lifehub` now say what a dossier is: a record of moments in
+time, read as a compact event list of dated entries (what happened or was decided, and its consequence).
+Research, test rounds, comparisons and other extensive material no longer go into the hub. They are
+stored as a document in the owner's long-form folder, which the hub's settings page or lens names
+(typically OneDrive), and the dossier gets one dated entry with the conclusion and a link. The entry
+order is #4379's and is not restated here.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+A life-hub owner's dossiers stay short and scannable, and long research gets a home outside Notion.
+
+**Score:** 3
+
+#### Pull Request
+
+dkj-subagents-lifehub: a dossier is a compact, dated event list -- extensive material lives in OneDrive
+
+Plugins: dkj-subagents-lifehub
+
+[PR #4396](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4396)
+
+---
+
+### DEPLOY: feat/4382-tip-check-skill · 20261123-004838Z
+
+A new core-team skill, `tip-check`, owned by Rebecca with Marlowe red-teaming. Rebecca's and Marlowe's
+manuals and the plugin description name it, and the lifehub `ai-radar` skill hands its verdict pass to it.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+Share a tip from your feed (a post, a link, a pasted text) and ask whether it is worth it: `tip-check`
+holds it against your own setup (your `.claude/`, your enabled plugins, and Claude Code's own features),
+cites what you already have, asks whether the problem actually occurs for you, counts the cost, and
+advises Build, Later or Skip. Marlowe then tries to prove that advice wrong before you see it. Gaps worth
+building are filed as a feature issue.
+
+**Score:** 3
+
+#### Pull Request
+
+tip-check skill in the core team
+
+Plugins: dkj-subagents-alpha, dkj-subagents-lifehub
+
+[PR #4390](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4390)
+
+---
+
+### DEPLOY: docs/4378-one-detail-one-place · 20261123-003436Z
+
+Ian's manual in `dkj-subagents-lifehub` gains the hard rule "one detail, one place": every detail lives
+in exactly one dossier, the deepest one it is about, and a parent dossier only introduces and links to its
+children (#4378).
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+In a life hub, a parent dossier no longer repeats its children's amounts, dates, balances or open points.
+Ian puts the detail in the child and a link in the parent, so the hub stops contradicting itself when
+a child is updated and a reader no longer has to guess which copy is true.
+
+**Score:** 3
+
+#### Pull Request
+
+dkj-subagents-lifehub: one detail, one place
+
+Plugins: dkj-subagents-lifehub
+
+[PR #4383](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4383)
+
+---
 
 ### DEPLOY: fix/4375-branch-doc-sibling-folder · 20261120-174529Z
 

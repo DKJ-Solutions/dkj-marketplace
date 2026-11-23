@@ -229,7 +229,7 @@ $seam = & {
     $answers = @{
         LiveThemeId = ''; StoreDomain = ''; TrunkIsLive = $true; Trunk = ''; SyncPrefix = ''
         LintScript = ''; TestCommands = @(); ChangelogPath = ''; DriftCheck = ''; DeleteMarker = ''
-        DeployBranch = ''; AppRoot = ''
+        DeployBranch = ''; AppRoot = ''; ThemeLimit = $null
     }
     $cfg = Join-Path $args[0] 'scripts\repo-config.ps1'
     if (Test-Path -LiteralPath $cfg -PathType Leaf) {
@@ -259,6 +259,8 @@ $seam = & {
     # THE APP ROOT (#3174): '' is a store with no Shopify app; a relative path is the folder that
     # `shopify app deploy` runs against, whose changes no theme push carries.
     if (Test-FunctionDefined 'Get-ShopifyAppRoot')          { $answers.AppRoot       = [string](Get-ShopifyAppRoot) }
+    # THE THEME LIMIT (#4388): 20 unless the store answers its plan's number (100 on Shopify Plus).
+    if (Test-FunctionDefined 'Get-ShopifyThemeLimit')       { $answers.ThemeLimit    = Get-ShopifyThemeLimit }
     [pscustomobject]$answers
 } $repoRoot
 
@@ -734,10 +736,10 @@ if ($null -eq $themes) {
 
 # THE SWEEP'S PLACE IN THE ORDER, read off the same list (#4157). At or near Shopify's theme limit the sweep
 # is not aftercare: the backup at step 7 needs a free slot, so the sweep has to run before this preflight.
-$sweepOrder = Get-ThemeSweepOrder -Count $(if ($null -eq $themes) { -1 } else { @($themes).Count })
+$sweepOrder = Get-ThemeSweepOrder -Count $(if ($null -eq $themes) { -1 } else { @($themes).Count }) -Limit (Resolve-ShopifyThemeLimit -Answer $seam.ThemeLimit)
 if ($sweepOrder.Full) {
     Add-Step -Name 'theme slots' -State 'refuse' -Detail $sweepOrder.Message
-} elseif ($sweepOrder.SweepFirst) {
+} elseif ($sweepOrder.SweepFirst -or $sweepOrder.LimitExceeded) {
     Add-Step -Name 'theme slots' -State 'warn' -Detail $sweepOrder.Message
 }
 

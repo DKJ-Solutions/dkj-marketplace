@@ -391,17 +391,28 @@ function Get-ThemeSlotVerdict {
         refusal that names the step which frees a slot.
 
         THE LIMIT IS A PARAMETER WITH SHOPIFY'S NUMBER AS ITS DEFAULT, so a test can state it and a change on
-        Shopify's side is one argument, not a hunt.
+        Shopify's side is one argument, not a hunt. 20 holds for Basic, Grow and Advanced; Shopify Plus allows
+        100 (https://help.shopify.com/manual/online-store/themes/adding-themes), so callers pass the store's
+        own limit, read through Resolve-ShopifyThemeLimit (live-push-rules) from the Get-ShopifyThemeLimit
+        seam (#4388).
+
+        A COUNT ABOVE THE LIMIT PROVES THE LIMIT IS WRONG (#4388): a store cannot hold more themes than it
+        allows, so Count -gt Limit is not Full. LimitExceeded is $true, the Message names the seam to
+        answer, and no caller refuses on it. Count -eq Limit stays Full.
     #>
     param(
         [Parameter(Mandatory)][int]$Count,
         [int]$Limit = 20
     )
+    if ($Count -gt $Limit) {
+        return [pscustomobject]@{ Full = $false; LimitExceeded = $true; Count = $Count; Limit = $Limit
+            Message = "the store holds $Count themes, more than the configured limit of $Limit allows, so the limit is not this store's. Answer Get-ShopifyThemeLimit in scripts/repo-config.ps1 (20 for Basic, Grow and Advanced, 100 for Shopify Plus); the backup is not refused on it." }
+    }
     $full = $Count -ge $Limit
     $message = if ($full) {
         "the store is full ($Count/$Limit themes), so Shopify cannot duplicate live into a backup. Sweep spent previews first (the theme-lifecycle skill, sweep-preview-themes), then run this again."
     } else { '' }
-    return [pscustomobject]@{ Full = $full; Count = $Count; Limit = $Limit; Message = $message }
+    return [pscustomobject]@{ Full = $full; LimitExceeded = $false; Count = $Count; Limit = $Limit; Message = $message }
 }
 function Get-ThemeFillVerdict {
     <#
