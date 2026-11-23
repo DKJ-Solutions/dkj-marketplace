@@ -55,125 +55,13 @@
     (inbound #776 and #777), and the command that places it has its own suite in
     adopt-shopify-floor.tests.ps1.
 
+    SPLIT IN TWO (#4430): rule 5's other routes onto the deploy branch (#4329) and group 10, the
+    merged-only live push (#3758), and rule 6, go-live (#4402), are guard-live-theme-deploy.tests.ps1. The setup both share is
+    guard-live-theme-fixture.ps1, which says why the file was cut.
+
     Pure ASCII (repo convention for .ps1).
 #>
-# 'Continue', not 'Stop': the guard writes its refusal to stderr, and PowerShell 5.1 turns native
-# stderr from a child process into a terminating NativeCommandError when the preference is 'Stop'.
-# That stderr IS the expected output of a blocking case, so it must not end the run.
-$ErrorActionPreference = 'Continue'
-
-$RepoRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..\..')).Path
-# Rule 5's fixtures need a git repo, built through the judged helper so a failed git is seen (#1635).
-. (Join-Path $PSScriptRoot '..\lib\fixture-git-lib.ps1')
-$Guard   = Join-Path $RepoRoot 'plugins\dkj-subagents\dkj-subagents-shopify\hooks\guard-live-theme.ps1'
-$Check    = Join-Path $RepoRoot 'plugins\dkj-subagents\dkj-subagents-shopify\hooks\shopify-floor-sessioncheck.ps1'
-# Fixture paths carry $PID: the test gate is a throttled PARALLEL scheduler, so two runs at one fixed
-# temp path tear down each other's tree mid-assert.
-$Fixture  = Join-Path ([System.IO.Path]::GetTempPath()) "guard-live-theme-fixture-$PID-$([guid]::NewGuid().ToString('n'))"
-
-$Utf8NoBom = New-Object System.Text.UTF8Encoding($false)
-$script:pass = 0
-$script:fail = 0
-$LF = "`n"
-$LIVE = '190793613653'
-
-function Assert-Equal {
-    param($Expected, $Actual, [string]$Name)
-    if ($Expected -eq $Actual) {
-        $script:pass++; Write-Host "  [PASS] $Name" -ForegroundColor Green
-    } else {
-        $script:fail++; Write-Host "  [FAIL] $Name`n         expected: '$Expected'`n         got:      '$Actual'" -ForegroundColor Red
-    }
-}
-
-function Assert-True {
-    param([bool]$Condition, [string]$Name)
-    if ($Condition) {
-        $script:pass++; Write-Host "  [PASS] $Name" -ForegroundColor Green
-    } else {
-        $script:fail++; Write-Host "  [FAIL] $Name" -ForegroundColor Red
-    }
-}
-
-function New-FixtureRepo {
-    <# A consuming repo with the seam answers under test, or none at all. #>
-    param([string]$Label, [string]$ConfigBody = $null)
-    $root = Join-Path $Fixture "repo-$Label"
-    if (Test-Path -LiteralPath $root) { Remove-Item -Recurse -Force -LiteralPath $root }
-    New-Item -ItemType Directory -Force -Path (Join-Path $root 'scripts') | Out-Null
-    if ($null -ne $ConfigBody) {
-        [System.IO.File]::WriteAllText((Join-Path $root 'scripts\repo-config.ps1'), $ConfigBody, $Utf8NoBom)
-    }
-    return $root
-}
-
-function Initialize-MergedFixture {
-    <#
-        Turn a fixture repo into a checkout whose theme files ARE the trunk: one commit, with
-        refs/remotes/origin/main pointing at it. Since #3758 an authorised live push is held to
-        origin/<trunk>, so every case that asserts the marker AUTHORISES needs this ground under it.
-        autocrlf is pinned off so the stored bytes are the bytes written, whatever this machine's config.
-    #>
-    param([string]$Root, [string]$Trunk = 'main')
-    New-Item -ItemType Directory -Force -Path (Join-Path $Root 'assets'), (Join-Path $Root 'layout') | Out-Null
-    [System.IO.File]::WriteAllText((Join-Path $Root 'assets\x.css'), "body { color: red; }`n", $Utf8NoBom)
-    [System.IO.File]::WriteAllText((Join-Path $Root 'layout\theme.liquid'), "<html>`n{{ content_for_layout }}`n</html>`n", $Utf8NoBom)
-    Invoke-FixtureGitIn $Root init -q
-    Invoke-FixtureGitIn $Root symbolic-ref HEAD "refs/heads/$Trunk"
-    Invoke-FixtureGitIn $Root config core.autocrlf false
-    Invoke-FixtureGitIn $Root config user.name fixture
-    Invoke-FixtureGitIn $Root config user.email fixture@example.com
-    Invoke-FixtureGitIn $Root add -A
-    Invoke-FixtureGitIn $Root commit -q -m init
-    Invoke-FixtureGitIn $Root update-ref "refs/remotes/origin/$Trunk" HEAD
-}
-
-function Invoke-Guard {
-    <# Returns the exit code. The payload is the shape the harness sends, built rather than typed. #>
-    param([string]$Command, [string]$Root)
-    $payload = @{ tool_name = 'Bash'; tool_input = @{ command = $Command } } | ConvertTo-Json -Compress -Depth 5
-    $prev = $env:CLAUDE_PROJECT_DIR
-    $env:CLAUDE_PROJECT_DIR = $Root
-    try {
-        $payload | & powershell -NoProfile -ExecutionPolicy Bypass -File $Guard 2>&1 | Out-Null
-        return $LASTEXITCODE
-    } finally {
-        if ($null -eq $prev) { Remove-Item Env:\CLAUDE_PROJECT_DIR -ErrorAction SilentlyContinue }
-        else { $env:CLAUDE_PROJECT_DIR = $prev }
-    }
-}
-
-function Get-GuardRefusal {
-    <#
-        The refusal TEXT rather than the exit code. Invoke-Guard discards stderr on purpose -- forty
-        cases care only whether the command was blocked -- but the wording is itself a guard property
-        since inbound #1032, and a sentence nothing asserts is a sentence the next edit removes.
-    #>
-    param([string]$Command, [string]$Root)
-    $payload = @{ tool_name = 'PowerShell'; tool_input = @{ command = $Command } } | ConvertTo-Json -Compress -Depth 5
-    $prev = $env:CLAUDE_PROJECT_DIR
-    $env:CLAUDE_PROJECT_DIR = $Root
-    try {
-        $out = $payload | & powershell -NoProfile -ExecutionPolicy Bypass -File $Guard 2>&1
-        return (($out | ForEach-Object { "$_" }) -join "`n")
-    } finally {
-        if ($null -eq $prev) { Remove-Item Env:\CLAUDE_PROJECT_DIR -ErrorAction SilentlyContinue }
-        else { $env:CLAUDE_PROJECT_DIR = $prev }
-    }
-}
-
-function Invoke-FloorCheck {
-    param([string]$Root)
-    $prev = $env:CLAUDE_PROJECT_DIR
-    $env:CLAUDE_PROJECT_DIR = $Root
-    try {
-        $out = & powershell -NoProfile -ExecutionPolicy Bypass -File $Check 2>&1
-        return [pscustomobject]@{ Code = $LASTEXITCODE; Out = (($out | ForEach-Object { "$_" }) -join "`n") }
-    } finally {
-        if ($null -eq $prev) { Remove-Item Env:\CLAUDE_PROJECT_DIR -ErrorAction SilentlyContinue }
-        else { $env:CLAUDE_PROJECT_DIR = $prev }
-    }
-}
+. (Join-Path $PSScriptRoot 'guard-live-theme-fixture.ps1')
 
 try {
     Write-Host "== guard-live-theme.tests: the live-theme guard and its session check ==" -ForegroundColor Cyan
@@ -542,30 +430,9 @@ function Get-ShopifyThemeDeleteMarker { return 'XOXO-THEME-DELETE-AUTHORIZED' }
     Assert-Equal 0 (Invoke-Guard -Command "perl -e 'system(qq{shopify theme publish --theme 1})'" -Root $both) "wrapper: and 'perl -e' is UNCHANGED -- the residual limit this hook's header states, not a hole the swap opened"
 
     # ----------------------------------------------------------------------------------------------
-    # A MISSING LIB DEGRADES TOWARDS CHECKING, which is where this guard parts company with its sibling
-    # guard-working-copy.ps1: that one exits 0 and says the guard is off, because a working copy can be
-    # restored from origin and a published theme cannot be un-published. Run from a directory with no
-    # scripts\lib beside it, which is exactly what a broken or half-updated install looks like.
-    $noLibDir = Join-Path $Fixture 'nolib\hooks'
-    New-Item -ItemType Directory -Force -Path $noLibDir | Out-Null
-    $noLibGuard = Join-Path $noLibDir 'guard-live-theme.ps1'
-    Copy-Item -LiteralPath $Guard -Destination $noLibGuard -Force
-
-    function Invoke-DegradedGuard {
-        param([string]$Command, [string]$Root = $both)
-        $payload = @{ tool_name = 'Bash'; tool_input = @{ command = $Command } } | ConvertTo-Json -Compress -Depth 5
-        $prev = $env:CLAUDE_PROJECT_DIR
-        $env:CLAUDE_PROJECT_DIR = $Root
-        try {
-            $err = ($payload | & powershell -NoProfile -ExecutionPolicy Bypass -File $noLibGuard 2>&1 | Out-String)
-            return @{ Code = $LASTEXITCODE; Out = $err }
-        } finally {
-            if ($null -eq $prev) { Remove-Item Env:\CLAUDE_PROJECT_DIR -ErrorAction SilentlyContinue }
-            else { $env:CLAUDE_PROJECT_DIR = $prev }
-        }
-    }
-
-    $degraded = Invoke-DegradedGuard -Command 'shopify theme publish --theme 1'
+    # A missing lib degrades towards checking: Invoke-DegradedGuard (guard-live-theme-fixture.ps1) runs
+    # a copy of the guard with no scripts\lib beside it, and says why that is the direction to fail in.
+    $degraded = Invoke-DegradedGuard -Command 'shopify theme publish --theme 1' -Root $both
     Assert-Equal 2 $degraded.Code                             'no lib: a publish is STILL blocked -- the guard degrades, it does not switch off'
     Assert-True ($degraded.Out -match 'DEGRADED')             'no lib: and it says on stderr that it is running degraded'
     Assert-True ($degraded.Out -match 'command-guard-lib')    'no lib: naming the file to reinstall, so the report is actionable'
@@ -573,7 +440,7 @@ function Get-ShopifyThemeDeleteMarker { return 'XOXO-THEME-DELETE-AUTHORIZED' }
     # THE COST OF THAT CHOICE, ASSERTED RATHER THAN LEFT TO BE DISCOVERED. Without the lib there are no
     # exemptions, so writing the rule down is blocked too -- the pre-#769 behaviour. This case passes
     # (exit 0) in every normal install, and group 2 above is what proves it.
-    Assert-Equal 2 (Invoke-DegradedGuard -Command "cat > notes.md <<'EOF'${LF}shopify theme publish --theme 1${LF}EOF").Code 'no lib: and the cost is real -- authoring the rule is blocked too, which is why this is a broken-install path and not a mode anybody runs in'
+    Assert-Equal 2 (Invoke-DegradedGuard -Command "cat > notes.md <<'EOF'${LF}shopify theme publish --theme 1${LF}EOF" -Root $both).Code 'no lib: and the cost is real -- authoring the rule is blocked too, which is why this is a broken-install path and not a mode anybody runs in'
 
     # --- group 9: the same rules through the Admin API -- 'shopify store execute' (#2881) ---------
     # 'shopify store execute --allow-mutations' runs Admin GraphQL, so themePublish or themeFilesUpsert
@@ -587,7 +454,8 @@ function Get-ShopifyThemeDeleteMarker { return 'XOXO-THEME-DELETE-AUTHORIZED' }
     Assert-Equal 2 (Invoke-Guard -Command "$exec --query 'mutation { themeFilesUpsert(themeId: \`"$gid\`", files: []) { job { id } } }'" -Root $configured) 'store execute: a theme write naming the live id is refused'
     Assert-Equal 0 (Invoke-Guard -Command "$exec --query 'mutation { themeFilesUpsert(themeId: \`"gid://shopify/OnlineStoreTheme/987654321\`", files: []) { job { id } } }'" -Root $configured) 'store execute: the same write to a preview theme passes, like a preview push'
     # #3761: unlike rule 3, the marker does NOT let it through -- the content is inline and cannot be held to the trunk.
-    Assert-Equal 2 (Invoke-Guard -Command "$exec --query 'mutation { themeFilesUpsert(themeId: \`"$gid\`", files: []) { job { id } } }' # LIVE-PUSH-AUTHORIZED" -Root $configured) 'store execute: and the live write WITH the marker is refused too -- no marker authorises a live write through the API (#3761)'    Assert-Equal 2 (Invoke-Guard -Command "$exec --query 'mutation { themeFilesUpsert(themeId: \`"gid://shopify/OnlineStoreTheme/987654321\`", files: []) { job { id } } }'" -Root $bare) 'store execute: with no live id configured, any theme write is refused -- nothing can tell it from live'
+    Assert-Equal 2 (Invoke-Guard -Command "$exec --query 'mutation { themeFilesUpsert(themeId: \`"$gid\`", files: []) { job { id } } }' # LIVE-PUSH-AUTHORIZED" -Root $configured) 'store execute: and the live write WITH the marker is refused too -- no marker authorises a live write through the API (#3761)'
+    Assert-Equal 2 (Invoke-Guard -Command "$exec --query 'mutation { themeFilesUpsert(themeId: \`"gid://shopify/OnlineStoreTheme/987654321\`", files: []) { job { id } } }'" -Root $bare) 'store execute: with no live id configured, any theme write is refused -- nothing can tell it from live'
     Assert-Equal 2 (Invoke-Guard -Command "$exec --query 'mutation { themeDelete(id: \`"gid://shopify/OnlineStoreTheme/987654321\`") { deletedThemeId } }'" -Root $configured) 'store execute: themeDelete is refused without the delete seam, like rule 2'
     Assert-Equal 0 (Invoke-Guard -Command "$exec --query 'mutation { themeDelete(id: \`"gid://shopify/OnlineStoreTheme/987654321\`") { deletedThemeId } }' # XOXO-THEME-DELETE-AUTHORIZED" -Root $del) 'store execute: and allowed for a preview with the repo delete marker'
     Assert-Equal 2 (Invoke-Guard -Command "$exec --query 'mutation { themeDelete(id: \`"$gid\`") { deletedThemeId } }' # XOXO-THEME-DELETE-AUTHORIZED" -Root $del) 'store execute: but never for the live id, marker or not'
@@ -638,10 +506,8 @@ function Get-ShopifyThemeDeleteMarker { return 'XOXO-THEME-DELETE-AUTHORIZED' }
     # The seam is answered, so the live theme deploys from 'live' and a push to it IS a live deploy.
     # 'gh pr merge' stays ungated by decision: the deploy ruleset already requires the promotion PR.
     Write-Host "rule 5 -- a git push to the deploy branch of a Git-connected live theme (#3014)" -ForegroundColor Cyan
-    $deployCfg = @"
-function Get-ShopifyLiveThemeId { return '$LIVE' }
-function Get-ShopifyLiveDeployBranch { return 'live' }
-"@
+    # $deployCfg, the answered deploy-branch seam, is guard-live-theme-fixture.ps1's.
+
     $conn = New-FixtureRepo -Label 'conn' -ConfigBody $deployCfg
     Invoke-FixtureGitIn $conn init -q
     Invoke-FixtureGitIn $conn symbolic-ref HEAD refs/heads/feat/x
@@ -711,7 +577,6 @@ function Get-ShopifyLiveDeployBranch { return 'live' }
     New-Item -ItemType Directory -Force -Path $lane | Out-Null
     Invoke-FixtureGitIn $lane init -q
     Invoke-FixtureGitIn $lane symbolic-ref HEAD refs/heads/feat/y
-    $cwdPayload = { param($c, $cwd) @{ tool_name = 'Bash'; cwd = $cwd; tool_input = @{ command = $c } } | ConvertTo-Json -Compress -Depth 5 }
     $prevDir = $env:CLAUDE_PROJECT_DIR
     $env:CLAUDE_PROJECT_DIR = $conn
     try {
@@ -751,311 +616,6 @@ function Get-ShopifyLiveDeployBranch { return 'live' }
     Assert-Equal 2 (Invoke-DegradedGuard -Command 'git push origin main' -Root $conn).Code 'no lib, deploy branch answered: a git push is blocked -- the target cannot be read'
     Assert-Equal 0 (Invoke-DegradedGuard -Command 'git push origin main:live # LIVE-PUSH-AUTHORIZED' -Root $conn).Code 'no lib: and the marker still authorises it'
     Assert-Equal 0 (Invoke-DegradedGuard -Command 'git push origin main' -Root $configured).Code 'no lib, seam unanswered: a git push is untouched'
-
-    # --- rule 5, the other routes onto the deploy branch (#4329) --------------------------------------
-    # The owner reversed #3014's "the promotion PR is deliberately ungated": a PR based on the deploy
-    # branch, a writing gh api call on it and a local write while it is checked out each need the marker.
-    Write-Host "rule 5 -- the promotion PR, gh api and local writes onto the deploy branch (#4329)" -ForegroundColor Cyan
-    $c2 = New-FixtureRepo -Label 'conn-routes' -ConfigBody $deployCfg
-    Invoke-FixtureGitIn $c2 init -q
-    Invoke-FixtureGitIn $c2 symbolic-ref HEAD refs/heads/main
-    $mk5 = '# LIVE-PUSH-AUTHORIZED'
-
-    $routeBlocked = @(
-        @{ n = 'pr create --base live';               c = 'gh pr create --base live --head main --title x' },
-        @{ n = 'pr create --base=live';               c = 'gh pr create --base=live --title x' },
-        @{ n = 'pr create -B live';                   c = 'gh pr create -B live --title x' },
-        @{ n = 'pr create -Blive';                    c = 'gh pr create -Blive --title x' },
-        @{ n = 'pr create -B=live';                   c = 'gh pr create -B=live' },
-        @{ n = 'pr create quoted value';              c = 'gh pr create --base "live" --title x' },
-        @{ n = 'pr create single-quoted =value';      c = "gh pr create --base='live'" },
-        @{ n = 'pr create refs/heads/live';           c = 'gh pr create --base refs/heads/live' },
-        @{ n = 'pr create different case';            c = 'gh pr create --base LIVE' },
-        @{ n = 'pr edit --base live';                 c = 'gh pr edit 12 --base live' },
-        @{ n = 'pr create base from a variable';      c = 'gh pr create --base $B' },
-        @{ n = 'pr create base from a substitution';  c = 'gh pr create --base $(echo live)' },
-        @{ n = 'pr create base in backticks';         c = 'gh pr create --base `echo live`' },
-        @{ n = 'pr create after another command';     c = 'git status && gh pr create --base live' },
-        @{ n = 'pr create wrapped in bash -c';        c = 'bash -c "gh pr create --base live"' },
-        @{ n = 'api POST git/refs/heads/live';        c = 'gh api -X POST repos/o/r/git/refs/heads/live' },
-        @{ n = 'api PATCH git/refs/heads/live';       c = 'gh api --method PATCH repos/o/r/git/refs/heads/live -f sha=abc' },
-        @{ n = 'api -XDELETE';                        c = 'gh api -XDELETE repos/o/r/git/refs/heads/live' },
-        @{ n = 'api --method=put, lowercase';         c = 'gh api --method=put repos/o/r/git/refs/heads/live' },
-        @{ n = 'api git/refs with ref= field';        c = 'gh api repos/o/r/git/refs -f ref=refs/heads/live -f sha=abc' },
-        @{ n = 'api git/refs with bare-name ref';     c = 'gh api repos/o/r/git/refs --raw-field ref=live -f sha=abc' },
-        @{ n = 'api branches/live/rename';            c = 'gh api -X POST repos/o/r/branches/live/rename -f new_name=old' },
-        @{ n = 'api branches/live/protection PUT';    c = 'gh api -X PUT repos/o/r/branches/live/protection --input p.json' },
-        @{ n = 'api rename onto the deploy name';     c = 'gh api repos/o/r/branches/main/rename -f new_name=live' },
-        @{ n = 'api merges with base=live';           c = 'gh api repos/o/r/merges -f base=live -f head=main' },
-        @{ n = 'api implicit POST, branch= field';    c = 'gh api repos/o/r/anything --field branch=live' },
-        @{ n = 'api pulls PATCH base=live';           c = 'gh api -X PATCH repos/o/r/pulls/3 -f base=live' },
-        @{ n = 'api --input on git/refs';             c = 'gh api repos/o/r/git/refs --input body.json' },
-        @{ n = 'api field value from a variable';     c = 'gh api repos/o/r/git/refs -f ref=$R' },
-        @{ n = 'api path with a leading slash';       c = 'gh api -X DELETE /repos/o/r/git/refs/heads/Live' }
-    )
-    foreach ($case in $routeBlocked) {
-        Assert-Equal 2 (Invoke-Guard -Command $case.c -Root $c2) "deploy route blocked: $($case.n)"
-        Assert-Equal 0 (Invoke-Guard -Command "$($case.c) $mk5" -Root $c2) "deploy route authorised by the marker: $($case.n)"
-    }
-
-    $routeAllowed = @(
-        @{ n = 'pr create --base main';               c = 'gh pr create --base main --title x' },
-        @{ n = 'pr create with no base';              c = 'gh pr create --title "go live" --body "live"' },
-        @{ n = 'pr create base that only contains it'; c = 'gh pr create --base feat/live-preview' },
-        @{ n = 'pr edit title only';                  c = 'gh pr edit 12 --title "promote to live"' },
-        @{ n = 'pr merge stays ungated';              c = 'gh pr merge 12 --merge' },
-        @{ n = 'pr merge --admin on the deploy PR';   c = 'gh pr merge 12 --merge --admin' },
-        @{ n = 'pr view';                             c = 'gh pr view 12 --json baseRefName' },
-        @{ n = 'api GET branches/live';               c = 'gh api repos/o/r/branches/live' },
-        @{ n = 'api explicit GET with a field';       c = 'gh api -X GET repos/o/r/branches/live -f per_page=1' },
-        @{ n = 'api GET git/refs/heads/live';         c = 'gh api repos/o/r/git/refs/heads/live' },
-        @{ n = 'api write on branches/main/...';      c = 'gh api -X POST repos/o/r/branches/main/rename -f new_name=trunk' },
-        @{ n = 'api write on git/refs/heads/main';    c = 'gh api -X PATCH repos/o/r/git/refs/heads/main -f sha=abc' },
-        @{ n = 'api create ref for another branch';   c = 'gh api repos/o/r/git/refs -f ref=refs/heads/feat/x -f sha=abc' },
-        @{ n = 'api branch that only starts with it'; c = 'gh api -X DELETE repos/o/r/git/refs/heads/live2' },
-        @{ n = 'api issue comment mentioning live';   c = 'gh api repos/o/r/issues/1/comments -f body="push to live"' },
-        @{ n = 'a mention in echo';                   c = 'echo "gh pr create --base live"' },
-        @{ n = 'a mention in a heredoc';              c = "cat > notes.md <<'EOF'${LF}gh pr create --base live${LF}gh api -X DELETE repos/o/r/git/refs/heads/live${LF}EOF" },
-        @{ n = 'a mention in a grep';                 c = "grep -n 'gh pr create --base live' docs/*.md" },
-        @{ n = 'a mention after the comment mark';    c = 'gh pr create --base main # --base live' },
-        @{ n = 'gh issue create naming it';           c = 'gh issue create --title "pr create --base live"' }
-    )
-    foreach ($case in $routeAllowed) { Assert-Equal 0 (Invoke-Guard -Command $case.c -Root $c2) "deploy route allowed: $($case.n)" }
-
-    # Local writes while HEAD is the deploy branch. HEAD is main here, so every one passes first.
-    $localWrites = @('git commit -m x', 'git commit --amend --no-edit', 'git merge main', 'git cherry-pick abc', 'git revert abc', 'git am p.patch', 'git rebase main', 'git pull')
-    foreach ($w in $localWrites) { Assert-Equal 0 (Invoke-Guard -Command $w -Root $c2) "local write on HEAD=main passes: $w" }
-    Invoke-FixtureGitIn $c2 symbolic-ref HEAD refs/heads/live
-    foreach ($w in $localWrites) {
-        Assert-Equal 2 (Invoke-Guard -Command $w -Root $c2) "local write on HEAD=live blocked: $w"
-        Assert-Equal 0 (Invoke-Guard -Command "$w $mk5" -Root $c2) "local write on HEAD=live authorised by the marker: $w"
-    }
-    foreach ($r in @('git status', 'git log --oneline', 'git diff', 'git fetch origin', 'git checkout main', 'git branch -a', 'git merge-base main live', 'git stash list', 'git add -A')) {
-        Assert-Equal 0 (Invoke-Guard -Command $r -Root $c2) "read-only or non-writing git on HEAD=live passes: $r"
-    }
-    Assert-Equal 2 (Invoke-Guard -Command 'git status && git commit -m x' -Root $c2) 'local write on HEAD=live: after a harmless command'
-    Assert-Equal 2 (Invoke-Guard -Command 'git -c user.name=x commit -m x' -Root $c2) 'local write on HEAD=live: with -c config in front'
-    Assert-Equal 0 (Invoke-Guard -Command 'echo "git commit -m x"' -Root $c2) 'local write: a mention in echo is not a commit'
-    Assert-Equal 0 (Invoke-Guard -Command 'git grep -n commit' -Root $c2) 'local write: git grep is not a commit'
-    Invoke-FixtureGitIn $c2 symbolic-ref HEAD refs/heads/main
-    # 'Elsewhere' makes HEAD unknowable, so the write subcommands are refused even on a clean trunk.
-    Assert-Equal 2 (Invoke-Guard -Command 'git -C x commit -m y' -Root $c2) 'local write: git -C x commit is refused, HEAD cannot be told'
-    Assert-Equal 2 (Invoke-Guard -Command 'git --git-dir=x/.git merge main' -Root $c2) 'local write: --git-dir merge is refused'
-    Assert-Equal 2 (Invoke-Guard -Command 'cd sub && git commit -m y' -Root $c2) 'local write: after a cd the commit is refused'
-    Assert-Equal 0 (Invoke-Guard -Command 'cd sub && git status' -Root $c2) 'local write: but a read after a cd passes'
-    Assert-Equal 0 (Invoke-Guard -Command 'git -C x commit -m y # LIVE-PUSH-AUTHORIZED' -Root $c2) 'local write: git -C x commit with the marker passes'
-    # No readable HEAD: refused for the write subcommands, passes for a read.
-    $c3 = New-FixtureRepo -Label 'conn-routes-nogit' -ConfigBody $deployCfg
-    Assert-Equal 2 (Invoke-Guard -Command 'git commit -m x' -Root $c3) 'local write: HEAD cannot be read -> refused'
-    Assert-Equal 0 (Invoke-Guard -Command 'git status' -Root $c3) 'local write: HEAD cannot be read, a read still passes'
-
-    # HEAD is read from the payload cwd: a lane on a work branch commits while the project root sits on live.
-    Invoke-FixtureGitIn $c2 symbolic-ref HEAD refs/heads/live
-    Invoke-FixtureGitIn $lane symbolic-ref HEAD refs/heads/feat/y
-    $prevDir = $env:CLAUDE_PROJECT_DIR
-    $env:CLAUDE_PROJECT_DIR = $c2
-    try {
-        (& $cwdPayload 'git commit -m x' $lane) | & powershell -NoProfile -ExecutionPolicy Bypass -File $Guard 2>&1 | Out-Null
-        Assert-Equal 0 $LASTEXITCODE 'local write: a commit from a lane on a work branch passes, though the project root sits on the deploy branch'
-    } finally {
-        if ($null -eq $prevDir) { Remove-Item Env:\CLAUDE_PROJECT_DIR -ErrorAction SilentlyContinue } else { $env:CLAUDE_PROJECT_DIR = $prevDir }
-    }
-
-    # One plain 'git -C <dir>' is read where it lands rather than refused: the root sits on live here.
-    Assert-Equal 0 (Invoke-Guard -Command "git -C `"$lane`" commit -m x" -Root $c2) 'local write: git -C into a checkout on a work branch passes, though the root sits on the deploy branch'
-    Invoke-FixtureGitIn $lane symbolic-ref HEAD refs/heads/live
-    Assert-Equal 2 (Invoke-Guard -Command "git -C `"$lane`" commit -m x" -Root $c2) 'local write: git -C into a checkout ON the deploy branch is blocked'
-    Invoke-FixtureGitIn $lane symbolic-ref HEAD refs/heads/feat/y
-    Assert-Equal 2 (Invoke-Guard -Command "git -C `"$lane`" -C sub commit -m x" -Root $c2) 'local write: two -C cannot be placed and is refused'
-    Assert-Equal 2 (Invoke-Guard -Command 'git -C $D commit -m x' -Root $c2) 'local write: a -C the shell expands is refused'
-
-    # The seam unanswered, a placeholder, or no config: none of this exists.
-    $unans = New-FixtureRepo -Label 'conn-routes-unanswered' -ConfigBody "function Get-ShopifyLiveThemeId { return '$LIVE' }"
-    Invoke-FixtureGitIn $unans init -q
-    Invoke-FixtureGitIn $unans symbolic-ref HEAD refs/heads/live
-    foreach ($c in @('gh pr create --base live', 'gh pr edit 3 --base live', 'gh api -X POST repos/o/r/git/refs/heads/live', 'gh api repos/o/r/git/refs -f ref=refs/heads/live', 'git commit -m x', 'git merge main', 'git -C x commit -m y')) {
-        Assert-Equal 0 (Invoke-Guard -Command $c -Root $unans) "seam unanswered: not gated: $c"
-        Assert-Equal 0 (Invoke-Guard -Command $c -Root $connPlaceholder) "seam placeholder: not gated: $c"
-    }
-
-    # A configured marker narrows these routes exactly as it narrows the push.
-    Assert-Equal 2 (Invoke-Guard -Command 'gh pr create --base live # LIVE-PUSH-AUTHORIZED' -Root $connNarrow) 'deploy route: the default marker no longer authorises where the repo names its own'
-    Assert-Equal 0 (Invoke-Guard -Command 'gh pr create --base live # SWB-LIVE-PUSH-AUTHORIZED' -Root $connNarrow) 'deploy route: the repo marker authorises'
-
-    # The refusal names the branch, says why, and says how to authorise.
-    $refusal = Get-GuardRefusal -Command 'gh pr create --base live' -Root $c2
-    Assert-True ($refusal -match "'live'") 'deploy route: the refusal names the deploy branch'
-    Assert-True ($refusal -match 'live deploy') 'deploy route: and says the promotion is a live deploy'
-    Assert-True ($refusal -match '# LIVE-PUSH-AUTHORIZED') 'deploy route: and tells how to authorise'
-
-    # Degraded (no lib): a PR with a base, or a gh api naming the deploy branch, needs the marker.
-    Assert-Equal 2 (Invoke-DegradedGuard -Command 'gh pr create --base main' -Root $conn).Code 'no lib: gh pr create with a base is blocked -- the base cannot be read'
-    Assert-Equal 2 (Invoke-DegradedGuard -Command 'gh pr edit 3 -B main' -Root $conn).Code 'no lib: gh pr edit -B is blocked too'
-    Assert-Equal 0 (Invoke-DegradedGuard -Command 'gh pr create --base main # LIVE-PUSH-AUTHORIZED' -Root $conn).Code 'no lib: and the marker authorises it'
-    Assert-Equal 0 (Invoke-DegradedGuard -Command 'gh pr create --title x' -Root $conn).Code 'no lib: a PR with no base flag passes'
-    Assert-Equal 2 (Invoke-DegradedGuard -Command 'gh api -X POST repos/o/r/git/refs/heads/live' -Root $conn).Code 'no lib: gh api naming the deploy branch is blocked'
-    Assert-Equal 0 (Invoke-DegradedGuard -Command 'gh api repos/o/r/branches/main' -Root $conn).Code 'no lib: gh api not naming it passes'
-    Assert-Equal 0 (Invoke-DegradedGuard -Command 'gh pr create --base live' -Root $unans).Code 'no lib, seam unanswered: gh is untouched'
-
-    # --- group 10: an authorised live push carries only what the trunk holds (#3758) --------------
-    # Measured in a consumer: two UNMERGED pull requests went to live with '--only' and the marker, and
-    # live then held work the trunk did not. The marker says somebody meant to push to live; this group
-    # asserts that it no longer decides WHAT -- every file must be what origin/<trunk> holds.
-    Write-Host "group 10 -- merged only: an authorised live push is held to origin/<trunk> (#3758)" -ForegroundColor Cyan
-    $m = New-FixtureRepo -Label 'merged' -ConfigBody "function Get-ShopifyLiveThemeId { return '$LIVE' }"
-    Initialize-MergedFixture -Root $m
-    $push = "shopify theme push --store x.myshopify.com --theme $LIVE --allow-live"
-    $mk = '# LIVE-PUSH-AUTHORIZED'
-    $css = Join-Path $m 'assets\x.css'
-
-    Assert-Equal 0 (Invoke-Guard -Command "$push --only assets/x.css $mk" -Root $m) 'merged: a file equal to origin/main passes'
-    Assert-Equal 0 (Invoke-Guard -Command "$push --only=assets/x.css $mk" -Root $m) 'merged: and in the --only=<file> spelling'
-    Assert-Equal 0 (Invoke-Guard -Command "$push -o assets/x.css -o layout/theme.liquid $mk" -Root $m) 'merged: and with the short flag, several files'
-    Assert-Equal 0 (Invoke-Guard -Command "$push $mk" -Root $m) 'merged: a whole-theme push from a clean checkout equal to origin/main passes'
-    Assert-Equal 0 (Invoke-Guard -Command "$push --only assets/gone.css $mk" -Root $m) 'merged: a deletion of a file the trunk does not hold either passes'
-
-    # SHELL SYNTAX AFTER THE PUSH IS NOT A PUSHED FILE (#4405). Measured in a consumer: a trailing
-    # '2>&1 | tail -15' made Test-Path throw on '2>&1', so an authorised push was blocked by a crash.
-    Assert-Equal 0 (Invoke-Guard -Command "$push --only assets/x.css 2>&1 | tail -15 $mk" -Root $m) 'shell: a trailing 2>&1 | tail is judged, not crashed on'
-    Assert-Equal 0 (Invoke-Guard -Command "$push --only assets/x.css > out.txt $mk" -Root $m) 'shell: and a redirection target is not read as a pushed file'
-    $refusal = Get-GuardRefusal -Command "$push --only `"assets/a<b.css`" $mk" -Root $m
-    Assert-True ($refusal -match 'assets/a<b\.css: a character no file name can hold') 'shell: a quoted value holding < is refused by name, not by a crash'
-    Assert-True ($refusal -notmatch 'could not run this guard') 'shell: and the refusal does not blame PowerShell'
-
-    # LINE ENDINGS ARE NOT A DIFFERENCE, read the way sync-main reads them.
-    [System.IO.File]::WriteAllText($css, "body { color: red; }`r`n", $Utf8NoBom)
-    Assert-Equal 0 (Invoke-Guard -Command "$push --only assets/x.css $mk" -Root $m) 'merged: the same content with CRLF endings passes'
-
-    # An uncommitted edit, pushed from the trunk itself: the case a branch test would miss.
-    [System.IO.File]::WriteAllText($css, "body { color: blue; }`n", $Utf8NoBom)
-    Assert-Equal 2 (Invoke-Guard -Command "$push --only assets/x.css $mk" -Root $m) 'refused: an uncommitted edit on the trunk'
-    Assert-Equal 2 (Invoke-Guard -Command "$push $mk" -Root $m) 'refused: and a whole-theme push over it'
-    $refusal = Get-GuardRefusal -Command "$push --only assets/x.css $mk" -Root $m
-    Assert-True ($refusal -match 'assets/x\.css: differs from origin/main') 'refused: the refusal names the file and what it differs from'
-    Assert-True ($refusal -match 'Merge first') 'refused: and says to merge first'
-    Invoke-FixtureGitIn $m checkout -q -- assets/x.css
-
-    # The measured case: work committed on a branch that is not merged.
-    Invoke-FixtureGitIn $m checkout -q -b fix/401-unmerged
-    [System.IO.File]::WriteAllText($css, "body { color: green; }`n", $Utf8NoBom)
-    [System.IO.File]::WriteAllText((Join-Path $m 'assets\new.css'), "a {}`n", $Utf8NoBom)
-    Invoke-FixtureGitIn $m add -A
-    Invoke-FixtureGitIn $m commit -q -m 'unmerged work'
-    Assert-Equal 2 (Invoke-Guard -Command "$push --only assets/x.css $mk" -Root $m) 'refused: a file changed on an unmerged branch'
-    Assert-Equal 2 (Invoke-Guard -Command "$push --only assets/new.css $mk" -Root $m) 'refused: a file the trunk does not hold at all'
-    Assert-Equal 2 (Invoke-Guard -Command "$push $mk" -Root $m) 'refused: a whole-theme push from a commit ahead of origin/main'
-    Assert-Equal 0 (Invoke-Guard -Command "$push --only layout/theme.liquid $mk" -Root $m) 'merged: but a file that branch did not touch passes -- content, not the checked-out branch'
-    Invoke-FixtureGitIn $m checkout -q main
-    Invoke-FixtureGitIn $m branch -q -D fix/401-unmerged
-
-    # A deletion of merged work: the file is absent here and present on the trunk.
-    Remove-Item -LiteralPath $css -Force
-    Assert-Equal 2 (Invoke-Guard -Command "$push --only assets/x.css $mk" -Root $m) 'refused: an --only of a file the trunk holds but this checkout lacks -- it would delete merged work from live'
-    Invoke-FixtureGitIn $m checkout -q -- assets/x.css
-
-    [System.IO.File]::WriteAllText((Join-Path $m 'assets\stray.css'), "a {}`n", $Utf8NoBom)
-    Assert-Equal 2 (Invoke-Guard -Command "$push $mk" -Root $m) 'refused: a whole-theme push with an untracked file in the root'
-    Remove-Item -LiteralPath (Join-Path $m 'assets\stray.css') -Force
-
-    # A change git status cannot see: skip-worktree hides it from the whole-root check.
-    Invoke-FixtureGitIn $m update-index --skip-worktree assets/x.css
-    [System.IO.File]::WriteAllText($css, "body { color: blue; }`n", $Utf8NoBom)
-    Assert-Equal 2 (Invoke-Guard -Command "$push $mk" -Root $m) 'refused: a whole-theme push over a skip-worktree file'
-    Invoke-FixtureGitIn $m update-index --no-skip-worktree assets/x.css
-    Invoke-FixtureGitIn $m checkout -q -- assets/x.css
-
-    # A second live push in the same command is measured too: the first no longer ends the run.
-    [System.IO.File]::WriteAllText($css, "body { color: blue; }`n", $Utf8NoBom)
-    Assert-Equal 2 (Invoke-Guard -Command "$push --only layout/theme.liquid $mk${LF}$push --only assets/x.css $mk" -Root $m) 'refused: an unmerged file in a SECOND push on the same command, after a first that passes'
-    Invoke-FixtureGitIn $m checkout -q -- assets/x.css
-
-    # What cannot be read is refused -- the direction this guard fails in.
-    $unreadable = @(
-        @{ n = 'a pattern in --only';                 c = "$push --only 'assets/*.css' $mk" },
-        @{ n = 'a directory in --only';               c = "$push --only assets $mk" },
-        @{ n = 'a shell variable';                    c = "$push --only `$F $mk" },
-        @{ n = 'an environment from the toml';        c = "$push --environment production --only assets/x.css $mk" },
-        @{ n = 'a short -e';                          c = "$push -e production --only assets/x.css $mk" },
-        @{ n = 'a directory change first';            c = "cd sub && $push --only assets/x.css $mk" },
-        @{ n = 'SHOPIFY_FLAG_ONLY on the line';       c = "SHOPIFY_FLAG_ONLY=assets/new.css $push $mk" },
-        @{ n = 'a path outside the theme root';       c = "$push --only ../other/x.css $mk" },
-        # Review of #3758: each of these was read as harmless in the first cut.
-        @{ n = 'Push-Location first';                 c = "Push-Location sub; $push --only assets/x.css $mk" },
-        @{ n = 'cd.. with no space';                  c = "cd..; $push --only assets/x.css $mk" },
-        @{ n = 'a value given as -o=<value> is read'; c = "$push --only layout/theme.liquid -o=assets/*.css $mk" },
-        @{ n = 'a non-ASCII name';                    c = "$push --only assets/caf" + [char]0x00E9 + ".css $mk" },
-        @{ n = 'a second bare word after --only';     c = "$push --only layout/theme.liquid assets/*.css $mk" }
-    )
-    foreach ($case in $unreadable) { Assert-Equal 2 (Invoke-Guard -Command $case.c -Root $m) "refused: $($case.n)" }
-
-    # No origin/<trunk> to compare with: fetch first. And no git checkout at all.
-    Invoke-FixtureGitIn $m update-ref -d refs/remotes/origin/main
-    Assert-True ((Get-GuardRefusal -Command "$push --only assets/x.css $mk" -Root $m) -match "git fetch origin") 'refused: with no origin/main the refusal says to fetch'
-    Invoke-FixtureGitIn $m update-ref refs/remotes/origin/main HEAD
-    $notGit = New-FixtureRepo -Label 'not-git' -ConfigBody "function Get-ShopifyLiveThemeId { return '$LIVE' }"
-    Assert-Equal 2 (Invoke-Guard -Command "$push $mk" -Root $notGit) 'refused: a theme root that is not a git checkout'
-
-    # The trunk comes from Get-TrunkBranchName, the seam push-preview and live-preflight read.
-    $dev = New-FixtureRepo -Label 'trunk-develop' -ConfigBody "function Get-ShopifyLiveThemeId { return '$LIVE' }${LF}function Get-TrunkBranchName { return 'develop' }"
-    Initialize-MergedFixture -Root $dev -Trunk 'develop'
-    Assert-Equal 0 (Invoke-Guard -Command "$push --only assets/x.css $mk" -Root $dev) 'trunk seam: measured against origin/develop where the repo names it'
-    $badTrunk = New-FixtureRepo -Label 'trunk-bad' -ConfigBody "function Get-ShopifyLiveThemeId { return '$LIVE' }${LF}function Get-TrunkBranchName { return 'VUL IN' }"
-    Initialize-MergedFixture -Root $badTrunk
-    Assert-Equal 2 (Invoke-Guard -Command "$push --only assets/x.css $mk" -Root $badTrunk) 'trunk seam: an answer that is not a branch name refuses rather than falling back to main'
-
-    # Degraded, the push cannot be read, so the marker alone no longer authorises it.
-    Assert-Equal 2 (Invoke-DegradedGuard -Command "$push --only assets/x.css $mk" -Root $m).Code 'no lib: an authorised live push is refused -- what it carries cannot be read'
-
-    # --- rule 6: the go-live command (#4402) -----------------------------------------------------------
-    # One marker on the go-live line lets it reach the person's confirmation prompt (#4436); without it the line is refused, in a
-    # Git-connected repo and in one with no seams at all. Naming the file in a text tool is not running it.
-    Write-Host "rule 6 -- the go-live command (#4402)" -ForegroundColor Cyan
-    $gl = 'powershell -NoProfile -ExecutionPolicy Bypass -File "C:/x/dkj-repo-workflow-bwj/7.4.0/scripts/task/go-live.ps1" -Version 3.2.0 -AppDeploy'
-    $bare = New-FixtureRepo -Label 'golive-bare'
-    foreach ($root in @($conn, $bare)) {
-        $label = if ($root -eq $conn) { 'connected' } else { 'no seams' }
-        Assert-Equal 2 (Invoke-Guard -Command $gl -Root $root) "go-live ($label): refused without the marker"
-        Assert-Equal 0 (Invoke-Guard -Command "$gl # SWB-LIVE-PUSH-AUTHORIZED" -Root $root) "go-live ($label): passes the guard with the marker on the line"
-        # #4436: passing is not allowing -- the marker is session-composable, so the person is asked.
-        $asked = Get-GuardRefusal -Command "$gl # SWB-LIVE-PUSH-AUTHORIZED" -Root $root
-        Assert-True ($asked -match '"permissionDecision":"ask"') "go-live ($label): with the marker it ASKS the person rather than allowing (#4436)"
-        Assert-True ($asked -match 'promotion PR' -and $asked -match '#4436') "go-live ($label): the question names what it takes live"
-    }
-    Assert-True ((Get-GuardRefusal -Command 'Get-Content scripts/task/go-live.ps1' -Root $conn) -notmatch 'permissionDecision') 'go-live: reading the script asks nothing (#4436)'
-    Assert-True ((Get-GuardRefusal -Command 'shopify theme push --theme 999 # SWB-LIVE-PUSH-AUTHORIZED' -Root $bare) -notmatch 'permissionDecision') 'a marked non-go-live command asks nothing: rule 3 and 5 stay marker-only (#4436)'
-    $glBlocked = @(
-        @{ n = 'a call operator and a quoted path'; c = "& 'C:\x\scripts\task\go-live.ps1' -Version 3.2.0 -SkipAppDeploy" },
-        @{ n = 'a relative path';                    c = '.\scripts\task\go-live.ps1 -Version 3.2.0' },
-        @{ n = 'after a semicolon';                  c = "cd C:\repo; $gl" },
-        @{ n = 'inside a bash -c wrapper';           c = "bash -c `"$($gl -replace '"', '')`"" },
-        # Sebastian's review of #4402: each of these passed the first cut.
-        @{ n = 'a substitution inside echo';         c = 'echo $(powershell -File go-live.ps1 -Version 1.0.0 -AppDeploy)' },
-        @{ n = 'a backtick substitution inside cat'; c = 'cat x `powershell -File go-live.ps1 -Version 1.0.0`' },
-        @{ n = 'a git alias on the line';            c = 'git -c alias.x="!powershell -File go-live.ps1 -Version 1.0.0" x' },
-        @{ n = 'git config writing an alias';        c = "git config alias.g '!powershell -File scripts/go-live.ps1'" },
-        @{ n = 'a comma-joined argument';            c = "powershell '-File',go-live.ps1 -Version 1.0.0" },
-        @{ n = 'a trailing dot Windows strips';      c = 'powershell -File .\go-live.ps1. -Version 1.0.0' },
-        @{ n = 'upper case';                         c = 'powershell -File .\GO-LIVE.PS1 -Version 1.0.0' }
-    )
-    foreach ($case in $glBlocked) { Assert-Equal 2 (Invoke-Guard -Command $case.c -Root $conn) "go-live blocked: $($case.n)" }
-    $glMentions = @(
-        @{ n = 'reading the script';          c = 'Get-Content scripts/task/go-live.ps1' },
-        @{ n = 'grepping for it';             c = 'grep -n Stop-GoLive go-live.ps1' },
-        @{ n = 'staging it in git';           c = 'git add plugins/x/scripts/task/go-live.ps1' },
-        @{ n = 'a git log of it';             c = 'git -C repo log --oneline -- scripts/task/go-live.ps1' },
-        @{ n = 'a heredoc body naming it';    c = "cat > notes.md <<'EOF'${LF}run go-live.ps1 -AppDeploy${LF}EOF" },
-        @{ n = 'a different script name';     c = 'powershell -File scripts/task/go-live-check.ps1' }
-    )
-    foreach ($case in $glMentions) { Assert-Equal 0 (Invoke-Guard -Command $case.c -Root $conn) "go-live mention passes: $($case.n)" }
-    # In a repo without a deploy branch, so rule 5's local-write check does not answer first.
-    Assert-Equal 0 (Invoke-Guard -Command 'git commit -m "feat: add go-live.ps1"' -Root $bare) 'go-live mention passes: a commit message naming it'
-    Assert-True ((Get-GuardRefusal -Command $gl -Root $conn) -match '-AppDeploy or -SkipAppDeploy') 'go-live refusal names the app-deploy switch'
-    # Towards checking, stated: a command that is not a text tool and only NAMES the file is refused too.
-    Assert-Equal 2 (Invoke-Guard -Command 'Test-Path scripts/task/go-live.ps1' -Root $conn) 'go-live: a non-text command naming the file is refused (the stated false positive)'
-
-    # And the rest of rule 3 is untouched: a preview push is not measured at all.
-    [System.IO.File]::WriteAllText($css, "body { color: blue; }`n", $Utf8NoBom)
-    Assert-Equal 0 (Invoke-Guard -Command 'shopify theme push --store x.myshopify.com --theme 987654321 --only assets/x.css' -Root $m) 'untouched: a preview push of unmerged work'
 } finally {
     Remove-Item -Recurse -Force -LiteralPath $Fixture -ErrorAction SilentlyContinue
 }

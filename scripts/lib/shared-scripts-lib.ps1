@@ -111,8 +111,9 @@ function Get-SharedScriptPairs {
             # THE BRANCH-PREFIX COMPARISON (#3886) reads the blueprint at '..\..\blueprint\' off the script,
             # which is the plugin's own folder in the mirror and nothing in the source copy (where the
             # check is silent by design), so the two copies resolve differently and only the mirror can be
-            # shown to work. The suite's section 14 runs the mirror against fixture consumers.
-            MirrorRun = 'script-contract.tests.ps1'
+            # shown to work. Section 14 runs the mirror against fixture consumers, and since #4430 it is in
+            # the second script-contract suite.
+            MirrorRun = 'script-contract-tables.tests.ps1'
         },
         # RETIRED, AUGUST 7, 2026: 'new-changelog-entry'. It was new-branch's child step, and this entry
         # noted that it had no skill of its own because that skill documented both. The name stopped being

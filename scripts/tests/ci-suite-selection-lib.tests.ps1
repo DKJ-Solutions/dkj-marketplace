@@ -136,7 +136,7 @@ $ci = [System.IO.File]::ReadAllText((Join-Path $RepoRoot '.github\workflows\ci.y
 Assert-True ($ci -match 'get-pr-suite-selection\.ps1 -Shard \$\{\{ matrix\.shard \}\}') 'each suites shard asks the selection with its own shard number'
 Assert-True ($ci -match "-SuiteNames \`$selected") 'shard 1 runs the selected suites by name'
 Assert-True ($ci -match "\`$mode -eq 'whole'") 'an unproven selection runs the whole pool in shard 1'
-Assert-True ($ci -match '-Shard \$\{\{ matrix\.shard \}\} -ShardCount 5') 'and every other case keeps the sharded run'
+Assert-True ($ci -match '-Shard \$\{\{ matrix\.shard \}\} -ShardCount \d+') 'and every other case keeps the sharded run'
 Assert-True ($ci -match "get-pr-suite-selection\.ps1 -Shard 0") 'the Linux leg asks too, outside the matrix'
 Assert-True ($ci -match "if: \`$\{\{ steps\.pr-suite-selection\.outputs\.mode != 'skip' \}\}") 'and it skips its suites only on skip'
 
