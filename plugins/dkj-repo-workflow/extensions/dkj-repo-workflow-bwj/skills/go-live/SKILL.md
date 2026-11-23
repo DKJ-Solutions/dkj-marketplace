@@ -28,7 +28,9 @@ powershell -NoProfile -ExecutionPolicy Bypass -File "${CLAUDE_PLUGIN_ROOT}/scrip
   marker your repo states in its own safety rules, as a shell comment on that exact command.
   `guard-live-theme` (dkj-subagents-shopify, its rule 6) refuses a line that runs `go-live.ps1` without it,
   because every act below happens inside a script the guard cannot read. go-live never prints the marker
-  and never reads it: the line a person authorises is theirs to write.
+  and never reads it: the line a person authorises is theirs to write. **And with the marker the guard
+  still asks** (#4436): a comment is something a session can write itself, so the line reaches Claude
+  Code's confirmation prompt and runs only once the person confirms it there.
 - **The app deploy rides inside the same word**, as a required switch on the same line. Where
   `Get-ShopifyAppRoot` is answered, the line says `-AppDeploy` or `-SkipAppDeploy`, and neither is
   refused. Skipping writes `hold` for the app's files into the live-push record, so it never needs a
