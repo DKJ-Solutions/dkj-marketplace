@@ -2,7 +2,30 @@
 
 ## [Unreleased]
 
-**20 / 22 minor entries** <!-- pending-tally -->
+**20 / 23 minor entries** <!-- pending-tally -->
+
+### DEPLOY: fix/3932-overview-server-timing · 20261123-162729Z
+
+The product's Consumers pages now send a `Server-Timing` header naming each step a request ran and how long it
+took: the register check, the GitHub read, the checkout scan, the cards and the page. The page itself does not
+change. The group-3 test prints it on its `[TIMING #3932]` line, so the next CI run of
+`consumer-dashboard.tests.ps1` says which step made the overview take 13 s on CI (#3932).
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+N/A: a diagnostic header on a local developer page, read by this repo's own test.
+
+**Score:** N/A
+
+#### Pull Request
+
+Consumers overview names its slow step in a Server-Timing header
+
+[PR #4444](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4444)
+
+---
 
 ### DEPLOY: feat/4430-split-heavy-suites · 20261123-155401Z
 
