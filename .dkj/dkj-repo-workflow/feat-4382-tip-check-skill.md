@@ -46,11 +46,13 @@ specialists it needs live; the core team ships no script, so it is a procedure.
 ### CREATE
 
 - [x] `tip-check` skill in `dkj-subagents-alpha`: claim, what we have (cited path), is the problem ours, cost, advice, Marlowe's red-team, filing
-- [x] Rebecca's and Marlowe's manuals name it; the plugin description lists it
+- [x] Rebecca's and Marlowe's manuals name it; the plugin description and the teams README list it
 - [x] The lifehub `ai-radar` skill points its verdict pass at `tip-check`
 
 ### TEST
 
+- [x] Sebastian's security review: no blocking finding; his four advices taken (the data-not-instructions line widened to replies and linked pages, the browser read-only on one URL, no private detail in a filed issue, no local secrets read)
+- [x] Edith's copy edit: the README rows, the radar's verdict wording and one phrasing aligned
 - [x] `check-plugin-integrity.ps1`: 0 errors (a cross-plugin link written absolute)
 
 ### DEPLOY: feat/4382-tip-check-skill
