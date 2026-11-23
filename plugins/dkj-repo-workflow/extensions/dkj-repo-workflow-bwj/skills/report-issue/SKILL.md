@@ -153,8 +153,27 @@ labels are added afterwards, and the reach label takes its `## Why` section in t
 
 ```bash
 gh issue edit <n> --repo <owner>/<repo> --add-label bug
-gh issue edit <n> --repo <owner>/<repo> --body "<current body + the ## Why section>" --add-label "<reach label>"
 ```
+
+and the reach label goes on with the body appended as below.
+
+**Appending to an issue body -- never through a PowerShell string** (#4428). On PowerShell,
+`$body = gh issue view <n> --json body --jq .body` returns an **array of lines**, and a string
+concatenated onto it joins them with single spaces: the rewritten body loses every newline, headings
+and the `filed-with` marker included. Measured on a store issue, November 23, 2026, and nothing caught it,
+because `guard-reach-reason` only asks whether the section is present. So let `gh` write the body to a
+file itself, append to that file, and pass it back with `--body-file`:
+
+```powershell
+$file = Join-Path $env:TEMP "issue-<n>-body.md"
+cmd /c "gh issue view <n> --repo <owner>/<repo> --json body --jq .body > `"$file`""
+Add-Content -LiteralPath $file -Encoding UTF8 -Value "`n## Why <reach label>`n<who notices it, and what they notice>"
+gh issue edit <n> --repo <owner>/<repo> --body-file $file --add-label "<reach label>"
+```
+
+`cmd /c` with its own redirect keeps the bytes off PowerShell's console decoding, so a non-ASCII
+character survives too; `Add-Content` on the existing file adds no BOM. Step 3's Asana line is appended
+the same way, without the `--add-label`. In bash, `gh issue view ... --jq .body > "$file"` does the same.
 
 ## Step 2 -- the Asana task (a translation, not a copy)
 
@@ -396,7 +415,9 @@ by re-running this skill's steps 2-3.
   <!-- asana-task: <numeric task GID> -->
   ```
 
-  The marker holds the bare numeric GID only. `gh issue edit <n> --repo <owner>/<repo> --body "<full new body>"`.
+  The marker holds the bare numeric GID only. Append it through a file and `--body-file`, as
+  [step 1's recipe](#step-1----the-github-issue-always) shows, never by rebuilding the body as a PowerShell
+  string (#4428).
 
 - **Asana task** -- the `Tracked on GitHub:` line already carries the issue URL, so nothing more is
   needed unless you created the task before you had the issue URL; in that case edit the task notes

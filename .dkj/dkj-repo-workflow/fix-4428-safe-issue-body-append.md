@@ -39,19 +39,41 @@
 
 ### PLAN
 
+Inbound #4428: `report-issue` told a session to add the reach label with
+`gh issue edit --body "<current body + the ## Why section>"`; on PowerShell the natural read of the
+body is an array of lines, and concatenating onto it flattened a store issue's body to one line.
+Replace that with a file-based recipe (`gh` writes the body, append, `--body-file`), and point step 3's
+Asana-marker append at it. The optional guard on a collapsed body is left out: the recipe removes the
+cause, and nothing has slipped past it yet.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `skills/report-issue/SKILL.md` step 1: the PowerShell recipe for appending the `## Why` section,
+  with the measurement.
+- [x] Step 3's Asana-marker append points at the same recipe.
 
 ### TEST
 
+- [x] Ran the recipe read-only against #4428 into the scratchpad: 9 lines before, 12 after the
+  appended section, no BOM (first bytes `35,35,32`), a non-ASCII `é` intact. The naive
+  `gh ... --jq .body` read returned `Object[]` with 9 elements, confirming the reported cause.
+
 ### DEPLOY: fix/4428-safe-issue-body-append
 
-**Score:**
+Adding the reach label to an issue that is already filed no longer flattens its body on PowerShell.
+[`report-issue`](../../plugins/dkj-repo-workflow/extensions/dkj-repo-workflow-bwj/skills/report-issue/SKILL.md)
+now has `gh` write the current body to a file, appends the `## Why` section to that file and passes it
+back with `--body-file`, where it used to rebuild the body as a PowerShell string, which joined every
+line with a space. Step 3's Asana link is appended the same way (#4428).
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+A store session that adds the reach label afterwards keeps the issue's headings, paragraphs and
+`filed-with` marker intact, so nobody has to repair the body by hand.
+
+**Score:** 2
 
 #### Pull Request
 
