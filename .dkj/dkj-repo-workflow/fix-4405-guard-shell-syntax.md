@@ -39,19 +39,37 @@
 
 ### PLAN
 
+Inbound #4405: an authorised live push ending in `2>&1 | tail -15` was blocked by a crash in
+`guard-live-theme`, not by a verdict. Verified cause: `Get-LivePushTrunkProblems` reads every bare word
+after the push as a pushed file, so `2>&1` reached `Test-Path`, which throws on `>` (illegal path character).
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `guard-live-theme.ps1`: unquoted control operators end the push's arguments, unquoted redirections
+  (with a standalone target) are skipped, and an `--only` value holding a character no path can hold is
+  refused by name before `Test-Path`.
+- [x] `guard-live-theme.tests.ps1`: group 10 gains four `shell:` asserts (trailing `2>&1 | tail`,
+  `> out.txt`, a quoted `<` refused by name).
 
 ### TEST
 
+- [x] `guard-live-theme.tests.ps1` standalone: 3 of the new asserts failed on the old hook; 415 of 415 pass on the fix.
+
 ### DEPLOY: fix/4405-guard-shell-syntax
 
-**Score:**
+`guard-live-theme` now judges an authorised live push whose command line ends in shell syntax, such as
+`2>&1 | tail -15` or `> out.txt`, instead of crashing on it. Redirections and pipes are no longer read as
+pushed files, and an `--only` value holding a character no file name can hold is refused by name instead
+of surfacing as "PowerShell could not run this guard" (#4405).
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+A Shopify store's maintainer can pipe a live push's output (`2>&1 | tail`) without the guard blocking an
+authorised release by crashing, and a bad `--only` value now gets a refusal that names the file.
+
+**Score:** 2
 
 #### Pull Request
 
