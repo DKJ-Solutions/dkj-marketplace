@@ -2610,6 +2610,58 @@ function Test-DisjointDocsOnlyCertificate {
     return [pscustomobject]@{ Eligible = $true; Reason = ''; SharedPaths = @(); NonDocsPaths = @() }
 }
 
+function Test-MergedResultVerdict {
+    <#
+    .SYNOPSIS
+        Whether the merged-result verdict merge-on-green.yml's token-free job handed over covers THIS merge:
+        it passed, on the same PR head and the same 'main' tip ship-pr is about to judge (issue #4440). PURE.
+
+    .DESCRIPTION
+        THE UNATTENDED HALF OF THE #4432 DISCOUNT. A -TrustedRoot run must not spawn the merged tree's scripts
+        (#2452), so the two cross-file checks run in a separate job of merge-on-green.yml that holds no
+        token, and the ship reads only its verdict. That job's output is not trusted to say MORE than one
+        pass on one pair of SHAs: a verdict for another head, or for a 'main' that has moved since, covers
+        nothing here, and the lap applies.
+
+        FAILS CLOSED: anything but the exact word 'pass', or a SHA that is not 40 lowercase hex characters,
+        is not a pass. An absent verdict (a session run, a consumer runner, a skipped job) reads as
+        'no verdict', so the caller can say which.
+
+    .PARAMETER Verdict
+        The job's verdict word: 'pass', 'fail' or 'skip'. Empty when no verdict was handed over.
+
+    .PARAMETER VerdictHead
+        The PR head SHA the job merged 'main' into.
+
+    .PARAMETER VerdictMain
+        The 'main' SHA the job merged.
+
+    .PARAMETER HeadSha
+        The PR head this run is about to merge.
+
+    .PARAMETER MainSha
+        The 'main' tip this run's gained commits were read up to.
+    #>
+    param(
+        [AllowEmptyString()][string]$Verdict = '',
+        [AllowEmptyString()][string]$VerdictHead = '',
+        [AllowEmptyString()][string]$VerdictMain = '',
+        [AllowEmptyString()][string]$HeadSha = '',
+        [AllowEmptyString()][string]$MainSha = ''
+    )
+
+    $v = "$Verdict".Trim()
+    if (-not $v) { return [pscustomobject]@{ Passed = $false; Reason = 'no merged-result verdict was handed to this run' } }
+    if ($v -cne 'pass') { return [pscustomobject]@{ Passed = $false; Reason = "the merged-result job did not pass (verdict: $(if ($v -cmatch '^[a-z]{1,12}$') { $v } else { 'unreadable' }))" } }
+    $sha = '^[0-9a-f]{40}$'
+    $vh = "$VerdictHead".Trim(); $vm = "$VerdictMain".Trim(); $h = "$HeadSha".Trim(); $m = "$MainSha".Trim()
+    if ($vh -cnotmatch $sha -or $vm -cnotmatch $sha) { return [pscustomobject]@{ Passed = $false; Reason = 'the merged-result verdict names no readable SHA pair' } }
+    if ($h -cnotmatch $sha -or $m -cnotmatch $sha) { return [pscustomobject]@{ Passed = $false; Reason = 'this run could not read its own head and main SHAs' } }
+    if ($vh -cne $h) { return [pscustomobject]@{ Passed = $false; Reason = "the merged-result verdict is for another PR head ($($vh.Substring(0, 8)), not $($h.Substring(0, 8)))" } }
+    if ($vm -cne $m) { return [pscustomobject]@{ Passed = $false; Reason = "'main' moved after the merged-result job ($($vm.Substring(0, 8)) -> $($m.Substring(0, 8)))" } }
+    return [pscustomobject]@{ Passed = $true; Reason = '' }
+}
+
 function Get-FailedCheckRunRefs {
     <#
     .SYNOPSIS

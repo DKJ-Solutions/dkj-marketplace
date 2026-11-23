@@ -665,7 +665,13 @@ disqualify) that shares no file with the non-fold commits `main` gained keeps it
 forward lap, once `check-plugin-integrity` and `check-always-on-budget` pass on a local merge of `main`
 into the PR head, in a throwaway worktree (~2 minutes measured for the integrity check, against a ~10
 minute CI lap). Any failure, conflict or unreadable diff falls through to the ordinary lap; step 3a does
-not forward early for such a PR, and leaves the decision to step 3b.
+not forward early for such a PR, and leaves the decision to step 3b. **The unattended merge-on-green run
+gets the same discount without running those checks itself** ([#4440](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4440)):
+its token may not spawn scripts from a PR-derived tree (#2452), so a separate, token-free job of
+`merge-on-green.yml` runs them and hands over a verdict, which `-TrustedRoot` accepts only for the exact PR
+head and `main` tip it names. (Step 3a's early read stays off there, at no cost: the sweep picks a PR only
+once its required checks are green, so the wait step 3a reads during never happens.) Without such a job (a consumer's runner, where `check-plugin-integrity` does
+not exist anyway) there is no verdict, and the lap applies.
 
 **The anchor is the certifying run's own `created_at`, not a check's `startedAt` — re-anchored after a
 red-team caught the first build's bias the wrong way round.** The original reasoning ("conservative,

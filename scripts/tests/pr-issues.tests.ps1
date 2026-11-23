@@ -2823,6 +2823,42 @@ Assert-Equal $false $dd.Eligible 'a deleted non-.md file disqualifies the PR'
 $dd = Test-DisjointDocsOnlyCertificate -PrPaths @('new/x.md') -GainedPaths @('old/x.md', 'new/x.md')
 Assert-Equal $false $dd.Eligible 'a gained rename whose new side is the PR file counts as shared'
 
+# --- Test-MergedResultVerdict: the unattended run reads the token-free job's verdict (issue #4440) ----
+Write-Host ""
+Write-Host "Test-MergedResultVerdict -- a pass covers only its own head and main (issue #4440)" -ForegroundColor Cyan
+
+$hA = 'a' * 40; $hB = 'b' * 40; $mA = 'c' * 40; $mB = 'd' * 40
+$mv = Test-MergedResultVerdict -Verdict 'pass' -VerdictHead $hA -VerdictMain $mA -HeadSha $hA -MainSha $mA
+Assert-Equal $true $mv.Passed 'a pass on the same head and the same main tip -> passed'
+$mv = Test-MergedResultVerdict -Verdict '' -VerdictHead '' -VerdictMain '' -HeadSha $hA -MainSha $mA
+Assert-Equal $false $mv.Passed 'no verdict handed over -> not passed'
+Assert-True ($mv.Reason -like '*no merged-result verdict*') 'and the reason says none was handed over'
+$mv = Test-MergedResultVerdict -Verdict 'fail' -VerdictHead $hA -VerdictMain $mA -HeadSha $hA -MainSha $mA
+Assert-Equal $false $mv.Passed 'a fail verdict -> not passed'
+$mv = Test-MergedResultVerdict -Verdict 'PASS' -VerdictHead $hA -VerdictMain $mA -HeadSha $hA -MainSha $mA
+Assert-Equal $false $mv.Passed 'only the exact word pass counts (case-sensitive, fail closed)'
+$mv = Test-MergedResultVerdict -Verdict "pass`nx" -VerdictHead $hA -VerdictMain $mA -HeadSha $hA -MainSha $mA
+Assert-Equal $false $mv.Passed 'a verdict with trailing text is not a pass'
+Assert-True ($mv.Reason -like '*unreadable*') 'and an unexpected verdict word is not echoed'
+$mv = Test-MergedResultVerdict -Verdict 'pass' -VerdictHead $hB -VerdictMain $mA -HeadSha $hA -MainSha $mA
+Assert-Equal $false $mv.Passed 'a pass for another PR head -> not passed'
+$mv = Test-MergedResultVerdict -Verdict 'pass' -VerdictHead $hA -VerdictMain $mA -HeadSha $hA -MainSha $mB
+Assert-Equal $false $mv.Passed 'a pass for a main tip that has moved since -> not passed'
+Assert-True ($mv.Reason -like "*'main' moved*") 'and the reason says main moved'
+$mv = Test-MergedResultVerdict -Verdict 'pass' -VerdictHead 'abc' -VerdictMain $mA -HeadSha 'abc' -MainSha $mA
+Assert-Equal $false $mv.Passed 'a short SHA, even matching, is not a pass'
+$mv = Test-MergedResultVerdict -Verdict 'pass' -VerdictHead $hA.ToUpper() -VerdictMain $mA -HeadSha $hA.ToUpper() -MainSha $mA
+Assert-Equal $false $mv.Passed 'an uppercase SHA is not the 40-lowercase-hex shape git prints'
+$mv = Test-MergedResultVerdict -Verdict 'pass' -VerdictHead $hA -VerdictMain $mA -HeadSha '' -MainSha $mA
+Assert-Equal $false $mv.Passed 'this run''s own head unread -> not passed'
+
+# The wiring: under -TrustedRoot step 3b reads the verdict instead of skipping the discount outright, and
+# never spawns the merged-result checks there.
+Assert-True ($shipText -match 'elseif \(\$TrustedRoot\) \{[\s\S]{0,900}?Test-MergedResultVerdict -Verdict "\$env:DKJ_MERGED_RESULT_VERDICT"') `
+    'step 3b reads the handed-over verdict under -TrustedRoot (#4440)'
+Assert-True ($shipText -notmatch 'does not apply to an unattended -TrustedRoot run') `
+    'the blanket -TrustedRoot opt-out of the docs-only discount is gone (#4440)'
+
 
 # --- ship-pr.ps1's step 3b: the wiring, as far as a suite without a live remote can reach it --------
 # THE ACTUAL git fetch/gh api/git log/refusal WIRING DRIVES A REAL REMOTE AND IS NOT COVERED HERE -- the

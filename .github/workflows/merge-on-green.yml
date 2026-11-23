@@ -90,7 +90,139 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  # THREE JOBS BEFORE THE REDISPATCH, AND THE SPLIT IS A RUNNER BOUNDARY, NOT TIDINESS (issue #4440). The
+  # merged-result job below runs scripts out of a tree built from the PR head, and a step in the SAME job
+  # as the ship could rewrite 'trusted-main' on the shared runner disk before the token-bearing step runs
+  # it. A separate job is a separate virtual machine, so the pick is lifted into its own job too, and both
+  # later jobs read it through needs:.
+  pick:
+    runs-on: ubuntu-latest
+    # 20 MINUTES: the picker's settle wait (at most 660s, below) plus its one-minute re-read, with room.
+    timeout-minutes: 20
+    outputs:
+      picked: ${{ steps.pick.outputs.picked }}
+      pr: ${{ steps.pick.outputs.pr }}
+      branch: ${{ steps.pick.outputs.branch }}
+      sha: ${{ steps.pick.outputs.sha }}
+    steps:
+      # The trunk, read-only, for the picker script; the ship job below checks it out again for itself.
+      - name: Checkout the trusted trunk for the picker
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: main
+          path: trusted-main
+          persist-credentials: false
+
+      - name: Make `powershell` resolve to pwsh
+        shell: bash
+        run: sudo ln -sf "$(command -v pwsh)" /usr/local/bin/powershell
+
+      # THE PICKER READS WITH THE JOB-SCOPED TOKEN, NOT WITH THE PAT. It only lists pull requests and
+      # their checks, and an hour-lived token that expires with the run is the right credential for a
+      # read -- keeping the standing one out of every step that does not need it. RUN FROM 'trusted-main'
+      # (working-directory), which is where this script's file now lives on disk -- the workspace ROOT no
+      # longer holds a checkout at all, so a bare relative path here would resolve to nothing.
+      #
+      # -WaitForSettleSeconds 660 (#3807): when nothing is eligible ONLY because the settle window refused
+      # it, the picker waits out the remainder -- at most the 10-minute window plus a margin -- and judges
+      # the tracker once more. That wake is this run's own, because for the last pull request to go green
+      # no later CI run will come to wake the sweep, and the schedule above arrives hours late. While it
+      # waits it holds the concurrency group; a CI completion meanwhile queues one pending sweep, which is
+      # idempotent. The picker's own one-minute re-read on mergeable UNKNOWN (#4427, on by default) comes
+      # first, so 12 minutes fits this job's cap, and two forward laps plus the ship fit the ship job's.
+      # The consumer template passes the same cap (#3809): there the wait is billed, a cost accepted for it.
+      - name: Is any armed pull request owed a merge?
+        id: pick
+        shell: pwsh
+        working-directory: trusted-main
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          powershell -NoProfile -ExecutionPolicy Bypass -File scripts/ci/pick-merge-on-green.ps1 -WaitForSettleSeconds 660
+          exit $LASTEXITCODE
+
+  # THE #4432 CROSS-FILE CHECKS, RUN WHERE NO TOKEN IS (issue #4440, the owner's option (a)). A docs-only
+  # pull request that shares no file with what 'main' gained since its certificate keeps that certificate
+  # without a ~10 minute forward lap, once check-plugin-integrity and check-always-on-budget pass on 'main'
+  # merged into its head. A session runs those checks itself; the ship job below must not, because it holds
+  # FOLD_PUSH_TOKEN and #2452 keeps the merged tree's code out of that process. So this job runs them, holds
+  # no secret and only a contents: read token, and hands over three strings: the verdict, and the head and
+  # 'main' SHAs it was reached on. ship-pr (Test-MergedResultVerdict) accepts a pass only for the exact head
+  # it is merging and the exact 'main' tip it judged, and only for a PR its OWN trusted code judged
+  # docs-only and disjoint. So the most a forged verdict can buy is skipping one lap for such a PR, whose
+  # required check has already passed on its own head.
+  #
+  # IT RUNS NOTHING THE PR WROTE AS CODE. A PR whose diff names any path that is not .md is answered 'skip'
+  # before anything is merged or run, so the scripts executed here are always the trunk's own, beside the
+  # PR's Markdown. WINDOWS, LIKE ci.yml's LINT LEG, because that is where check-plugin-integrity is proven.
+  merged-result:
+    needs: pick
+    if: ${{ needs.pick.outputs.picked == 'true' }}
+    runs-on: windows-latest
+    # 20 MINUTES: the lint leg measures 1.5 minutes and the budget check under one; a wedge detector.
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    outputs:
+      verdict: ${{ steps.check.outputs.verdict }}
+      head: ${{ steps.check.outputs.head }}
+      main: ${{ steps.check.outputs.main }}
+    steps:
+      # THE PICKED COMMIT, NOT THE BRANCH NAME, and the full history, so 'origin/main' and the merge base
+      # are both here.
+      - name: Checkout the picked head with full history
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ needs.pick.outputs.sha }}
+          path: merged
+          fetch-depth: 0
+          persist-credentials: false
+
+      # EVERY EXIT WRITES A VERDICT, and only 'pass' discounts anything; 'skip' and 'fail' leave the lap.
+      # The picked SHA arrives through env:, never through ${{ }} inside run:.
+      - name: Merge main in and run the cross-file checks
+        id: check
+        shell: powershell
+        working-directory: merged
+        env:
+          PICKED_SHA: ${{ needs.pick.outputs.sha }}
+        run: |
+          $main = "$(git rev-parse origin/main)".Trim()
+          function Out-Verdict([string]$Verdict, [string]$Why) {
+            Write-Host "merged-result: $Verdict -- $Why"
+            # NOT Out-File -Encoding utf8: under Windows PowerShell that writes a BOM, and the first key would
+            # read as '<BOM>verdict', so every pass would arrive as no verdict at all.
+            [System.IO.File]::AppendAllText($env:GITHUB_OUTPUT, "verdict=$Verdict`nhead=$env:PICKED_SHA`nmain=$main`n", (New-Object System.Text.UTF8Encoding $false))
+            exit 0
+          }
+          if ("$(git rev-parse HEAD)".Trim() -ne $env:PICKED_SHA) { Out-Verdict 'skip' 'the checkout is not the picked commit' }
+          $base = "$(git merge-base origin/main HEAD)".Trim()
+          if ($LASTEXITCODE -ne 0 -or -not $base) { Out-Verdict 'skip' 'no merge base with origin/main' }
+          # --raw, so the MODES are read too: a symlink (120000) or a submodule (160000) named *.md is not a
+          # Markdown file, and refusing it keeps "only the trunk's scripts run here" true by construction.
+          $status = @(git -c core.quotePath=false diff --raw -M $base HEAD)
+          if ($LASTEXITCODE -ne 0 -or $status.Count -eq 0) { Out-Verdict 'skip' 'the PR diff could not be read' }
+          foreach ($line in $status) {
+            $meta = @((($line -split "`t")[0]) -split ' ')
+            if ($meta.Count -lt 2 -or $meta[0] -match '120000|160000' -or $meta[1] -match '^(120000|160000)$') { Out-Verdict 'skip' 'the PR changes a symlink or a submodule' }
+            foreach ($p in @(($line -split "`t") | Select-Object -Skip 1)) {
+              if (-not $p.EndsWith('.md', [System.StringComparison]::OrdinalIgnoreCase)) { Out-Verdict 'skip' 'the PR changes a path that is not .md' }
+            }
+          }
+          git -c user.name=merge-on-green -c user.email=merge-on-green@localhost -c commit.gpgsign=false merge --no-edit --quiet origin/main
+          if ($LASTEXITCODE -ne 0) { Out-Verdict 'fail' 'origin/main does not merge cleanly into the PR head' }
+          powershell -NoProfile -ExecutionPolicy Bypass -File scripts/lint/check-plugin-integrity.ps1
+          if ($LASTEXITCODE -ne 0) { Out-Verdict 'fail' 'check-plugin-integrity did not pass on the merged result' }
+          powershell -NoProfile -ExecutionPolicy Bypass -File scripts/lint/check-always-on-budget.ps1 -RootOverride (Get-Location).Path
+          if ($LASTEXITCODE -ne 0) { Out-Verdict 'fail' 'check-always-on-budget did not pass on the merged result' }
+          Out-Verdict 'pass' 'both cross-file checks passed on the merged result'
+
   merge-on-green:
+    # AFTER BOTH, AND NOT HELD BY THE SECOND: a merged-result job that failed, timed out or was never
+    # needed hands over no 'pass', and ship-pr then takes the forward lap exactly as before #4440.
+    needs: [pick, merged-result]
+    if: ${{ !cancelled() && needs.pick.result == 'success' && needs.pick.outputs.picked == 'true' }}
     # LINUX, UNDER PWSH 7 (issue #2616), the last runner to follow fold-on-merge, verify-resolved and
     # repo-settings (#2488). It was held back because it drives ship-pr's whole merge path, and a
     # workflow_run runner cannot be proved on its own PR: it runs the DEFAULT BRANCH's copy of this file.
@@ -125,8 +257,8 @@ jobs:
       # touching scripts/, .github/, .workflow-scripts/ or a plugin's scripts/ could therefore never be
       # swept (Get-MergeOnGreenExecutedPathHit refused it), which was ~80% of merged PRs here (#2436).
       #
-      # NOW: 'trusted-main' is a checkout of the TRUNK, and 'pr-branch' (added further down, once a
-      # pull request is actually picked) is a checkout of the PR's OWN head -- two independent clones,
+      # NOW: 'trusted-main' is a checkout of the TRUNK, and 'pr-branch' (added further down; the pick
+      # job above has already chosen the pull request) is a checkout of the PR's OWN head -- two independent clones,
       # two independent git configs, sharing nothing but the same runner disk. ship-pr.ps1 -- and every
       # sibling lib it loads via $PSScriptRoot -- runs FROM 'trusted-main' (see the Ship it step), so the
       # code doing the sweeping is never the branch's own copy, whatever the branch's diff touches.
@@ -139,7 +271,8 @@ jobs:
       # for the residual exposure that choice still carries (GH_TOKEN in the step's process environment,
       # inherited by every child process of it, same as every other step in this file already accepts for
       # its `gh` calls). That process does read PR-controlled DATA (the branch document, the PR body) as
-      # text, and a job split to keep the token away from it was measured and refused on #2452; what
+      # text, and a job split to keep the token away from THAT DATA was measured and refused on #2452 (the
+      # pick and merged-result jobs above are a different split: they keep CODE away from it, #4440); what
       # guards it instead is scripts/tests/trusted-tree-seam.tests.ps1, which refuses the enumerated
       # string-to-code primitives (its header lists them) in the code this step runs, child scripts
       # included -- a syntactic guard against one being ADDED, since that code comes from trusted-main.
@@ -168,31 +301,6 @@ jobs:
         shell: bash
         run: sudo ln -sf "$(command -v pwsh)" /usr/local/bin/powershell
 
-      # THE PICKER READS WITH THE JOB-SCOPED TOKEN, NOT WITH THE PAT. It only lists pull requests and
-      # their checks, and an hour-lived token that expires with the run is the right credential for a
-      # read -- keeping the standing one out of every step that does not need it. RUN FROM 'trusted-main'
-      # (working-directory), which is where this script's file now lives on disk -- the workspace ROOT no
-      # longer holds a checkout at all, so a bare relative path here would resolve to nothing.
-      #
-      # -WaitForSettleSeconds 660 (#3807): when nothing is eligible ONLY because the settle window refused
-      # it, the picker waits out the remainder -- at most the 10-minute window plus a margin -- and judges
-      # the tracker once more. That wake is this run's own, because for the last pull request to go green
-      # no later CI run will come to wake the sweep, and the schedule above arrives hours late. While it
-      # waits it holds the concurrency group; a CI completion meanwhile queues one pending sweep, which is
-      # idempotent. The picker's own one-minute re-read on mergeable UNKNOWN (#4427, on by default) comes
-      # first, so 12 minutes plus two forward laps plus the ship still fits the 45-minute cap below.
-      # The consumer template passes the same cap (#3809): there the wait is billed, a cost accepted for it.
-      - name: Is any armed pull request owed a merge?
-        id: pick
-        shell: pwsh
-        working-directory: trusted-main
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GH_REPO: ${{ github.repository }}
-        run: |
-          powershell -NoProfile -ExecutionPolicy Bypass -File scripts/ci/pick-merge-on-green.ps1 -WaitForSettleSeconds 660
-          exit $LASTEXITCODE
-
       # THE PR'S OWN HEAD, IN ITS OWN TREE -- carrying no token, and persist-credentials: false so
       # nothing is written to ITS .git/config either. ref: is the picker's own output, not typed by a
       # session -- pick-merge-on-green.ps1 has already refused any branch name outside a plain charset
@@ -203,10 +311,10 @@ jobs:
       # SHALLOW (the default): the SHA check just below refuses on a moved head before anything past this
       # tree is trusted, and the Ship it step deepens THIS checkout, not this one's ref resolution.
       - name: Checkout the picked pull request's branch
-        if: ${{ steps.pick.outputs.picked == 'true' }}
+        if: ${{ needs.pick.outputs.picked == 'true' }}
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          ref: ${{ steps.pick.outputs.branch }}
+          ref: ${{ needs.pick.outputs.branch }}
           path: pr-branch
           persist-credentials: false
 
@@ -240,15 +348,20 @@ jobs:
       # second half of that same guard, and neither is load-bearing alone.
       - name: Ship it
         id: ship
-        if: ${{ steps.pick.outputs.picked == 'true' }}
+        if: ${{ needs.pick.outputs.picked == 'true' }}
         shell: pwsh
         env:
           GH_TOKEN: ${{ secrets.FOLD_PUSH_TOKEN }}
           GH_REPO: ${{ github.repository }}
           CLAUDE_PROJECT_DIR: ${{ github.workspace }}/pr-branch
-          SHIP_BRANCH: ${{ steps.pick.outputs.branch }}
-          SHIP_PR: ${{ steps.pick.outputs.pr }}
-          SHIP_SHA: ${{ steps.pick.outputs.sha }}
+          SHIP_BRANCH: ${{ needs.pick.outputs.branch }}
+          SHIP_PR: ${{ needs.pick.outputs.pr }}
+          SHIP_SHA: ${{ needs.pick.outputs.sha }}
+          # THE merged-result JOB'S VERDICT (issue #4440), read by ship-pr's step 3b only under -TrustedRoot
+          # and only for the head and 'main' tip it names. Empty when that job was skipped or failed.
+          DKJ_MERGED_RESULT_VERDICT: ${{ needs.merged-result.outputs.verdict }}
+          DKJ_MERGED_RESULT_HEAD: ${{ needs.merged-result.outputs.head }}
+          DKJ_MERGED_RESULT_MAIN: ${{ needs.merged-result.outputs.main }}
         run: |
           # Commit-metadata identity only -- who authored ship-pr's fold commit. It is independent of the
           # push credential set up below: a ruleset bypass is checked against the PUSHING token's identity,
