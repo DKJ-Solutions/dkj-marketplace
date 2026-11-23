@@ -39,19 +39,36 @@
 
 ### PLAN
 
+A new optional seam, `Get-AsanaReviewFollowers`, so the colleague who owns SEO, UX or CRO follows a
+mirrored Asana task from creation when the finding touches their area (#4442). Decided in the build:
+the area is judged in step 1 (one step old by step 2), only created tasks get followers, and
+`guard-asana-mirror` does not check it, because the area is a judgement.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `report-issue`: read the seam, judge the area in step 1, pass `followers` on the same `create task` call in step 2.
+- [x] The bwj README seam list and the adopt skill's `repo-config.ps1` stub carry the new function, `$null` by default.
 
 ### TEST
 
+- [x] Docs only; the Asana `create_tasks` tool's schema confirms `followers` is a comma-separated string per task. The gates run in `ship-pr`.
+
 ### DEPLOY: feat/4442-asana-review-followers
 
-**Score:**
+`report-issue` can now put the colleague who owns SEO, UX or CRO on a mirrored Asana task from the
+moment it is created, when the finding touches their area. A new optional seam in
+`scripts/repo-config.ps1`, `Get-AsanaReviewFollowers`, maps `seo`, `ux` and `cro` to Asana user
+GIDs; step 1 judges which areas a finding touches and step 2 passes those users as `followers` on the
+same `create task` call. Left at `$null`, nothing changes.
+
+**Score:** 3
 
 #### What makes this deploy extra special
 
-**Score:**
+For a store team, a change to search, navigation, templates or checkout now reaches the SEO/CRO owner
+before it is built rather than after it is live, once the seam is answered.
+
+**Score:** 3
 
 #### Pull Request
 
