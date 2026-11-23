@@ -104,7 +104,7 @@ gh issue create --repo <owner>/<repo> --title "<precise technical title>" --body
 | what to set | how to decide it |
 |---|---|
 | the kind (`--label bug`, `--label feature` or `--label research`) | **always exactly one of the three** (#2783, #3006): **`feature`** for something new being added, **`bug`** for something that exists and has to change, **`research`** for research or a test a session carries out in the repo, which changes nothing on the store (a decision that is not ours is no issue: the filing test above). A doc finding is a `bug` or a `feature` -- a missing page is a `feature`, a wrong one a `bug`. A ticket that researches first and then builds is not `research`. There is no fourth kind and no `documentation` label |
-| the reach label (`Get-ReachLabel`, default `minor`) | **only** where management or the commissioner would notice it. The test is whether that reader notices the **defect**, not whether the file renders to them: a customer-facing template with a developer-only defect is tier 0, and a build script whose breakage stops a release the business is waiting on is not. **In doubt, leave it off.** Where you set it, the body carries the `## Why <reach label>` section below, which answers that test in words |
+| the reach label (`Get-ReachLabel`, default `minor`) | **only** where management or the commissioner would notice it. The test is whether that reader notices the **defect**, not whether the file renders to them: a customer-facing template with a developer-only defect is tier 0, and a build script whose breakage stops a release the business is waiting on is not. **A measured SEO defect on indexed live pages takes it** -- a missing or broken H1 or heading order, a wrong canonical, broken structured data, a page that cannot be indexed -- because the store's SEO team is the reader who notices it, and that team is named in the section (#4426). **In doubt, leave it off**, which holds for defects nobody outside development meets. Where you set it, the body carries the `## Why <reach label>` section below, which answers that test in words |
 
 **`hooks/guard-kind-label.ps1` refuses** a `gh issue create` on a store repo that carries none, or
 more than one, of the three kinds (#4197). Labels set in a template, the browser or an editor,
@@ -153,8 +153,27 @@ labels are added afterwards, and the reach label takes its `## Why` section in t
 
 ```bash
 gh issue edit <n> --repo <owner>/<repo> --add-label bug
-gh issue edit <n> --repo <owner>/<repo> --body "<current body + the ## Why section>" --add-label "<reach label>"
 ```
+
+and the reach label goes on with the body appended as below.
+
+**Appending to an issue body -- never through a PowerShell string** (#4428). On PowerShell,
+`$body = gh issue view <n> --json body --jq .body` returns an **array of lines**, and a string
+concatenated onto it joins them with single spaces: the rewritten body loses every newline, headings
+and the `filed-with` marker included. Measured on a store issue, November 23, 2026, and nothing caught it,
+because `guard-reach-reason` only asks whether the section is present. So let `gh` write the body to a
+file itself, append to that file, and pass it back with `--body-file`:
+
+```powershell
+$file = Join-Path $env:TEMP "issue-<n>-body.md"
+cmd /c "gh issue view <n> --repo <owner>/<repo> --json body --jq .body > `"$file`""
+Add-Content -LiteralPath $file -Encoding UTF8 -Value "`n## Why <reach label>`n<who notices it, and what they notice>"
+gh issue edit <n> --repo <owner>/<repo> --body-file $file --add-label "<reach label>"
+```
+
+`cmd /c` with its own redirect keeps the bytes off PowerShell's console decoding, so a non-ASCII
+character survives too; `Add-Content` on the existing file adds no BOM. Step 3's Asana line is appended
+the same way, without the `--add-label`. In bash, `gh issue view ... --jq .body > "$file"` does the same.
 
 ## Step 2 -- the Asana task (a translation, not a copy)
 
@@ -396,7 +415,9 @@ by re-running this skill's steps 2-3.
   <!-- asana-task: <numeric task GID> -->
   ```
 
-  The marker holds the bare numeric GID only. `gh issue edit <n> --repo <owner>/<repo> --body "<full new body>"`.
+  The marker holds the bare numeric GID only. Append it through a file and `--body-file`, as
+  [step 1's recipe](#step-1----the-github-issue-always) shows, never by rebuilding the body as a PowerShell
+  string (#4428).
 
 - **Asana task** -- the `Tracked on GitHub:` line already carries the issue URL, so nothing more is
   needed unless you created the task before you had the issue URL; in that case edit the task notes

@@ -943,8 +943,37 @@ Assert-Equal 0 (Get-MergeOnGreenSettleWaitSeconds -Verdicts @($nanOne) -CapSecon
 
 # WIRED: the runner passes a cap, and the picker waits once and then judges a fresh pass.
 Assert-True ($flowRaw -match 'pick-merge-on-green\.ps1 -WaitForSettleSeconds \d+') 'merge-on-green.yml passes the picker a settle-wait cap'
-Assert-True ($pickRaw -match 'Get-MergeOnGreenSettleWaitSeconds' -and ([regex]::Matches($pickRaw, '\$verdicts = @\(Invoke-PickPass\)')).Count -eq 2) `
-    'the picker asks the lib how long to wait and re-reads the tracker for its second look'
+Assert-True ($pickRaw -match 'Get-MergeOnGreenSettleWaitSeconds' -and ([regex]::Matches($pickRaw, '\$verdicts = @\(Invoke-PickPass\)')).Count -eq 3) `
+    'the picker asks the lib how long to wait and re-reads the tracker for its second look (settle and unknown, one each)'
+
+Write-Host ''
+Write-Host 'Re-reading once while GitHub computes mergeability (#4427)' -ForegroundColor Cyan
+
+# ONLY UNKNOWN CARRIES THE MARKER: it is the one mergeable answer that clears by itself in seconds.
+$unk = Get-MergeOnGreenPrVerdict -Record (New-PrRecord -Mergeable 'UNKNOWN') -MergeBlockVerdict (New-Green) -GreenAgeMinutes 12
+Assert-True ($unk.PSObject.Properties['MergeableUnknown'] -and $unk.MergeableUnknown) 'mergeable UNKNOWN carries MergeableUnknown'
+Assert-Equal "mergeable is 'UNKNOWN', not 'MERGEABLE'" $unk.Reason 'and the Reason a sweep prints is unchanged'
+$conf = Get-MergeOnGreenPrVerdict -Record (New-PrRecord -Mergeable 'CONFLICTING') -MergeBlockVerdict (New-Green) -GreenAgeMinutes 12
+Assert-True (-not $conf.PSObject.Properties['MergeableUnknown']) 'CONFLICTING carries none -- a conflict waits on a person'
+$blank = Get-MergeOnGreenPrVerdict -Record (New-PrRecord -Mergeable '') -MergeBlockVerdict (New-Green) -GreenAgeMinutes 12
+Assert-True (-not $blank.PSObject.Properties['MergeableUnknown']) 'an unreadable mergeable carries none'
+
+$unkOne = [pscustomobject]@{ Eligible = $false; Reason = 'unknown'; MergeableUnknown = $true; Number = '6' }
+Assert-Equal 60 (Get-MergeOnGreenUnknownWaitSeconds -Verdicts @($unkOne, $redOne) -CapSeconds 60) 'one UNKNOWN among refusals waits the cap'
+Assert-Equal 0 (Get-MergeOnGreenUnknownWaitSeconds -Verdicts @($unkOne, $okOne) -CapSeconds 60) `
+    'something already eligible is handed over now, not waited behind'
+Assert-Equal 0 (Get-MergeOnGreenUnknownWaitSeconds -Verdicts @($redOne, $waitOne) -CapSeconds 60) 'no UNKNOWN, no wait'
+Assert-Equal 0 (Get-MergeOnGreenUnknownWaitSeconds -Verdicts @($unkOne) -CapSeconds 0) 'cap 0 switches it off'
+Assert-Equal 0 (Get-MergeOnGreenUnknownWaitSeconds -Verdicts @() -CapSeconds 60) 'nothing armed waits for nothing'
+
+# WIRED: the picker rebuilds each verdict into an entry of its own, so the marker must be copied across,
+# exactly as SettleRemainingMinutes is -- measured in review: without the copy the re-read never fired.
+Assert-True ($pickRaw -match "verdict\.PSObject\.Properties\['MergeableUnknown'\]" -and $pickRaw -match 'NotePropertyName MergeableUnknown') `
+    'the picker copies MergeableUnknown from the verdict onto the entry it hands the wait function'
+# WIRED: the re-read is on by default and comes before the settle wait.
+Assert-True ($pickRaw -match '\[int\]\$WaitForUnknownSeconds = 60') 'the picker re-reads on UNKNOWN by default'
+Assert-True ($pickRaw.IndexOf('Get-MergeOnGreenUnknownWaitSeconds -Verdicts') -lt $pickRaw.IndexOf('Get-MergeOnGreenSettleWaitSeconds -Verdicts')) `
+    'the UNKNOWN re-read runs before the settle wait, so a PR it clears can still be waited out'
 
 Write-Host ''
 Write-Host 'A held merge wakes the next sweep itself (#4198)' -ForegroundColor Cyan

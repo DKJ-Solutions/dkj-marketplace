@@ -159,6 +159,9 @@ try {
             )
             RealBlock = (Get-Json 'shopify theme publish --theme 1')
             RealAllow = (Get-Json 'ls -la')
+            AlsoClosed = @(
+                @{ Desc = 'the go-live command (#4402)'; Payload = (Get-Json 'powershell -File scripts/task/go-live.ps1 -Version 1.0.0 -AppDeploy') }
+            )
         },
         @{
             Name = 'guard-working-copy'
@@ -204,6 +207,13 @@ try {
         # 3. THE PAYLOAD STILL REACHES THE INTERPRETER. The wrapper reads stdin to judge it, so it has to
         #    hand it on -- a guard that runs on an empty stdin allows everything.
         Assert-Equal $g.Subject (([System.IO.File]::ReadAllText($stdinFile)).TrimEnd()) 'the payload arrives at powershell intact through the wrapper'
+        # A second subject a guard holds that does not look like the first (#4402: the go-live command).
+        if ($g.ContainsKey('AlsoClosed')) {
+            foreach ($x in $g.AlsoClosed) {
+                $r = Invoke-Stubbed -Command $cmd -Payload $x.Payload -StubRc 45
+                Assert-Equal 2 $r.Code "start failure on $($x.Desc): REFUSED -- fails closed"
+            }
+        }
 
         # 4. THE NARROWNESS, which is the decision. A failure on any other call is passed through exactly
         #    as before: a non-blocking error, the call proceeds.
