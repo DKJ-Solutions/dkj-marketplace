@@ -217,8 +217,7 @@ function Invoke-ShopifyCliBounded {
         [Parameter(Mandatory = $true)][int]$TimeoutSeconds,
         [switch]$DiscardStderr
     )
-    $tag = [guid]::NewGuid().ToString('N')
-    $base = Join-Path ([System.IO.Path]::GetTempPath()) "shopify-bounded-$PID-$tag"
+    $base = Join-Path ([System.IO.Path]::GetTempPath()) ("shopify-bounded-$PID-" + [guid]::NewGuid().ToString('N'))
     $scriptFile = "$base.ps1"; $outFile = "$base.out"; $errFile = "$base.err"
     $timedOut = $false; $code = -1; $p = $null
     try {
