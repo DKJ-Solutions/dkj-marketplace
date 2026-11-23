@@ -22,7 +22,7 @@ skills-design philosophy — retired in turn on October 2, 2026, its versioning 
 
 | Folder | The specialists it adds |
 |---|---|
-| [`dkj-subagents-alpha/`](dkj-subagents-alpha/) | The **core team** — the specialists who work anywhere, with or without a repository, plus the orchestrator's persona and the `orchestrator` skill. The one team the Claude App gets. |
+| [`dkj-subagents-alpha/`](dkj-subagents-alpha/) | The **core team** — the specialists who work anywhere, with or without a repository, plus the orchestrator's persona and the `orchestrator` and `tip-check` skills. The one team the Claude App gets. |
 | [`dkj-subagents-developers/`](dkj-subagents-developers/) | The **developers team** — the specialists whose craft needs a repository (Derek, Rendall, Sylvester, Cody, Tycho, Victor, Sebastian, Ravi, Nolan, Tessa), plus `specialists-init`, `specialists-teardown`, `sync-roster`, `move-data-to-onedrive` and the roster hook. Split off the core team in [#4211](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4211). |
 | [`dkj-subagents-lifehub/`](dkj-subagents-lifehub/) | An **add-on team** for a personal information hub / brain-based knowledge repo. |
 | [`dkj-subagents-shopify/`](dkj-subagents-shopify/) | An **add-on team** for a Shopify store repo: theme code, store management, configuration. |
@@ -95,7 +95,7 @@ the page a reader consults precisely because they assume the two halves match.
 - **`skills/`, `hooks/`, `scripts/`, `personas/`** — optional, and only where a team genuinely needs
   them. In practice `dkj-subagents-developers` is the one carrying all four, because the adoption path, the roster
   session check and the sync scripts belong to the base team rather than to any domain team, and to its
-  repo-bound half (#4211); the core team ships only `personas/` (Chris, Bianca) and the `orchestrator` skill;
+  repo-bound half (#4211); the core team ships only `personas/` (Chris, Bianca) and the `orchestrator` and `tip-check` skills;
   `dkj-subagents-shopify` ships four domain skills, and the other two teams are specialists and manuals only.
 
 ## `subagent-shared/` — in this directory, and not a team
@@ -194,7 +194,7 @@ the directory rule rides along with the name, unaffected, exactly as this paragr
 
 | Plugin | What it is | Who it's for |
 |---|---|---|
-| [`dkj-subagents-alpha/`](dkj-subagents-alpha/) | **The core team.** Nine specialists who work anywhere, with or without a repository (research, planning, product ownership, data analysis, design, UX, copy editing, long-form writing, and the investigative red-team), plus the personas Chris and Bianca and the `orchestrator` skill. | **Every** consuming repo, and the Claude App — always enable it. |
+| [`dkj-subagents-alpha/`](dkj-subagents-alpha/) | **The core team.** Nine specialists who work anywhere, with or without a repository (research, planning, product ownership, data analysis, design, UX, copy editing, long-form writing, and the investigative red-team), plus the personas Chris and Bianca and the `orchestrator` and `tip-check` skills. | **Every** consuming repo, and the Claude App — always enable it. |
 | [`dkj-subagents-developers/`](dkj-subagents-developers/) | **The developers team.** The eight specialists whose craft needs a repository (app development, testing, systems administration, technical writing, code review, security review, refactoring, performance), the personas Derek and Rendall, and the skills `specialists-init`, `specialists-teardown`, `sync-roster` and `move-data-to-onedrive`. Requires the core team (#4211). | **Every** consuming repo, beside the core team — never the Claude App. |
 | [`dkj-subagents-lifehub/`](dkj-subagents-lifehub/) | **An add-on team.** Five specialists for a personal information hub / brain-based knowledge repo (Astrid, Fiona, Hugo, Ian, Onyx). Deliberately domain-flavored: they know their repo and teammates by name. | Only a life-hub-style repo. |
 | [`dkj-subagents-shopify/`](dkj-subagents-shopify/) | **An add-on team.** Three specialists for a Shopify store repo (Liam · Liquid, Sandra · store management, Steven · configuration) plus four domain skills of its own (`adopt-shopify-floor`, `push-preview`, `start-task`, `sync-main`). Also deliberately domain-flavored. | Only a Shopify repo (e.g. smartwatchbanden). |

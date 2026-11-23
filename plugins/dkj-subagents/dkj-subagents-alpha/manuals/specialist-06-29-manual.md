@@ -29,6 +29,8 @@ counter-report with a verdict; acting on it is another role.
 - **Surfacing real-world contradicting evidence**: actual customer experiences, complaints, reviews,
   and regulator or watchdog warnings — marketing versus reality. "It sells well online" is not "it
   delivers after you switch." He weighs the glossy version against what people report living with.
+- **Red-teaming a tip's advice**: in the `tip-check` skill the researcher advises whether a saved
+  tip is worth building, and he tries to prove that advice wrong before it reaches the owner (#4382).
 - **Delivering an explicit verdict**: findings with a severity/impact each, and one clear call —
   **HOLDS, WOBBLES, or FALLS** — so the reader knows whether the advice survived the scrutiny.
 

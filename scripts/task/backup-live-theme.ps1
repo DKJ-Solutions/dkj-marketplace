@@ -172,6 +172,8 @@ if (Test-Path -LiteralPath $guardLib -PathType Leaf) { . $guardLib; Assert-OwnCo
 
 . (Join-Path $PSScriptRoot '..\lib\command-probe-lib.ps1')
 . (Join-Path $PSScriptRoot '..\lib\theme-lifecycle-rules.ps1')
+# Resolve-ShopifyThemeLimit, the one reading of the Get-ShopifyThemeLimit seam (#4388); pure, functions only.
+. (Join-Path $PSScriptRoot '..\lib\live-push-rules.ps1')
 . (Join-Path $PSScriptRoot '..\lib\theme-archive-rules.ps1')
 . (Join-Path $PSScriptRoot '..\lib\shopify-cli-lib.ps1')
 . (Join-Path $PSScriptRoot '..\lib\check-report-lib.ps1')
@@ -197,7 +199,7 @@ Set-Location -LiteralPath $repoRoot
 # to defaults rather than take this script down.
 $seam = & {
     Set-StrictMode -Off
-    $answers = @{ LiveThemeId = ''; StoreDomain = ''; DeleteMarker = ''; TrunkIsLive = $true; DeployBranch = ''; ThemePrefix = '' }
+    $answers = @{ LiveThemeId = ''; StoreDomain = ''; DeleteMarker = ''; TrunkIsLive = $true; DeployBranch = ''; ThemePrefix = ''; ThemeLimit = $null }
     $cfg = Join-Path $repoRoot 'scripts\repo-config.ps1'
     if (Test-Path -LiteralPath $cfg -PathType Leaf) {
         try { . $cfg } catch { Write-Warning "scripts/repo-config.ps1 could not be read: $(Format-SafeProseToken -Value $_.Exception.Message)" }
@@ -213,6 +215,8 @@ $seam = & {
     # promotion instead of a push (#3013).
     if (Test-FunctionDefined 'Get-ShopifyLiveDeployBranch')  { $answers.DeployBranch = [string](Get-ShopifyLiveDeployBranch) }
     if (Test-FunctionDefined 'Get-ShopifyThemePrefix')       { $answers.ThemePrefix  = [string](Get-ShopifyThemePrefix) }
+    # OPTIONAL: the plan's theme limit, 20 unless answered (#4388); read through Resolve-ShopifyThemeLimit.
+    if (Test-FunctionDefined 'Get-ShopifyThemeLimit')        { $answers.ThemeLimit   = Get-ShopifyThemeLimit }
     [pscustomobject]$answers
 }
 
@@ -326,7 +330,8 @@ $dupArgs = @('theme', 'duplicate', '--store', $store, '--theme', $liveId, '--nam
 # the duplicate cannot succeed, and the run used to learn that only from a missing theme afterwards -- and
 # then blamed the list. The refusal names the sweep, the one step that frees a slot. An adopted copy takes
 # no slot, so it is not asked; a dry run reports the same verdict without refusing.
-$slots = Get-ThemeSlotVerdict -Count @($themes).Count
+$slots = Get-ThemeSlotVerdict -Count @($themes).Count -Limit (Resolve-ShopifyThemeLimit -Answer $seam.ThemeLimit)
+if ($slots.LimitExceeded) { Write-Warning $slots.Message }
 if ($slots.Full -and -not $adopted) {
     if ($DryRun) {
         Write-Host "  DRY RUN: a real run would refuse here -- $($slots.Message)" -ForegroundColor Yellow

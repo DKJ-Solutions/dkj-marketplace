@@ -174,7 +174,14 @@ Assert-True ($slotFull.Message -match '20/20' -and $slotFull.Message -match 'swe
 Assert-True (-not (Get-ThemeSlotVerdict -Count 19).Full) 'one below the limit there is room'
 Assert-Equal '' (Get-ThemeSlotVerdict -Count 19).Message 'and nothing is said'
 Assert-True (Get-ThemeSlotVerdict -Count 5 -Limit 5).Full 'the limit is a parameter, so a changed number is one argument'
+# A COUNT ABOVE THE LIMIT PROVES THE LIMIT IS WRONG (#4388): not Full, so nothing is refused.
+$slotOver = Get-ThemeSlotVerdict -Count 43 -Limit 20
+Assert-True ($slotOver.LimitExceeded -and -not $slotOver.Full) '43 themes against a limit of 20: LimitExceeded and not Full'
+Assert-True ($slotOver.Message -match 'Get-ShopifyThemeLimit' -and $slotOver.Message -match '100') '...the message names the seam to answer and the Shopify Plus number'
+Assert-True (-not (Get-ThemeSlotVerdict -Count 43 -Limit 100).Full -and -not (Get-ThemeSlotVerdict -Count 43 -Limit 100).LimitExceeded) '43 themes against a limit of 100: room'
+Assert-True ((Get-ThemeSlotVerdict -Count 20 -Limit 20).Full -and -not (Get-ThemeSlotVerdict -Count 20 -Limit 20).LimitExceeded) '20/20 is still Full'
 $backupSrc = [System.IO.File]::ReadAllText((Join-Path $RepoRoot 'scripts\task\backup-live-theme.ps1'))
+Assert-True ($backupSrc.Contains('Resolve-ShopifyThemeLimit -Answer $seam.ThemeLimit')) 'backup-live-theme passes the store''s limit, read through the one helper'
 $slotAt = $backupSrc.IndexOf('Get-ThemeSlotVerdict -Count')
 $dupAt  = $backupSrc.IndexOf('Invoke-ShopifyCli -Arguments $dupArgs')
 Assert-True ($slotAt -gt 0 -and $dupAt -gt $slotAt) 'backup-live-theme asks for a slot before it runs the duplicate'
