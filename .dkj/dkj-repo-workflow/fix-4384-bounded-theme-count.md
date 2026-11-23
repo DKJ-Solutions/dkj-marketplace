@@ -39,21 +39,35 @@
 
 ### PLAN
 
+Issue #4384 (bug-inbound): with an expired Shopify CLI login, `prepare-release`'s theme-count read
+(`shopify theme list --json`, stderr discarded, no timeout) waited silently on a device-code login for
+~11 minutes. Bound the read and name the expired login; apply the same to `live-preflight`'s theme list.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `shopify-cli-lib.ps1`: opt-in `-TimeoutSeconds` (only with `-Quiet`) through a bounded arm that runs the shim in a child `powershell.exe`, kills the process tree on timeout, and reports `TimedOut` and `LoginRequired`; mirrors synced.
+- [x] `prepare-release.ps1`: the theme-count read is bounded at 60 s, and its skip names the expired login and the one command that fixes it.
+- [x] `live-preflight.ps1` (root and mirror): the same bound, and the live-theme refusal names the login.
 
 ### TEST
 
+- [x] `shopify-cli.tests.ps1`: new cases for a bounded fast read with a stderr hint, exit-code passthrough, the login diagnostic, a login-waiting stub timing out with its process gone, a plain timeout, and `-TimeoutSeconds` without `-Quiet` refused; the suite passes locally, `check-plugin-integrity` reports 0 errors.
+
 ### DEPLOY: fix/4384-bounded-theme-count
 
-**Score:**
+`prepare-release` and `live-preflight` bound their `shopify theme list` read at 60 s, and a timeout or the
+CLI's `log in to Shopify` prompt becomes a verdict naming the fix: `run 'shopify theme list --store <store>'
+once to log in`. `Invoke-ShopifyCli` gains an opt-in `-TimeoutSeconds` for captured calls (#4384).
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+A release prep on a machine whose Shopify login has expired now says so within a minute instead of
+hanging silently for about eleven, and tells you the one command that logs back in.
+
+**Score:** 3
 
 #### Pull Request
 
 Theme-count read is bounded and names an expired Shopify login
-

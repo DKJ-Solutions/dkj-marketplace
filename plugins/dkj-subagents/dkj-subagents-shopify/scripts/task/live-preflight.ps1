@@ -682,11 +682,24 @@ function Get-ThemeList {
     # a stack trace instead of a verdict. Measured against a fixture on a machine with no Shopify CLI
     # installed, which is every machine that is not a store's. A preflight whose job is to refuse
     # cleanly must not be the one thing in the chain that crashes.
+    #
+    # BOUNDED (#4384): an expired CLI login makes this call print a device-code login to stderr and wait
+    # for it, which -DiscardStderr hid, so the preflight hung silently. A timeout or that diagnostic sets
+    # $script:themeListNote, which the refuse detail below names.
+    $script:themeListNote = ''
     $list = $null
     try {
-        $list = Invoke-ShopifyCli -Arguments @('theme', 'list', '--store', $store, '--json') -Quiet -DiscardStderr
+        $list = Invoke-ShopifyCli -Arguments @('theme', 'list', '--store', $store, '--json') -Quiet -DiscardStderr -TimeoutSeconds 60
     } catch {
         Write-Warning "the Shopify CLI could not be run: $(Format-SafeProseToken -Value $_.Exception.Message)"
+        return $null
+    }
+    if ($null -ne $list -and ($list.TimedOut -or $list.LoginRequired)) {
+        $script:themeListNote = if ($list.TimedOut -and -not $list.LoginRequired) {
+            "the Shopify CLI timed out after 60 s (an expired login is the usual cause) -- run 'shopify theme list --store $(Format-SafeProseToken -Value $store)' once to log in."
+        } else {
+            "Shopify CLI not logged in -- run 'shopify theme list --store $(Format-SafeProseToken -Value $store)' once to log in."
+        }
         return $null
     }
     if ($null -eq $list -or $list.ExitCode -ne 0) { return $null }
@@ -700,7 +713,7 @@ function Get-ThemeList {
 
 $themes = Get-ThemeList
 if ($null -eq $themes) {
-    Add-Step -Name 'live theme' -State 'refuse' -Detail 'could not read the store''s theme list -- the Shopify CLI is missing, not authenticated, or the store is wrong. Which theme is live is therefore unverified, and everything after this is about that theme.'
+    Add-Step -Name 'live theme' -State 'refuse' -Detail "could not read the store's theme list -- $(if ($script:themeListNote) { $script:themeListNote } else { 'the Shopify CLI is missing, not authenticated, or the store is wrong.' }) Which theme is live is therefore unverified, and everything after this is about that theme."
 } else {
     $match = @($themes | Where-Object { $_ -and ([string]$_.id).Trim() -eq $liveId })
     # BOTH SPELLINGS, as theme-lifecycle-rules and theme-archive-rules already read them: Shopify CLI 4.8.x
