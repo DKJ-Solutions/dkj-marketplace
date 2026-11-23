@@ -39,19 +39,36 @@
 
 ### PLAN
 
+#4429: `scripts/tests/suite-durations.json` was last written 2026-11-17 and held 168 of the tree's 208
+suites, so 40 suites were packed into the CI shards without a measured duration, and the slowest shard
+ran 555-668 s against an even split of about 450 s. Refresh it from the three PR runs the issue
+measured, with the repo's own `record-suite-durations`.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `scripts/maintenance/record-suite-durations.ps1 -RunId 45154073407,45156109457,45152244349`:
+  208 suite rows read from each run, pool total 9172 s, file rewritten (machine label kept).
 
 ### TEST
 
+- [x] The recorder refuses a tableless run and read 208 rows from each of the three; the gates
+  `ship-pr` runs judge the rest. Whether the slowest shard actually drops toward 450 s is read off the
+  next CI runs, not asserted here: the two suites that pin a shard on their own
+  (`guard-live-theme` 465 s, `script-contract` 429 s) set a floor no packing removes, which is #4430.
+
 ### DEPLOY: fix/4429-refresh-suite-durations
 
-**Score:**
+`scripts/tests/suite-durations.json` holds a measured CI duration for all 208 suites again, read from
+three pull-request runs of November 23, 2026, where 40 suites added since November 17 had none and
+were packed into the CI shards blind (#4429).
+
+**Score:** 1
 
 #### What makes this deploy extra special
 
-**Score:**
+The file is this repo's own CI packing hint and ships to nobody who installs the plugins.
+
+**Score:** N/A
 
 #### Pull Request
 
