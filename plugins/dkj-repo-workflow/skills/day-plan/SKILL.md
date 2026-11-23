@@ -37,6 +37,8 @@ step: she proposes, the owner decides, and she holds the band in both directions
    - **go** -- the task fits in one sentence, so it runs in auto mode.
 
    Everything that does not fit goes under **not today**, by name, so it is a decision and not a loose end.
+   Put the one or two items with the most leverage first, and end with one question: *what do we stop or
+   drop to make room?* (#4414).
 3. **Hold the band, both ways.** Under 6 hours is not a full day, and over 8 is too much. Say so plainly and
    say what to add or what to move. A short or long day is allowed, but only with its reason.
 4. **Write the agreed plan** to a JSON file in your scratchpad, check it, and write it once the owner agrees:

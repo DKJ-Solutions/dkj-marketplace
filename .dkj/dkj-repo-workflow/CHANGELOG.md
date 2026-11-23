@@ -2,7 +2,111 @@
 
 ## [Unreleased]
 
-**11 / 11 minor entries** <!-- pending-tally -->
+**15 / 15 minor entries** <!-- pending-tally -->
+
+### DEPLOY: fix/4424-stranded-sweep-incomplete · 20261123-130628Z
+
+`check-stranded-sweep` and `check-unshipped-pr` no longer report `[INCOMPLETE]` for a pull request whose
+required check CI has not created yet. `gh pr checks --required` exits 1 with `no required checks
+reported` in that state, and the shared scan counted it as a failed read, so with several sweeps handing
+off at once about half the armed pull requests went unjudged on every run, and a rerun never helped. That
+answer is now judged as pending, so a required check that never appears turns into `[STUCK]` after the
+quiet window instead of going unjudged forever. Where something does stay unjudged, the `[INCOMPLETE]`
+line now says which cause hit (a failed read, the scan budget, or no number) and only suggests a rerun
+when the budget was the cause.
+
+**Score:** 3
+
+#### What makes this deploy extra special
+
+A consumer running `issues-sweep` gets step 1's hand-off check back: the `[STUCK]` report for a red or
+silent hand-off now reaches every armed pull request, where it used to skip the ones still waiting on CI.
+
+**Score:** 2
+
+#### Pull Request
+
+check-stranded-sweep judges a not-yet-reported required check as pending and names why a scan stopped
+
+Plugins: dkj-repo-workflow
+
+[PR #4425](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4425)
+
+---
+
+### DEPLOY: docs/4418-design-lessons-to-manuals · 20261123-125105Z
+
+The UX designer's and the graphic designer's manuals now carry three design lessons that had only lived in
+one machine's memory notes: the visual design is built in Figma the same professional way as a wireframe,
+both share the design system's one spacing and radius scale, and where the two disagree on structure the
+visual design adapts to the wireframe (#4418).
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+A visual design in Figma no longer starts from one-off frames or its own spacing scale, and no longer
+quietly overrides the tested wireframe's layout.
+
+**Score:** 2
+
+#### Pull Request
+
+Design lessons from local memory notes land in Uma's and Gwen's manuals
+
+Plugins: dkj-subagents-alpha
+
+[PR #4422](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4422)
+
+---
+
+### DEPLOY: docs/4415-tip-check-manual-outcome · 20261123-123536Z
+
+`tip-check` now weighs sharpening an existing specialist's manual as an outcome. A tip that adds a
+better question or habit to a manual is a Build of a manual line, not a Skip (#4415).
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+A tip that improves how a specialist already works is no longer thrown away as "we have it". It
+comes back as a concrete manual line to file.
+
+**Score:** 2
+
+#### Pull Request
+
+tip-check: sharpening an existing manual is an outcome too
+
+Plugins: dkj-subagents-alpha
+
+[PR #4421](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4421)
+
+---
+
+### DEPLOY: docs/4414-paula-stop-doing · 20261123-122049Z
+
+Paula's manual now has her name the highest-leverage items first in any plan she proposes and ask one
+question, *what do we stop or drop to make room?*, and `day-plan`'s morning proposal does the same (#4414).
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+A morning plan from `day-plan` now opens with the items that matter most and asks what to drop, so the
+day is not filled only by adding work.
+
+**Score:** 2
+
+#### Pull Request
+
+Paula's planning asks what to stop doing, not only what to add
+
+Plugins: dkj-repo-workflow, dkj-subagents-alpha
+
+[PR #4420](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4420)
+
+---
 
 ### DEPLOY: feat/4402-go-live-command · 20261123-120723Z
 
