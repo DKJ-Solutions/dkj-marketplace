@@ -2,7 +2,33 @@
 
 ## [Unreleased]
 
-**5 / 5 minor entries** <!-- pending-tally -->
+**6 / 6 minor entries** <!-- pending-tally -->
+
+### DEPLOY: fix/4400-review-park-verify · 20261123-105151Z
+
+`claim-issue.ps1 -Tag -Verify` now answers `[OK]` for the tag that parked an issue for review
+(`-Park awaiting-review-dev` or `awaiting-review-client`), so issues-sweep step 6 can resume an
+approved visible park (#4400).
+
+**Score:** 3
+
+#### What makes this deploy extra special
+
+A sweep coming back to a branch the owner approved no longer gets told the work is "another session's"
+and to stop. Before, every approved review park failed `-Verify`, so step 6 could not be followed as
+written. This applies to parks made after the update; an issue parked earlier carries no marker yet.
+
+**Score:** 3
+
+#### Pull Request
+
+issues-sweep: -Verify reads the tag a review park recorded
+
+Plugins: dkj-repo-workflow
+
+[PR #4411](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4411)
+
+---
 
 ### DEPLOY: fix/4404-closing-step-answer-to-pr-box · 20261123-103551Z
 
