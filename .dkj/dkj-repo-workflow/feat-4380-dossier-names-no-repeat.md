@@ -39,19 +39,36 @@
 
 ### PLAN
 
+Inbound #4380: Ian's manual has no naming rule, so new dossiers repeat context their path already
+gives. Verified on pickup: the manual's hard rules name filing, navigation and word count, and nothing
+about names.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] Add the "no word twice in a dossier's path" rule to Ian's hard rules in
+  `plugins/dkj-subagents/dkj-subagents-lifehub/manuals/specialist-04-03-manual.md`, with the three
+  cases from the issue (path supplies context, shared names allowed, proper names stay whole).
 
 ### TEST
 
+- [x] Doc-only change: the manual gains one bullet and nothing else moves; `ship-pr`'s gate runs
+  the integrity check and the suites.
+
 ### DEPLOY: feat/4380-dossier-names-no-repeat
 
-**Score:**
+Ian's manual carries a naming rule: a dossier he creates or renames repeats no word already higher in
+its path, two dossiers may share a name under different parents, and a proper name is never shortened
+to avoid the repeat (#4380).
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+In a life hub whose dossiers form a tree, new and renamed dossiers get short names the path explains
+(`Wedding › DJ`, not `Wedding › DJ wedding`), so paths stay readable without the owner renaming them by
+hand.
+
+**Score:** 2
 
 #### Pull Request
 

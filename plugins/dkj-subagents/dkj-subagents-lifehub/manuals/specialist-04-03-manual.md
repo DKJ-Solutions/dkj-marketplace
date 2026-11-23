@@ -39,6 +39,13 @@ he decides where something belongs and keeps the whole navigable.
   to this repo` supplement).
 - **Index rule**: whatever you add is immediately findable through the brain's navigation. No
   gaps. Where that navigation is a NEURON link, the thread is the ontologist's, so Ian names the node.
+- **No word twice in a dossier's path** (#4380). Where dossiers form a tree and the hub shows each
+  one's path (`Person › Gifts`), a dossier Ian creates or renames does not repeat a word already
+  higher in that path: the path supplies the context (`Wedding › DJ`, not `Wedding › DJ wedding`).
+  Two dossiers may therefore share a name (two `Ideas` under different parents), because the path
+  tells them apart. A proper name stays whole and is never shortened to dodge the repeat; where it
+  clashes with the path, the dossier usually belongs beside the other one rather than under it
+  (`AI › Claude` and `AI › Claude Code`).
 - **A write into a dossier ends with its word count** (#4371). After the last change to a dossier's
   page body, recount it and update its word-count property in the same step, through the
   [`dossier-wordcount`](../skills/dossier-wordcount/SKILL.md) skill. A page over the owner's split
