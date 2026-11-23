@@ -63,8 +63,8 @@ The slash route assumes the `UserPromptSubmit` payload carries the command as ty
 - [x] `scripts/tests/stopwatch.tests.ps1`: 356 passed, 0 failed, with negative cases for a sentence
   about the stopwatch, a question, a phrase on a later line and a phrase inside a pasted block.
 - [x] `check-plugin-integrity.ps1`: 0 errors.
-- [ ] The owner looks at the changed lines on Admin's Stopwatch overview, a prepared card's page and
-  the hub tile.
+- [x] The owner looks at the changed lines on Admin's Stopwatch overview, a prepared card's page and
+  the hub tile. Approved by the owner on 2026-11-23, recorded on #4386.
 
 ### DEPLOY: feat/4386-stopwatch-start-triggers
 
