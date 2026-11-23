@@ -2,7 +2,38 @@
 
 ## [Unreleased]
 
-**18 / 19 minor entries** <!-- pending-tally -->
+**19 / 20 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/4432-disjoint-docs-skip-lap · 20261123-141728Z
+
+Under merge-on-green every merge voided the certificate of every other armed PR, and each then paid a
+full CI forward lap (~10 min), even when the PR touched only `.md` files that none of the new trunk
+commits touched. Step 3b now discounts that case: when the PR's diff is docs-only (every path `.md`)
+and shares no file with the counted (non-fold) commits `main` gained, ship-pr merges `main` into the PR
+head in a throwaway worktree and runs `check-plugin-integrity` and `check-always-on-budget` there (~2
+min). Green, the certificate holds and the merge goes ahead without a lap; anything that fails or cannot
+run falls through to the lap unchanged. Step 3a no longer early-forwards such a PR. The discount applies
+only to a run in a session's own checkout: the unattended merge-on-green run (`-TrustedRoot`) keeps the
+lap, because it may not spawn scripts from a PR-derived tree (#2452); that half is #4440. (#4432)
+
+**Score:** 3
+
+#### What makes this deploy extra special
+
+A session that ships a docs-only pull request with `ship-pr` no longer waits a full CI cycle each time
+another merge lands first. The local cross-file checks on the merged result take about two minutes.
+
+**Score:** 3
+
+#### Pull Request
+
+ship-pr step 3b: skip the forward lap for a docs-only PR disjoint from the trunk's new commits, after local cross-file checks
+
+Plugins: dkj-repo-workflow
+
+[PR #4441](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4441)
+
+---
 
 ### DEPLOY: fix/4436-go-live-ask-prompt · 20261123-140324Z
 

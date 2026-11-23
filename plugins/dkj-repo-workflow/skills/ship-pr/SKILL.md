@@ -659,6 +659,14 @@ test depends on is not this script's to do, and the predicate is already cheap e
 first-parent log) that narrowing it further would trade a real safety margin for a rarer refusal on no
 measured benefit.
 
+**A second discount sits beside the fold one ([#4432](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4432)).**
+A PR whose own diff is docs-only (every path ends in `.md`, deletions and renames of other files
+disqualify) that shares no file with the non-fold commits `main` gained keeps its certificate without a
+forward lap, once `check-plugin-integrity` and `check-always-on-budget` pass on a local merge of `main`
+into the PR head, in a throwaway worktree (~2 minutes measured for the integrity check, against a ~10
+minute CI lap). Any failure, conflict or unreadable diff falls through to the ordinary lap; step 3a does
+not forward early for such a PR, and leaves the decision to step 3b.
+
 **The anchor is the certifying run's own `created_at`, not a check's `startedAt` — re-anchored after a
 red-team caught the first build's bias the wrong way round.** The original reasoning ("conservative,
 because queueing only pushes `startedAt` *later* than the ref-fix moment") had the direction right and

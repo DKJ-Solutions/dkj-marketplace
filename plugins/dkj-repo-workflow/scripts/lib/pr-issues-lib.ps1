@@ -2544,6 +2544,72 @@ function Get-StaleCertificateVerdict {
     return [pscustomobject]@{ Stale = $true; Count = $remaining.Count; Commits = $remaining; ExemptCount = $exempt.Count; ExemptCommits = $exempt }
 }
 
+function Get-NameStatusPaths {
+    <#
+    .SYNOPSIS
+        Every path named by `git diff --name-status` lines -- both sides of a rename or copy -- so a caller
+        comparing path sets sees a rename's old AND new name (issue #4432). PURE.
+    #>
+    param([AllowEmptyCollection()][string[]]$Lines = @())
+
+    $paths = @()
+    foreach ($line in @($Lines)) {
+        if (-not $line -or -not ([string]$line).Trim()) { continue }
+        $fields = @(([string]$line).TrimEnd("`r", "`n") -split "`t")
+        # Field 0 is the status letter (M, A, D, R100, C75, T); every later field is a path.
+        for ($i = 1; $i -lt $fields.Count; $i++) {
+            if ($fields[$i]) { $paths += $fields[$i] }
+        }
+    }
+    return @($paths)
+}
+
+function Test-DisjointDocsOnlyCertificate {
+    <#
+    .SYNOPSIS
+        Whether a PR whose certificate 'main' has outrun can keep it without a forward lap, because its
+        own diff is docs-only AND shares no file with what 'main' gained (issue #4432). PURE.
+
+    .DESCRIPTION
+        THE SECOND DISCOUNT BESIDE THE FOLD ONE (#1592). Under merge-on-green a queue of docs-only PRs paid
+        a ~10 min lap after every other merge although nothing they touch could interact with a gained
+        commit's files. This function only decides ELIGIBILITY; the caller still runs the cheap cross-file
+        checks (dead links, budget) on the merged result before it trusts the certificate, because a docs
+        PR can still break a link INTO a file a gained commit moved.
+
+        FAILS CLOSED, as a whitelist: every PR path must end in .md (case-insensitive), so a deletion or
+        rename of a non-.md file, a script, a manifest, anything unknown, disqualifies. An empty PR path set
+        is not docs-only (a diff that did not read must not read as 'nothing to conflict with').
+        Disjoint means no gained path equals a PR path (case-insensitive, slashes normalised).
+
+    .PARAMETER PrPaths
+        Every path the PR changes against its merge base with the trunk, both sides of a rename.
+
+    .PARAMETER GainedPaths
+        Every path changed by the gained commits still COUNTED after the fold discount, both sides of a
+        rename.
+    #>
+    param(
+        [AllowEmptyCollection()][string[]]$PrPaths = @(),
+        [AllowEmptyCollection()][string[]]$GainedPaths = @()
+    )
+
+    $pr = @($PrPaths | Where-Object { $_ -and ([string]$_).Trim() } | ForEach-Object { ([string]$_).Trim().Replace('\', '/') })
+    $gained = @($GainedPaths | Where-Object { $_ -and ([string]$_).Trim() } | ForEach-Object { ([string]$_).Trim().Replace('\', '/') })
+    if ($pr.Count -eq 0) {
+        return [pscustomobject]@{ Eligible = $false; Reason = 'the PR diff names no path (not read, or empty) -- not treated as docs-only'; SharedPaths = @(); NonDocsPaths = @() }
+    }
+    $nonDocs = @($pr | Where-Object { -not $_.EndsWith('.md', [System.StringComparison]::OrdinalIgnoreCase) })
+    if ($nonDocs.Count -gt 0) {
+        return [pscustomobject]@{ Eligible = $false; Reason = "the PR changes $($nonDocs.Count) path(s) that are not .md (first: $($nonDocs[0]))"; SharedPaths = @(); NonDocsPaths = $nonDocs }
+    }
+    $shared = @($pr | Where-Object { $p = $_; @($gained | Where-Object { $_ -ieq $p }).Count -gt 0 } | Select-Object -Unique)
+    if ($shared.Count -gt 0) {
+        return [pscustomobject]@{ Eligible = $false; Reason = "the PR and the gained commits both change $($shared.Count) file(s) (first: $($shared[0]))"; SharedPaths = $shared; NonDocsPaths = @() }
+    }
+    return [pscustomobject]@{ Eligible = $true; Reason = ''; SharedPaths = @(); NonDocsPaths = @() }
+}
+
 function Get-FailedCheckRunRefs {
     <#
     .SYNOPSIS
