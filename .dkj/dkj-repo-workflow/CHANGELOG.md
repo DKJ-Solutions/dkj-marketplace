@@ -2,7 +2,32 @@
 
 ## [Unreleased]
 
-**12 / 13 minor entries** <!-- pending-tally -->
+**13 / 14 minor entries** <!-- pending-tally -->
+
+### DEPLOY: fix/4393-bounded-theme-list-reads · 20261123-031809Z
+
+`archive-theme`, `backup-live-theme`, `push-preview` and `sweep-preview-themes` bound their
+`shopify theme list` read at 60 s, as `prepare-release` and `live-preflight` already do, and a timeout or
+the CLI's login prompt is named with the one command that logs back in (#4393).
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+A preview push, backup, archive or sweep on a machine whose Shopify login has expired now stops within a
+minute and says so, instead of hanging silently.
+
+**Score:** 3
+
+#### Pull Request
+
+Bound the remaining theme-list reads and name an expired Shopify login
+
+Plugins: dkj-repo-workflow-bwj, dkj-subagents-shopify
+
+[PR #4397](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4397)
+
+---
 
 ### DEPLOY: fix/4381-ai-radar-judging-notion · 20261123-022200Z
 
