@@ -2,7 +2,35 @@
 
 ## [Unreleased]
 
-**15 / 15 minor entries** <!-- pending-tally -->
+**16 / 16 minor entries** <!-- pending-tally -->
+
+### DEPLOY: fix/4426-reach-test-seo-defects · 20261123-132051Z
+
+A store session filing a measured SEO defect on indexed live pages (a missing H1, a wrong canonical,
+broken structured data, a page that cannot be indexed) now gives it the reach label and names the
+store's SEO team in `## Why <reach label>`, instead of reading it as developer-only and filing it tier
+0 without an Asana card. [`report-issue`](../../plugins/dkj-repo-workflow/extensions/dkj-repo-workflow-bwj/skills/report-issue/SKILL.md)
+and [`WORKFLOW-portable.md`](../../plugins/dkj-repo-workflow/extensions/dkj-repo-workflow-bwj/WORKFLOW-portable.md)
+name the case (#4426).
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+A store's SEO defects on live pages now reach its Asana board and business worklist consistently,
+instead of depending on whether the SEO team's question happened to be in the session's context.
+
+**Score:** 2
+
+#### Pull Request
+
+report-issue's reach test names measured SEO defects on indexed live pages
+
+Plugins: dkj-repo-workflow-bwj
+
+[PR #4431](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4431)
+
+---
 
 ### DEPLOY: fix/4424-stranded-sweep-incomplete · 20261123-130628Z
 
