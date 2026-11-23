@@ -183,7 +183,7 @@ you check anything out:**
 powershell -NoProfile -ExecutionPolicy Bypass -File "${CLAUDE_PLUGIN_ROOT}/scripts/task/claim-issue.ps1" <n> -Tag -Verify
 ```
 
-Exit 0 means yours; anything else means another session's, and on this machine a checked-out branch is
+Exit 0 means yours (a review park records its tag in its comment, so the tag that parked it answers `[OK]` although `-Park` released its claim, #4400); anything else means another session's, and on this machine a checked-out branch is
 indistinguishable from your own. **This is the sharpest place a vague claim costs** -- step 1 skips
 everything that carries a marker and is therefore safe whoever wrote it, while this step deliberately
 resumes on the tag's own work.

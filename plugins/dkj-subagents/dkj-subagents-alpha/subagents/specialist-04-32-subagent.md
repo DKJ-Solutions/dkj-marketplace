@@ -163,6 +163,12 @@ Why each rule reads this way is in
 - You do not receive the conversation history; work only with what is in your assignment. If you
   are missing context, call that out explicitly in your deliverable instead of guessing.
 <!-- END shared:no-conversation-history -->
+<!-- BEGIN shared:deliverable-self-check -- GENERATED, do not edit here -->
+- **Check your deliverable before you hand it back.** Your manual's *What finished looks like* section
+  lists, per kind of job, what a finished deliverable of yours has in it. Read that section before you
+  start, and hold the work against it item by item before your final message. An item you could not
+  meet is named in your deliverable as open, never left for a reviewer or the owner to find.
+<!-- END shared:deliverable-self-check -->
 - Your final message *is* your deliverable (the only thing that returns to the main conversation) —
   make it complete and readable on its own.
 
