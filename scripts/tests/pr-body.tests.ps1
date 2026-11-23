@@ -1006,6 +1006,21 @@ foreach ($olEmpty in @(@{ P = ''; A = $olAnswer }, @{ P = $olPattern; A = '' }, 
 $olCrlf = Set-PrOwnerLookAnswer -Body ($olBody -replace "`n", "`r`n") -Pattern $olPattern -Answer $olAnswer
 Assert-Equal 0 ([regex]::Matches($olCrlf.Body, "(?<!`r)`n").Count) 'owner look: a CRLF body stays CRLF'
 
+# --- Get-ClosingStepNotVisibleAnswer: the closing step's "not visible" answer (#4404) -----------------
+$nvStep = 'Is the change visible in the frontend / storefront?'
+$nvDoc = { param($line) "### PLAN`n`n### CREATE`n`n- [x] Build it`n$line`n`n### TEST`n`n- [ ] later`n" }
+Assert-Equal 'no visitor sees it' (Get-ClosingStepNotVisibleAnswer -Content (& $nvDoc "- [~] $nvStep no visitor sees it") -Steps @($nvStep)) 'not visible: a [~] step returns its reason'
+Assert-Equal 'live already shows these images' (Get-ClosingStepNotVisibleAnswer -Content (& $nvDoc "- [x] $nvStep No -- live already shows these images") -Steps @($nvStep)) 'not visible: [x] ... No -- reason returns the reason'
+foreach ($nvSep in @(' - ', ', ', ': ', (' ' + [char]0x2014 + ' '), (' ' + [char]0x2013 + ' '))) {
+    Assert-Equal 'why' (Get-ClosingStepNotVisibleAnswer -Content (& $nvDoc "- [x] $nvStep no$($nvSep)why") -Steps @($nvStep)) 'not visible: every accepted separator, any case of No'
+}
+Assert-Equal '' (Get-ClosingStepNotVisibleAnswer -Content (& $nvDoc "- [x] $nvStep Yes, the hero image changes") -Steps @($nvStep)) 'not visible: a ticked step without No means visible'
+Assert-Equal '' (Get-ClosingStepNotVisibleAnswer -Content (& $nvDoc "- [x] $nvStep No --") -Steps @($nvStep)) 'not visible: no reason, no answer'
+Assert-Equal '' (Get-ClosingStepNotVisibleAnswer -Content (& $nvDoc "- [ ] $nvStep") -Steps @($nvStep)) 'not visible: an open step is not an answer'
+Assert-Equal '' (Get-ClosingStepNotVisibleAnswer -Content (& $nvDoc '- [ ] something else') -Steps @($nvStep)) 'not visible: a missing step returns empty'
+Assert-Equal '' (Get-ClosingStepNotVisibleAnswer -Content "### CREATE`n`n- [x] Build`n`n### TEST`n`n- [~] $nvStep not here" -Steps @($nvStep)) 'not visible: the step under another section does not count'
+Assert-Equal '' (Get-ClosingStepNotVisibleAnswer -Content (& $nvDoc "- [~] $nvStep x") -Steps @()) 'not visible: no configured steps returns empty'
+
 Write-Host ""
 if ($script:fail -gt 0) {
     Write-Host "FAILS: $($script:fail) failed, $($script:pass) passed." -ForegroundColor Red

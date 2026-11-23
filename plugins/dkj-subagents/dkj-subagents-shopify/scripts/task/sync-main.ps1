@@ -799,9 +799,22 @@ function Write-SyncReconciliationBase {
         return
     }
 
+    # THE RESTORE COMMITS THE INDEX, NEVER A PATHSPEC (#4401). `git checkout <sha> -- <paths>` puts the
+    # trunk's blobs into the index byte for byte; `git commit -- <paths>` then RE-STAGES those paths from
+    # the working copy, through the clean filter, so under core.autocrlf=true a blob stored with CRLF came
+    # back as LF -- "no file changes" over a 264-line diff. The tree is held clean before this function
+    # runs, so the index holds nothing but these paths, and a bare commit takes it exactly as checked out.
     Invoke-SyncGitQuiet @(@('checkout', $trunkSha, '--') + $basePaths) | Out-Null
-    & git commit --quiet -m "$($subjects.Restore) (no file changes)" -- @basePaths
-    if ($LASTEXITCODE -ne 0) {
+    & git commit --quiet -m "$($subjects.Restore) (no file changes)"
+    if ($LASTEXITCODE -eq 0) {
+        # AND THE CLAIM IS MEASURED, NOT ASSUMED: the branch's tree must BE the trunk's tree.
+        & git diff --quiet $trunkSha HEAD --
+        if ($LASTEXITCODE -ne 0) {
+            Write-Host "The restore commit does not reproduce the trunk byte for byte (git diff $trunkSha HEAD is not empty). Do not merge it." -ForegroundColor Red
+            Write-Host "  Delete $BranchShown and report it: the branch would change files it claims to leave alone." -ForegroundColor Red
+            return
+        }
+    } else {
         # THE ONE STATE THIS FUNCTION MUST NOT LEAVE SILENTLY. One commit in, the branch holds live's
         # content for those paths, which is the wholesale overwrite the whole script exists to prevent --
         # so it is named, with the command that undoes it, rather than reported as a failed step.

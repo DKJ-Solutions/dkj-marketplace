@@ -998,6 +998,56 @@ function Set-PrOwnerLookAnswer {
     return $result
 }
 
+function Get-ClosingStepNotVisibleAnswer {
+    <#
+    .SYNOPSIS
+        Reads the branch document's closing CREATE step and returns the reason the author gave for "not
+        visible", or '' when the step does not say so.
+
+    .DESCRIPTION
+        THE CLOSING STEP'S ANSWER NEVER REACHED THE PR (#4404). new-branch writes the repo's closing step
+        (Get-BranchClosingSteps, for example "Is the change visible in the frontend?") under CREATE, and a
+        session answers it there. open-pr never carried the answer into the PR body, so the template box
+        for "nothing a visitor can see" stayed empty, a consumer check that wants one Preview box ticked
+        went red, and ship-pr merged anyway: measured eleven times in one consumer. #3958 closed the same
+        gap for the owner's look only.
+
+        TWO SHAPES COUNT AS "NOT VISIBLE, AND HERE IS WHY": '- [~] <step> <reason>' (the sanctioned skip
+        mark) and '- [x] <step> No -- <reason>' (a ticked answer that begins with No; the separator may be
+        '--', '-', ',', ':' or an en or em dash). A ticked step WITHOUT a No means visible, so it returns ''
+        and the not-visible box is never ticked on a guess. An open '- [ ]' step, an absent step and a step
+        with no reason all return '' too: a reasonless tick would be a claim nobody made.
+
+        ONLY THE CREATE SECTION IS READ, up to the next heading of level 1 to 3, so the same words under
+        another phase are not an answer. Pure: the caller reads the document and resolves the steps.
+    #>
+    param(
+        [AllowEmptyString()][string]$Content,
+        [AllowEmptyCollection()][string[]]$Steps = @()
+    )
+    if (-not $Content -or -not $Steps -or $Steps.Count -eq 0) { return '' }
+    $dashes = '--|-|,|:|' + [char]0x2013 + '|' + [char]0x2014
+    $inCreate = $false
+    foreach ($line in ($Content -split "\r?\n")) {
+        if ($line -match '^#{1,3}\s') {
+            $inCreate = ($line -match '^###\s+CREATE\b')
+            continue
+        }
+        if (-not $inCreate) { continue }
+        foreach ($step in $Steps) {
+            if (-not $step -or -not $step.Trim()) { continue }
+            $m = [regex]::Match($line, '^\s*[-*+]\s+\[(~|x|X)\]\s+' + [regex]::Escape($step.Trim()) + '\s*(.*)$')
+            if (-not $m.Success) { continue }
+            $rest = $m.Groups[2].Value.Trim()
+            if ($m.Groups[1].Value -eq '~') { return $rest }
+            $no = [regex]::Match($rest, '^(?i:no)\s*(?:' + $dashes + ')\s*(?![-])(.+)$')
+            if ($no.Success) { return $no.Groups[1].Value.Trim() }
+            return ''
+        }
+    }
+    return ''
+}
+
 function Get-PrDescriptionPlaceholderDefaults {
     <#
     .SYNOPSIS
