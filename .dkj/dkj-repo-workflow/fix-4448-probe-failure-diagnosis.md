@@ -39,19 +39,39 @@
 
 ### PLAN
 
+Inbound #4448: in `Wait-CheckRegistration`'s narrowed arm a FAILED `gh pr checks --json` probe was read as
+"not registered yet", polled for the full budget, and then refused with a sentence claiming other checks
+had registered. Verified in the code before repairing: the `catch` discarded the exit code and gh's text,
+and the caller's unnarrowed first wait is satisfied by any gh error text, so nothing ever proved a check
+had registered.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] Classify an unparseable narrowed probe: `no checks reported` stays "not yet", a non-zero exit otherwise is a probe failure, and a parsed payload (also on exit 8 or 1) resets the count
+- [x] Refuse after `-MaxProbeFailures` (3) consecutive failures, quoting gh's text and exit code with a token diagnosis
+- [x] Print "Other checks DID register" only when a poll saw one (`$everReported`), an honest variant otherwise
+- [x] The progress line says gh failed instead of `0 check(s) have reported so far`
+- [x] Mirror `plugins/dkj-repo-workflow/scripts/release/ship-pr.ps1` byte-identical
 
 ### TEST
 
+- [x] `pr-issues.tests.ps1`: 1225 asserts pass, 11 of them new source-text asserts for #4448
+- [x] Diff reviewed by the sweep before shipping
+
 ### DEPLOY: fix/4448-probe-failure-diagnosis
 
-**Score:**
+`ship-pr` no longer waits out its whole CI budget when `gh` cannot read the PR's checks: after three
+failed reads in a row it stops, prints gh's own error and exit code, and says to check the token's
+permissions. Its timeout refusal claims other checks registered only when one was actually seen (#4448).
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+A token that cannot read checks used to cost a run its whole wait and then blame the ruleset; the real
+cause is now on screen within about 45 seconds.
+
+**Score:** 2
 
 #### Pull Request
 

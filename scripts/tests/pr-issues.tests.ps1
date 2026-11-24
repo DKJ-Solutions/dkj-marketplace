@@ -3020,6 +3020,21 @@ $idxNarrowRefusal = Get-ShipIdx -Needle 'never registered on PR #$Pr within' -In
 $idxSuiteNote = Get-ShipIdx -Needle '$suiteNote = Get-MissingCheckSuiteRefusalNote' -In 'function Wait-CheckRegistration' -Code
 Assert-True ($idxNarrowRefusal -ge 0 -and $idxSuiteNote -gt $idxNarrowRefusal) 'and it returns before the no-check-suite note, whose subject is already ruled out on this path'
 
+# #4448: A gh CALL THAT FAILED IS NOT "NOT YET", and "Other checks DID register" is only said when a poll saw one.
+Assert-True ($shipText.Contains('[int]$MaxProbeFailures = 3')) 'Wait-CheckRegistration has a consecutive-probe-failure threshold parameter (#4448)'
+$idxFailCount = Get-ShipIdx -Needle '$probeFailures++' -In 'function Wait-CheckRegistration' -Code
+$idxFailExit  = Get-ShipIdx -Needle '$probe.ExitCode -ne 0' -In 'function Wait-CheckRegistration' -Code
+$idxFailRefuse = Get-ShipIdx -Needle 'Cannot read checks for PR #$Pr with the token in use' -In 'function Wait-CheckRegistration' -Code
+Assert-True ($idxFailCount -gt $idxWaitLoop -and $idxFailExit -gt $idxWaitLoop -and $idxFailRefuse -gt $idxFailCount) 'an unparseable probe with a non-zero exit is counted, and the cannot-read refusal follows the count (#4448)'
+Assert-True ((Get-ShipIdx -Needle '$probeFailures -ge $MaxProbeFailures' -In 'function Wait-CheckRegistration' -Code) -gt $idxWaitLoop) 'the refusal fires at the threshold, well before the full budget (#4448)'
+Assert-True ($shipText -like '*$lastProbeText*' -and $shipText -like '*last exit code $lastProbeExit*') 'the refusal quotes gh''s own error text and its exit code (#4448)'
+Assert-True ($shipText -like '*checks: read*' -and $shipText -like '*GH_TOKEN*') 'the refusal names the token and its permissions as the thing to check (#4448)'
+$idxEverSet  = Get-ShipIdx -Needle '$everReported = $true' -In 'function Wait-CheckRegistration' -Code
+$idxEverUse  = Get-ShipIdx -Needle 'if ($everReported) {' -In 'function Wait-CheckRegistration' -Code
+$idxOtherDid = Get-ShipIdx -Needle 'Other checks DID register' -In 'function Wait-CheckRegistration' -Code
+Assert-True ($idxEverSet -ge 0 -and $idxEverUse -gt $idxEverSet -and $idxOtherDid -gt $idxEverUse) 'the "Other checks DID register" sentence sits behind the ever-reported flag (#4448)'
+Assert-True ($shipText -like '*No check at all was seen to report within the budget*') 'and the honest variant is printed when no poll ever saw a check (#4448)'
+
 # ORDER IS THE REPAIR, not tidiness: the wait cannot wait for the right thing before the mode is
 # known. Asserted by offset, since that is the actual claim.
 $idxMode = Get-ShipIdx -Needle 'Get-RequiredCheckContexts -BranchRulesJson $foldRulesJson' -In 'Step 3:' -Code

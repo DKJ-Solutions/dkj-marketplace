@@ -1558,6 +1558,12 @@ function Wait-CheckRegistration {
         So the two halves are repaired together: this waits for the right thing, and the loop's #1350
         match now reads both of gh's wordings. Empty (the fall-back and the no-ruleset cases) leaves
         this byte-for-byte the wait every ship made before #1602.
+    .PARAMETER MaxProbeFailures
+        Consecutive narrowed probes that FAILED outright (unparseable, non-zero exit, and not gh's
+        `no checks reported`) before this refuses early with "cannot read checks with the token in
+        use" instead of polling the full budget (issue #4448). Reset by any parsed payload or any
+        `no checks reported`. The first, unnarrowed wait does not prove a check registered: it
+        returns as soon as gh's output lacks `no checks reported`, so a gh error text satisfies it.
     #>
     param(
         [Parameter(Mandatory)][string]$Pr,
@@ -1566,7 +1572,8 @@ function Wait-CheckRegistration {
         [int]$PollSeconds = 15,
         [int]$MaxWaitSec = 180,
         [int]$AlreadyWaited = 0,
-        [string[]]$RequiredNames = @()
+        [string[]]$RequiredNames = @(),
+        [int]$MaxProbeFailures = 3
     )
     $waited = $AlreadyWaited
 
@@ -1613,6 +1620,17 @@ function Wait-CheckRegistration {
     $wanted = @($RequiredNames | Where-Object { $_ -and ([string]$_).Trim() } | ForEach-Object { ([string]$_).Trim() })
     $subject = if ($waitNarrowed) { 'required check' } else { 'check' }
 
+    # TWO FACTS THE NARROWED ARM TRACKS SO ITS REFUSALS TELL THE TRUTH (issue #4448): whether any poll
+    # ever saw a check report, and how many probes in a row FAILED outright. Measured in a consumer
+    # whose token could not read checks: 1800s of polling, every line `0 check(s) have reported so
+    # far`, then a refusal claiming other checks had registered.
+    $everReported = $false
+    $probeFailures = 0
+    $probeFailed = $false
+    $probeText = ''
+    $lastProbeText = ''
+    $lastProbeExit = 0
+
     # THE NARROWED PROBE READS THE FULL PAYLOAD, NOT `--required`, AND THAT IS ABOUT LEGIBILITY RATHER
     # THAN CORRECTNESS. `--required` answers the question in one flag, and the first build used it --
     # but a required aggregator registers only once the jobs it needs have finished, so on this repo
@@ -1633,12 +1651,17 @@ function Wait-CheckRegistration {
             # is the #1549 hole this wait exists to keep the watch out of.
             $seen = @()
             $reported = 0
+            $probeFailed = $false
+            $probeText = ''
             try {
                 # Assign first, wrap second -- the 5.1 rule every parse in this tree follows.
                 $probeParsed = ($probe.Output -join "`n") | ConvertFrom-Json
                 $probeRecords = @(@($probeParsed) | Where-Object { $_ -and $_.name })
                 $reported = $probeRecords.Count
                 $seen = @($probeRecords | ForEach-Object { ([string]$_.name).Trim() })
+                # A PARSED PAYLOAD IS A SUCCESSFUL READ even when gh exits 8 (pending) or 1 (a failure).
+                $probeFailures = 0
+                if ($reported -gt 0) { $everReported = $true }
             } catch {
                 # An unparseable payload is "not yet", never "registered". gh prints
                 # `no checks reported` as TEXT even under --json, so this arm is the ordinary early
@@ -1646,6 +1669,35 @@ function Wait-CheckRegistration {
                 # nothing to block on -- the failure this wait exists to prevent.
                 $seen = @()
                 $reported = 0
+                # BUT NOT EVERY UNPARSEABLE PAYLOAD IS "NOT YET" (issue #4448). A gh call that FAILED
+                # (a token that cannot read checks: "Resource not accessible by integration", HTTP 403)
+                # is unparseable too, and was polled for the full budget as if CI were merely slow.
+                # Only the combination unparseable + non-zero exit + not `no checks reported` counts:
+                # pending (8) and failed (1) checks still parse, and exit 0 stays "not yet".
+                $probeText = (($probe.Output | Out-String) -replace '\s+', ' ').Trim()
+                if ($probeText -match 'no (required )?checks reported') {
+                    $probeFailures = 0
+                } elseif ($probe.ExitCode -ne 0) {
+                    $probeFailed = $true
+                    $probeFailures++
+                    $lastProbeText = $probeText
+                    $lastProbeExit = $probe.ExitCode
+                }
+            }
+            if ($probeFailures -ge $MaxProbeFailures) {
+                Write-Error @"
+Cannot read checks for PR #$Pr with the token in use -- NOT merged (issue #4448).
+
+'gh pr checks' failed $probeFailures times in a row (last exit code $lastProbeExit) and printed:
+
+  $lastProbeText
+
+This is not "CI has not started": no check could be read at all. Check which token is in effect
+(GH_TOKEN, or the workflow token's 'checks: read' and 'pull-requests: read' permissions), then run:
+
+  gh pr checks $Pr --repo $Repo
+"@
+                exit 1
             }
             $missing = @($wanted | Where-Object { $seen -notcontains $_ })
             if ($missing.Count -eq 0) { return $waited }
@@ -1665,22 +1717,37 @@ function Wait-CheckRegistration {
             # commit. Reading the suite list separates the two, and only the second is about the workflow.
             # The read itself is Get-MissingCheckSuiteRefusalNote (above), shared with #1584's early exit;
             # best-effort by construction, so any failure degrades to the wording that was already here.
-            # AND THE NARROWED TIMEOUT IS A DIFFERENT DIAGNOSIS (issue #1602). Reaching this with names
-            # given means SOME check registered -- the caller's first wait proved that -- and the
-            # required one still has not. "Check the workflow" is then the wrong sentence: the likely
-            # causes are a required context the ruleset names but no workflow produces (a rename, a
-            # typo), or a job whose own dependencies never completed. Get-MissingCheckSuiteRefusalNote
-            # is not asked either, since its subject is "no check suite at all", which is already
-            # ruled out here.
+            # AND THE NARROWED TIMEOUT IS A DIFFERENT DIAGNOSIS (issue #1602). With names given and
+            # SOME check seen to register, the required one still has not. "Check the workflow" is then
+            # the wrong sentence: the likely causes are a required context the ruleset names but no
+            # workflow produces (a rename, a typo), or a job whose own dependencies never completed.
+            # Get-MissingCheckSuiteRefusalNote is not asked either, since its subject is "no check
+            # suite at all", which is already ruled out once a check has been seen.
+            # BUT "SOME CHECK REGISTERED" IS ONLY TRUE WHEN A POLL SAW IT (issue #4448). The caller's
+            # first, unnarrowed wait returns as soon as gh's output lacks `no checks reported`, so a gh
+            # ERROR text satisfies it too. Measured in a consumer: 1800s of polling, every progress line
+            # `0 check(s) have reported so far`, then this refusal claiming other checks DID register.
+            # $everReported records whether any poll actually saw one, and the claim is printed only then.
             if ($waitNarrowed) {
-                Write-Error @"
-The required check $(Format-CheckNameList -Names $RequiredNames) never registered on PR #$Pr within
-${MaxWaitSec}s -- NOT merged (issue #1602).
-
+                if ($everReported) {
+                    $narrowedWhy = @"
 Other checks DID register, so CI is running: what has not appeared is the check the ruleset requires.
 Either the ruleset names a context no workflow of this repo produces (a rename or a typo in the
 required-check name), or the job that produces it is still waiting on dependencies that have not
 finished. Compare the two:
+"@
+                } else {
+                    $narrowedWhy = @"
+No check at all was seen to report within the budget, so the ruleset-versus-workflow comparison is
+not yet the diagnosis: CI may not have started for this head, or its checks could not be read
+(issue #4448). Compare the two:
+"@
+                }
+                Write-Error @"
+The required check $(Format-CheckNameList -Names $RequiredNames) never registered on PR #$Pr within
+${MaxWaitSec}s -- NOT merged (issue #1602).
+
+$narrowedWhy
 
   gh api repos/$Repo/rules/branches/main --jq '[.[] | select(.type=="required_status_checks") | .parameters.required_status_checks[].context]'
   gh pr checks $Pr --repo $Repo
@@ -1699,7 +1766,12 @@ finished. Compare the two:
         # names every check that HAS reported, so the line can carry the two facts a reader waiting
         # seven minutes actually wants: which required check is still absent, and that the rest of CI
         # is moving. That is #831's finding applied to this wait rather than only to the watch below.
-        if ($waitNarrowed) {
+        if ($waitNarrowed -and $probeFailed) {
+            # A FAILED PROBE IS NOT "0 CHECKS HAVE REPORTED" (issue #4448): say gh failed, and what it said.
+            $shortProbe = $probeText
+            if ($shortProbe.Length -gt 120) { $shortProbe = $shortProbe.Substring(0, 120) + '...' }
+            Write-Host "  (gh could not read the checks -- exit $($probe.ExitCode): $shortProbe; failure $probeFailures/$MaxProbeFailures; ${waited}s/${MaxWaitSec}s)" -ForegroundColor DarkYellow
+        } elseif ($waitNarrowed) {
             Write-Host "  (waiting for $(Format-CheckNameList -Names $missing) to register -- $reported check(s) have reported so far; ${waited}s/${MaxWaitSec}s)" -ForegroundColor DarkYellow
         } else {
             Write-Host "  (no $subject registered yet -- waited ${waited}s/${MaxWaitSec}s)" -ForegroundColor DarkYellow
