@@ -2,7 +2,33 @@
 
 ## [Unreleased]
 
-**5 / 5 minor entries** <!-- pending-tally -->
+**6 / 6 minor entries** <!-- pending-tally -->
+
+### DEPLOY: docs/4458-ian-consult-first-procedure · 20261124-151113Z
+
+Ian's manual now states how to consult a hub before writing a fact: walk the dossier tree, query the
+updates store by relation, then write. It also notes that the Notion API search matches titles only.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+In a life hub on Notion, Ian and the skills that place facts (`inbox-sweep`, `agenda`, `ai-radar`) now
+check the target dossier, its parent and its children, and the updates linked to them, before writing a
+fact. An empty title search no longer counts as proof that the fact is new, so the same fact stops
+landing twice on two dossiers with different dates.
+
+**Score:** 3
+
+#### Pull Request
+
+Ian's consult-first rule gets a procedure
+
+Plugins: dkj-subagents-lifehub
+
+[PR #4459](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4459)
+
+---
 
 ### DEPLOY: fix/4451-profile-chat-home · 20261124-131249Z
 
