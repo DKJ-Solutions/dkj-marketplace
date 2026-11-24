@@ -307,6 +307,115 @@ function Test-MergeOnGreenArmed {
     return $false
 }
 
+# THE REFUSED-HEAD LABEL AND MARKER ARE A HANDSHAKE TOO (issue #4449), between the runner's refusal step,
+# which writes them, the picker, which skips on them, and ship-pr's arm, which clears the label. Not a seam
+# for the arm label's reason: a repo renaming one half would have a sweep that never skips, or never stops.
+$script:MergeOnGreenRefusedLabel = 'merge-on-green-refused'
+
+function Get-MergeOnGreenRefusedLabel {
+    <#
+    .SYNOPSIS
+        The label the merge-on-green runner sets on a pull request whose ship it refused, beside a marker
+        comment naming the refused head -- issue #4449.
+
+    .DESCRIPTION
+        WHY THE SWEEP HAS TO REMEMBER A REFUSAL. The picker hands over the LOWEST-numbered eligible pull
+        request, so the oldest owed merge is never starved by a newer one. But a pull request ship-pr
+        refuses for a reason that does not change between sweeps is then picked again on every sweep,
+        and every armed pull request above it waits forever. Measured in a consumer: one pull request
+        refused five sweeps in a row while a newer one sat green, CLEAN and armed for 22 hours, never
+        attempted. ship-pr already disarms on the refusals it KNOWS are judgements (#2393); this catches
+        every other refusal, at the one place that sees all of them: the runner's own ship step.
+
+        WHY A LABEL AND A COMMENT, NOT ONE OF THEM. The comment carries the head SHA, so a new push makes
+        the pull request eligible again by itself. The label carries the authority: only somebody with
+        write access can set it, so a comment anybody may plant on a public pull request skips nothing
+        on its own. And removing the label is the plain act a person re-arms with.
+    #>
+    return $script:MergeOnGreenRefusedLabel
+}
+
+function Get-MergeOnGreenRefusalMarker {
+    <#
+    .SYNOPSIS
+        The hidden marker the runner writes into its refusal comment, naming the refused head (#4449).
+        '' where the SHA is not a plain hex object name, so nothing unvetted reaches a comment body.
+    #>
+    param([string]$Sha)
+
+    $clean = ([string]$Sha).Trim().ToLowerInvariant()
+    if ($clean -notmatch '\A[0-9a-f]{7,64}\z') { return '' }
+    return "<!-- merge-on-green-refused: $clean -->"
+}
+
+function Get-MergeOnGreenRefusalComment {
+    <#
+    .SYNOPSIS
+        The comment the runner posts beside Get-MergeOnGreenRefusedLabel when ship-pr refused the picked
+        head (#4449) -- '' where any input is not the plain shape expected, so the runner posts nothing.
+
+    .PARAMETER Sha
+        The head the sweep picked and ship-pr refused.
+
+    .PARAMETER ExitCode
+        ship-pr's exit code, digits only.
+
+    .PARAMETER RunUrl
+        The workflow run's own URL, so the reader lands on the log that says why.
+    #>
+    param([string]$Sha, [string]$ExitCode, [string]$RunUrl)
+
+    $marker = Get-MergeOnGreenRefusalMarker -Sha $Sha
+    if (-not $marker) { return '' }
+    if (([string]$ExitCode).Trim() -notmatch '\A\d{1,3}\z') { return '' }
+    if (([string]$RunUrl).Trim() -notmatch '\Ahttps://[A-Za-z0-9.-]+/[A-Za-z0-9._-]+/[A-Za-z0-9._-]+/actions/runs/\d+\z') { return '' }
+    $clean = ([string]$Sha).Trim().ToLowerInvariant()
+    $label = Get-MergeOnGreenRefusedLabel
+    return (@(
+        "merge-on-green: ship-pr refused head ``$clean`` (exit $(([string]$ExitCode).Trim())) -- the log says why: $(([string]$RunUrl).Trim())",
+        '',
+        "Later sweeps skip this pull request while it carries ``$label`` and this head, so it no longer holds back the armed pull requests above it (#4449). A new push makes it eligible again; so does removing the ``$label`` label, or shipping it from a session.",
+        '',
+        $marker
+    ) -join "`n")
+}
+
+function Get-MergeOnGreenRefusedHead {
+    <#
+    .SYNOPSIS
+        The head SHA a sweep already refused for this pull request, where that refusal still stands --
+        '' where it does not (issue #4449).
+
+    .DESCRIPTION
+        IT STANDS ONLY WHILE BOTH HALVES HOLD: the record carries Get-MergeOnGreenRefusedLabel, and one of
+        its comments carries Get-MergeOnGreenRefusalMarker for the record's CURRENT headRefOid. A push
+        moves the head past every marker; a person removing the label re-arms it; ship-pr's own arm
+        clears the label, so a session shipping it again is never held back by a sweep's old refusal.
+
+        PURE, like every verdict in this lib: the record is the `gh pr list` payload the picker already
+        holds, with `comments` among its fields, so this costs no call.
+
+    .PARAMETER Record
+        A pull request record carrying labels, headRefOid and comments (each with a body).
+
+    .OUTPUTS
+        [string] the refused SHA, or ''.
+    #>
+    param($Record)
+
+    if ($null -eq $Record) { return '' }
+    if (-not (Test-MergeOnGreenArmed -Record $Record -Label (Get-MergeOnGreenRefusedLabel))) { return '' }
+    if (-not $Record.PSObject.Properties['headRefOid']) { return '' }
+    $marker = Get-MergeOnGreenRefusalMarker -Sha ([string]$Record.headRefOid)
+    if (-not $marker) { return '' }
+    if (-not $Record.PSObject.Properties['comments']) { return '' }
+    foreach ($comment in @($Record.comments)) {
+        if ($null -eq $comment -or -not $comment.PSObject.Properties['body']) { continue }
+        if (([string]$comment.body).Contains($marker)) { return ([string]$Record.headRefOid).Trim().ToLowerInvariant() }
+    }
+    return ''
+}
+
 function Get-MergeOnGreenExecutedPathHit {
     <#
     .SYNOPSIS
@@ -585,6 +694,14 @@ function Get-MergeOnGreenPrVerdict {
         return [pscustomobject]@{ Eligible = $false; Reason = "not armed: no '$Label' label" }
     }
 
+    # A HEAD A SWEEP ALREADY REFUSED IS SKIPPED (#4449), so one pull request ship-pr keeps refusing cannot
+    # starve every armed pull request above it. RefusedHead lets the stranded check name the blocker.
+    $refusedHead = Get-MergeOnGreenRefusedHead -Record $Record
+    if ($refusedHead) {
+        $short = $refusedHead.Substring(0, [math]::Min(12, $refusedHead.Length))
+        return [pscustomobject]@{ Eligible = $false; Reason = "a sweep already refused this head ($short) -- a new push, or removing the '$(Get-MergeOnGreenRefusedLabel)' label, makes it eligible again"; RefusedHead = $refusedHead }
+    }
+
     $isDraft = $false
     if ($Record.PSObject.Properties['isDraft']) { $isDraft = [bool]$Record.isDraft }
     if ($isDraft) {
@@ -681,7 +798,9 @@ function Select-MergeOnGreenCandidate {
 
         LOWEST NUMBER RATHER THAN NEWEST, so the order is stable across sweeps and the oldest owed
         merge is never starved by a newer one arriving. It also makes a run reproducible from its
-        own log: the same armed set always yields the same pick.
+        own log: the same armed set always yields the same pick. The cost of a stable order is that a
+        pull request ship-pr refuses on every sweep would be picked on every sweep; the runner records
+        such a refusal against its head, and Get-MergeOnGreenPrVerdict skips that head (#4449).
 
     .PARAMETER Verdicts
         Records carrying at least Number and Eligible -- typically the pull request record with
@@ -967,7 +1086,39 @@ function Get-MergeOnGreenStuckVerdict {
 
     $verdict = Get-MergeOnGreenPrVerdict -Record $Record -MergeBlockVerdict $MergeBlockVerdict -GreenAgeMinutes $GreenAgeMinutes -Label $Label
     $why = if ($verdict.Eligible) { 'the sweep would take it, so check that the merge-on-green runner is running' } else { $verdict.Reason }
-    return [pscustomobject]@{ Stuck = $true; Reason = ("armed and quiet for {0:N0} hour(s), still not merged -- {1}" -f [math]::Floor($quietHours), $why) }
+    # Eligible IS RETURNED so the caller can name a lower-numbered pull request the sweep takes first (#4449):
+    # that is a fact about the whole armed set, which this per-record verdict cannot see.
+    return [pscustomobject]@{ Stuck = $true; Reason = ("armed and quiet for {0:N0} hour(s), still not merged -- {1}" -f [math]::Floor($quietHours), $why); Eligible = [bool]$verdict.Eligible }
+}
+
+function Get-MergeOnGreenQueueAheadNote {
+    <#
+    .SYNOPSIS
+        The clause naming the pull request a sweep takes BEFORE this one, or '' where none does (#4449).
+
+    .DESCRIPTION
+        "The sweep would take it, so check that the runner is running" was the whole sentence for an
+        eligible pull request that sat armed for hours, and in the measured case it was wrong: the runner
+        ran on every sweep, and every sweep picked a LOWER-numbered pull request that ship-pr then refused.
+        The picker takes the lowest eligible number, so the one that can hold this one back is the lowest
+        eligible number below it. Since #4449 a refusal the runner records is skipped, so this names the
+        case that is left: a refusal the runner could not record.
+
+    .PARAMETER Number
+        This pull request's number.
+
+    .PARAMETER EligibleNumbers
+        The numbers of every armed pull request the picker would take right now.
+
+    .OUTPUTS
+        [string] the clause, or ''.
+    #>
+    param([int]$Number, $EligibleNumbers)
+
+    $lower = @(@($EligibleNumbers) | Where-Object { $null -ne $_ } | ForEach-Object { [int]$_ } | Where-Object { $_ -lt $Number } | Sort-Object)
+    if ($lower.Count -eq 0) { return '' }
+    $first = $lower[0]
+    return "but every sweep takes #$first first (the lowest eligible number), so if ship-pr keeps refusing #$first, that is what holds this one back -- read #$first's merge-on-green log"
 }
 
 function Get-UnshippedPrVerdict {
