@@ -2,7 +2,31 @@
 
 ## [Unreleased]
 
-**8 / 8 minor entries** <!-- pending-tally -->
+**9 / 9 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/4464-ian-siblings-one-kind · 20261124-234146Z
+
+Ian's manual gains a rule that dossiers under one parent are of one kind and mutually exclusive.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+In a life hub, Ian now checks that a new dossier matches its siblings' kind before placing it. Where
+it does not, he finds the right group or adds a layer that names the kind, so a catch-all page such as
+"Ecosystem" or "Other" no longer has to be spotted by eye.
+
+**Score:** 3
+
+#### Pull Request
+
+Ian: siblings under one parent are of one kind
+
+Plugins: dkj-subagents-lifehub
+
+[PR #4470](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4470)
+
+---
 
 ### DEPLOY: feat/4463-ai-radar-topic-pages · 20261124-232732Z
 
