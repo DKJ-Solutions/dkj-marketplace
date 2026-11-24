@@ -2,7 +2,31 @@
 
 ## [Unreleased]
 
-**6 / 6 minor entries** <!-- pending-tally -->
+**7 / 7 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/4462-ian-one-home-per-topic · 20261124-231438Z
+
+Ian's and Onyx's manuals gain the one-home-per-topic rule for dossier trees.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+In a life hub, Ian now files a dossier under the topic it is about, not under the life area it
+touches. An employer's salary goes under that employer, and the income overview links to it. Where the
+hub keeps a category, it follows from the path, so the tree and the category can no longer disagree.
+
+**Score:** 3
+
+#### Pull Request
+
+Ian files a dossier under its topic, not under a life area
+
+Plugins: dkj-subagents-lifehub
+
+[PR #4467](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4467)
+
+---
 
 ### DEPLOY: docs/4458-ian-consult-first-procedure · 20261124-151113Z
 
