@@ -39,21 +39,37 @@
 
 ### PLAN
 
+Inbound #4462 from a consumer life hub, including its same-day correction: the category is derived
+from the path rather than multi-valued. Ian's manual takes the filing rule, and Onyx's takes the link half.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] Ian's manual: the "One home per topic" hard rule, with its test, overview dossiers that link
+  rather than copy, and the category derived from the path.
+- [x] Onyx's manual: a life area reaches a topic by a strong link, never by a second home.
 
 ### TEST
 
+- [x] Read back both rules against the issue and its correction comment. The multi-valued category
+  from the original body is deliberately left out. The gates run in `ship-pr`.
+
 ### DEPLOY: feat/4462-ian-one-home-per-topic
 
-**Score:**
+Ian's and Onyx's manuals gain the one-home-per-topic rule for dossier trees.
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+In a life hub, Ian now files a dossier under the topic it is about, not under the life area it
+touches. An employer's salary goes under that employer, and the income overview links to it. Where the
+hub keeps a category, it follows from the path, so the tree and the category can no longer disagree.
+
+**Score:** 3
 
 #### Pull Request
 
 Ian files a dossier under its topic, not under a life area
+
+Plugins: dkj-subagents-lifehub
 
