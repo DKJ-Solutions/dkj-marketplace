@@ -189,16 +189,23 @@ if (-not $repo) {
 # required-check read, both budgets and the honest judged/unjudged split, the display scrub and the
 # checkout token live in Invoke-BoundedPrScan. What is this check's own is the filter (the arming label),
 # the verdict, and the prose. The --json fields are the picker's plus 'title', which only this check prints.
+# `comments` CARRIES A SWEEP'S RECORDED REFUSAL OF A HEAD (#4449), so this check skips it as the picker does.
+# $eligibleNumbers COLLECTS EVERY ARMED PULL REQUEST THE PICKER WOULD TAKE NOW, so a stuck one can name the
+# lower-numbered one each sweep takes first (Get-MergeOnGreenQueueAheadNote).
+$eligibleNumbers = New-Object System.Collections.Generic.List[int]
 $scan = Invoke-BoundedPrScan -Repo $repo -ListFilter @('--label', $label) `
-    -JsonFields 'number,headRefName,headRefOid,title,isDraft,mergeable,labels,isCrossRepository,files,changedFiles,updatedAt' `
+    -JsonFields 'number,headRefName,headRefOid,title,isDraft,mergeable,labels,isCrossRepository,files,changedFiles,updatedAt,comments' `
     -TimeoutSeconds $TimeoutSeconds -MaxElapsedSeconds $MaxElapsedSeconds -Judge {
         param($Record, $MergeBlockVerdict, $GreenAgeMinutes)
+        if ((Get-MergeOnGreenPrVerdict -Record $Record -MergeBlockVerdict $MergeBlockVerdict -GreenAgeMinutes $GreenAgeMinutes -Label $label).Eligible) {
+            $eligibleNumbers.Add([int]$Record.number)
+        }
         $verdict = Get-MergeOnGreenStrandedVerdict -Record $Record -MergeBlockVerdict $MergeBlockVerdict -GreenAgeMinutes $GreenAgeMinutes -Label $label
         if ($verdict.Stranded) { return @{ Kind = 'Stranded' } }
         # STUCK (issue #4355): a hand-off leaves nobody watching CI, so a red check, a conflict or a
         # runner that never fires has to be reported by the next session -- and by a sweep's step 1.
         $stuck = Get-MergeOnGreenStuckVerdict -Record $Record -MergeBlockVerdict $MergeBlockVerdict -GreenAgeMinutes $GreenAgeMinutes -StuckHours $StuckHours -Label $label
-        if ($stuck.Stuck) { return @{ Kind = 'Stuck'; Reason = ($stuck.Reason -replace '[^\x20-\x7E]', '?') } }
+        if ($stuck.Stuck) { return @{ Kind = 'Stuck'; Reason = ($stuck.Reason -replace '[^\x20-\x7E]', '?'); Eligible = [bool]($stuck.PSObject.Properties['Eligible'] -and $stuck.Eligible) } }
         return $null
     }
 
@@ -238,6 +245,10 @@ if ($stuckOnes.Count -gt 0) {
         $titlePart = if ($s.Title) { " -- $($s.Title)" } else { '' }
         Write-Host "  #$($s.Number) ($($s.Branch))$titlePart"
         Write-Host "    why: $($s.Reason)"
+        if ($s.PSObject.Properties['Eligible'] -and $s.Eligible) {
+            $ahead = Get-MergeOnGreenQueueAheadNote -Number ([int]$s.Number) -EligibleNumbers $eligibleNumbers
+            if ($ahead) { Write-Host "    $ahead" }
+        }
         Get-PrScanResumeLines -Finding $s -RepoRoot $repoRoot | ForEach-Object { Write-Host $_ }
     }
 }

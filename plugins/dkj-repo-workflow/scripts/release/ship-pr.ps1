@@ -1341,9 +1341,22 @@ $script:ShipArmed = $false
 if (-not $NoMerge) {
     $armLabel = Get-MergeOnGreenArmLabel
     $filesRead = Invoke-NativeCapture -FilePath 'gh' -DiscardStderr -Arguments @(
-        'pr', 'view', "$pr", '--repo', $repo, '--json', 'files,changedFiles')
+        'pr', 'view', "$pr", '--repo', $repo, '--json', 'files,changedFiles,labels')
     $script:SweepRefusal = Get-MergeOnGreenSweepRefusal -FilesJson $(if ($filesRead.ExitCode -eq 0) { $filesRead.Output -join "`n" } else { '' })
     $script:ShipArmed = Set-ShipMergeOnGreenArm
+    # A SESSION SHIPPING IT AGAIN RE-ARMS IT FOR THE SWEEP TOO (#4449): an earlier sweep's refusal label is
+    # lifted, read off the payload already in hand, so the common case pays no extra call.
+    $refusedLabel = Get-MergeOnGreenRefusedLabel
+    $filesRecord = $null
+    if ($filesRead.ExitCode -eq 0) { try { $filesRecord = ConvertFrom-Json -InputObject ($filesRead.Output -join "`n") } catch { $filesRecord = $null } }
+    if ($script:ShipArmed -and (Test-MergeOnGreenArmed -Record $filesRecord -Label $refusedLabel)) {
+        $lift = Invoke-NativeCapture -FilePath 'gh' -DiscardStderr -Arguments @('pr', 'edit', "$pr", '--remove-label', $refusedLabel, '--repo', $repo)
+        if ($lift.ExitCode -eq 0) {
+            Write-Host "ship-pr: lifted '$refusedLabel' from PR #$pr -- an earlier sweep's refusal no longer holds it back (issue #4449)." -ForegroundColor DarkCyan
+        } else {
+            Write-Warning "could not remove '$refusedLabel' from PR #$pr, so the sweep keeps skipping this head -- 'gh pr edit $pr --remove-label $refusedLabel' lifts it by hand (issue #4449)."
+        }
+    }
     if ($script:ShipArmed) {
         if ($script:SweepRefusal) {
             Write-Host "ship-pr: armed PR #$pr with '$armLabel', but the merge-on-green sweep will NOT finish it: $($script:SweepRefusal) (issues #2338, #2436)." -ForegroundColor Yellow

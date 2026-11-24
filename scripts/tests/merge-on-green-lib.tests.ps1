@@ -554,7 +554,7 @@ Assert-True ((Get-MergeOnGreenSweepRefusal -FilesJson 'not json') -match 'could 
 # STRUCTURAL: both promise sites branch on the refusal, which is read before the arm call.
 $refusalAt = $shipRaw.IndexOf('Get-MergeOnGreenSweepRefusal -FilesJson')
 Assert-True ($refusalAt -gt 0 -and $refusalAt -lt $armAt) 'ship-pr reads the sweep refusal before it arms'
-Assert-True ($shipRaw -match "'--json', 'files,changedFiles'") 'from the same two fields the picker judges'
+Assert-True ($shipRaw -match "'--json', 'files,changedFiles(,labels)?'") 'from the same two fields the picker judges'
 Assert-True ($shipRaw -match '(?s)if \(\$script:SweepRefusal\) \{[^}]*will NOT finish it[^}]*\} else \{[^}]*the merge-on-green sweep does once') `
     'the arm message promises the sweep only when there is no refusal'
 Assert-True ($shipRaw -match '(?s)if \(\$script:SweepRefusal\) \{[^}]*will NOT finish it[^}]*\} else \{[^}]*the merge-on-green sweep finishes it') `
@@ -827,6 +827,68 @@ Assert-True (-not (Get-MergeOnGreenStuckVerdict -Record (New-QuietRecord -HoursA
     'an unarmed pull request is never stuck -- nobody handed it to the sweep'
 Assert-True (-not (Get-MergeOnGreenStuckVerdict -Record (New-QuietRecord -HoursAgo 5 -Files @('README.md', 'scripts/repo-config.ps1')) -MergeBlockVerdict (New-Green) -GreenAgeMinutes 30 -Now $stuckNow).Stuck) `
     'a stranded pull request is not ALSO stuck -- one pull request, one headline'
+
+Assert-True ($eligibleLong.Eligible) 'a stuck pull request the picker would take says so, for the queue-ahead note (#4449)'
+Assert-True (-not $pendingLong.Eligible) 'and a pending one does not'
+
+Write-Host ''
+Write-Host 'A refused head is skipped, so it cannot starve the queue (#4449)' -ForegroundColor Cyan
+
+$sha = 'abcdef0123456789abcdef0123456789abcdef01'
+Assert-Equal 'merge-on-green-refused' (Get-MergeOnGreenRefusedLabel) 'the refused label is the one spelling all three halves agree on'
+Assert-Equal "<!-- merge-on-green-refused: $sha -->" (Get-MergeOnGreenRefusalMarker -Sha $sha.ToUpperInvariant()) 'the marker names the head, lower-cased'
+Assert-Equal '' (Get-MergeOnGreenRefusalMarker -Sha 'abc --> <script>') 'a SHA that is not plain hex yields no marker'
+Assert-Equal '' (Get-MergeOnGreenRefusalMarker -Sha '') 'and so does an empty one'
+
+function New-RefusedRecord {
+    param([int]$Number = 10, [string]$Head = $sha, [string[]]$Labels = @('merge-when-green', 'merge-on-green-refused'), [string[]]$Bodies = @("x`n<!-- merge-on-green-refused: $sha -->"), [string]$Association = 'MEMBER')
+    $r = New-PrRecord -Number $Number -Labels $Labels
+    $r | Add-Member -NotePropertyName headRefOid -NotePropertyValue $Head
+    $r | Add-Member -NotePropertyName comments -NotePropertyValue @($Bodies | ForEach-Object { [pscustomobject]@{ body = $_; authorAssociation = $Association } })
+    return $r
+}
+
+Assert-Equal $sha (Get-MergeOnGreenRefusedHead -Record (New-RefusedRecord)) 'label plus a marker for the current head: the refusal stands'
+Assert-Equal '' (Get-MergeOnGreenRefusedHead -Record (New-RefusedRecord -Head ('1' * 40))) 'a new push moves the head past the marker'
+Assert-Equal '' (Get-MergeOnGreenRefusedHead -Record (New-RefusedRecord -Labels @('merge-when-green'))) 'without the label a planted marker comment skips nothing'
+Assert-Equal '' (Get-MergeOnGreenRefusedHead -Record (New-RefusedRecord -Bodies @('no marker here'))) 'the label without a marker for this head skips nothing either'
+Assert-Equal '' (Get-MergeOnGreenRefusedHead -Record (New-RefusedRecord -Association 'NONE')) 'a marker from somebody without write access counts for nothing, label or not (Sebastian #23)'
+Assert-Equal '' (Get-MergeOnGreenRefusedHead -Record (New-RefusedRecord -Association '')) 'nor does one whose association could not be read'
+Assert-Equal $sha (Get-MergeOnGreenRefusedHead -Record (New-RefusedRecord -Association 'OWNER')) 'an owner''s marker counts'
+Assert-Equal '' (Get-MergeOnGreenRefusedHead -Record (New-PrRecord)) 'a record with no comments field is not refused'
+Assert-Equal '' (Get-MergeOnGreenRefusedHead -Record $null) 'nor is no record at all'
+
+$refusedVerdict = Get-MergeOnGreenPrVerdict -Record (New-RefusedRecord -Number 583) -MergeBlockVerdict (New-Green) -GreenAgeMinutes 60
+Assert-True (-not $refusedVerdict.Eligible) 'a refused head is not eligible, however green'
+Assert-True ($refusedVerdict.Reason -like '*already refused this head*' -and $refusedVerdict.RefusedHead -eq $sha) 'and the reason says why, with the head'
+$newer = New-RefusedRecord -Number 587 -Labels @('merge-when-green') -Bodies @()
+$newerVerdict = Get-MergeOnGreenPrVerdict -Record $newer -MergeBlockVerdict (New-Green) -GreenAgeMinutes 60
+$pickedNow = Select-MergeOnGreenCandidate -Verdicts @(
+    [pscustomobject]@{ Number = 583; Eligible = $refusedVerdict.Eligible },
+    [pscustomobject]@{ Number = 587; Eligible = $newerVerdict.Eligible })
+Assert-Equal 587 $pickedNow.Number 'the measured case: #583 refused, so the sweep takes #587 instead of starving it'
+
+$runUrl = 'https://github.com/o/r/actions/runs/123'
+$comment = Get-MergeOnGreenRefusalComment -Sha $sha -ExitCode '1' -RunUrl $runUrl
+Assert-True ($comment.Contains((Get-MergeOnGreenRefusalMarker -Sha $sha)) -and $comment.Contains($runUrl)) 'the comment carries the marker and the log link'
+Assert-True ($comment -like '*merge-on-green-refused*' -and $comment -like '*new push*') 'and says how it clears'
+Assert-Equal '' (Get-MergeOnGreenRefusalComment -Sha $sha -ExitCode '1; rm' -RunUrl $runUrl) 'an exit code that is not digits yields no comment'
+Assert-Equal '' (Get-MergeOnGreenRefusalComment -Sha $sha -ExitCode '1' -RunUrl 'javascript:alert(1)') 'nor does a run URL outside the actions shape'
+Assert-Equal '' (Get-MergeOnGreenRefusalComment -Sha 'zz' -ExitCode '1' -RunUrl $runUrl) 'nor a bad SHA'
+
+Assert-Equal '' (Get-MergeOnGreenQueueAheadNote -Number 587 -EligibleNumbers @(587, 600)) 'no lower eligible number: nothing ahead in the queue'
+Assert-True ((Get-MergeOnGreenQueueAheadNote -Number 587 -EligibleNumbers @(600, 583, 590)) -like '*takes #583 first*') 'the lowest eligible number below it is the one named'
+Assert-Equal '' (Get-MergeOnGreenQueueAheadNote -Number 587 -EligibleNumbers @()) 'an empty set names nothing'
+
+$flowText = (Get-Content -LiteralPath $FlowPath -Raw) -replace "`r`n", "`n"
+$refuseStep = [regex]::Match($flowText, '(?s)- name: Refused -- record the head.*?(?=\n\s*\n|\z)').Value
+Assert-True ($refuseStep -ne '') 'the runner has a refusal step'
+Assert-True ($refuseStep -match "steps\.ship\.outputs\.ran == 'true'" -and $refuseStep -match "steps\.ship\.outputs\.held != 'true'") 'it fires only after ship-pr ran, and never on a held merge'
+Assert-True ($refuseStep -match 'working-directory: trusted-main' -and $refuseStep -match 'Get-MergeOnGreenRefusalComment') 'it runs the trusted trunk''s lib'
+Assert-True ([regex]::Match($refuseStep, '(?s)run: \|.*\z').Value -notmatch '\$\{\{') 'no expression is spliced into its run:'
+Assert-True ($flowText -match "'ran=true'" -and $flowText -match '"exit=\$shipExit"') 'the ship step writes ran and exit for it'
+Assert-True ($pickRaw -match 'changedFiles,comments') 'the picker reads comments in its one list call'
+Assert-True ((Get-Content -LiteralPath $ShipPath -Raw) -match 'Get-MergeOnGreenRefusedLabel') 'ship-pr lifts the refused label when it arms again'
 
 Write-Host ''
 Write-Host 'Get-UnshippedPrVerdict -- green, settled, and handed to no sweep (#2525)' -ForegroundColor Cyan
