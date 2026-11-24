@@ -39,19 +39,39 @@
 
 ### PLAN
 
+#4450: in a no-repo claude.ai session, an unprompted `add_repo` for the source repo was refused by the
+auto-mode classifier as `[Unauthorized Access]`, and went through after the owner asked for it. The
+orchestrator skill's REST filing section did not say so, or what to do next. One paragraph there.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `plugins/dkj-subagents/dkj-subagents-alpha/skills/orchestrator/SKILL.md`: a paragraph under
+  "Filing where GraphQL is refused". In a no-repo session, attaching the repo may be refused until the
+  owner asks. Ask once, as one menu option (shape B), and do not retry unprompted. Keep the finding
+  written out in the reply meanwhile. The standing fix is a preferences line; that it satisfies the
+  classifier on its own is stated as unmeasured.
 
 ### TEST
 
+- [x] Docs only; the paragraph cites #4450 as its measurement and adds no link outside this repo's own
+  tracker. The gates run in `ship-pr`.
+
 ### DEPLOY: fix/4450-orchestrator-attach-refusal
 
-**Score:**
+The orchestrator skill now says that in a session with no repo, attaching the source repo can be refused
+until the owner asks for it, and that the session then asks once instead of retrying or dropping the
+finding.
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+In a claude.ai chat running the orchestrator skill, a refused `add_repo` no longer reads as a ban on
+filing upstream: the session asks you once to approve the connection. A line in your preferences such as
+"report lessons upstream to DKJ-Solutions/dkj-marketplace" is named as the standing request, but nobody has
+yet measured whether the classifier accepts that line on its own.
+
+**Score:** 2
 
 #### Pull Request
 
