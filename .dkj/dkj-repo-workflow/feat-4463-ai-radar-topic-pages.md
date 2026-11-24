@@ -39,19 +39,34 @@
 
 ### PLAN
 
+Inbound #4463, plus its follow-up comment: a consumer hub sorts its AI dossier by topic, and its product
+pages now sit one level down under a Products page.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `ai-radar` step 0 names the child pages by topic, and says they may sit at any depth.
+- [x] The placement rule puts an item on the page of its topic, not its model family. A new product gets
+  its own page.
 
 ### TEST
 
+- [x] Read back against the issue and its comment. No other "model family" wording remains in the
+  skill. The gates run in `ship-pr`.
+
 ### DEPLOY: feat/4463-ai-radar-topic-pages
 
-**Score:**
+The `ai-radar` skill now describes the AI dossier's child pages by topic, at any depth, instead of one
+page per model family.
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+An `ai-radar` run now places each item on the page of the topic it is about, as the hub's settings page
+lists those pages, including a page nested under a Products layer. An agent-building article from the
+vendor's blog lands on the agent-patterns page instead of a catch-all ecosystem page.
+
+**Score:** 2
 
 #### Pull Request
 
