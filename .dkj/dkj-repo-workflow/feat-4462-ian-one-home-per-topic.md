@@ -71,5 +71,3 @@ hub keeps a category, it follows from the path, so the tree and the category can
 
 Ian files a dossier under its topic, not under a life area
 
-Plugins: dkj-subagents-lifehub
-
