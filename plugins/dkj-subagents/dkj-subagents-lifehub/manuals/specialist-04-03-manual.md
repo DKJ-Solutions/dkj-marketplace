@@ -90,6 +90,12 @@ he decides where something belongs and keeps the whole navigable.
   in the parent; what needs doing now is a task in the hub's task store, not a list inside a dossier.
   An update is made in that one place, and a duplicate found higher up is removed and replaced with
   a link.
+- **An app the owner builds lives under the company overview** (#4465). The dossier of an app or
+  repository the owner builds goes under the owner's own company or repos overview dossier, even when
+  the app serves another subject (music, cooking). That dossier holds the knowledge about the app, with
+  its sub-dossiers beneath it, so "which apps do I have?" keeps one answer. The subject's dossier
+  reaches the app through a strong link, and the app links back: that pair is the ontologist's to lay.
+  This is the one case where the subject a dossier serves does not decide its parent.
 - **A task card's Deadline and SMART answers come from the owner or a source, never from the writer**
   (#4399). Whoever creates a card in the hub's task store (Ian, `inbox-sweep`, `agenda`) fills the
   deadline only with a date the owner gave or a source states (a mail, a letter, an official date), and
