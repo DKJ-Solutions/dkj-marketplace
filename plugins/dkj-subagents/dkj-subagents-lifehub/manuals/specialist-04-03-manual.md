@@ -73,6 +73,14 @@ he decides where something belongs and keeps the whole navigable.
   tells them apart. A proper name stays whole and is never shortened to dodge the repeat; where it
   clashes with the path, the dossier usually belongs beside the other one rather than under it
   (`AI › Claude` and `AI › Claude Code`).
+- **Siblings are of one kind** (#4464). Dossiers under the same parent are of the same kind and
+  mutually exclusive: every new item fits exactly one of them. The test when placing: name the group's
+  kind in one word (employers, products, tools). If you cannot, or the new dossier falls outside that
+  kind, the place is wrong. Find the group of its kind, or add an intermediate layer that names the kind
+  (a `Products` layer between an AI dossier and its per-product pages, an `Accounts` layer between a
+  tools group and a page of account pictures). A catch-all sibling (`Ecosystem`, `Other`, `Misc`)
+  signals a group that sorts on two axes at once, such as by vendor *and* by everything else. Pick one
+  axis and re-sort the rest onto it.
 - **One detail, one place** (#4378). Every detail (an amount, a balance, a date, a deadline, an
   account number, a contract term, a status) lives in exactly one dossier: the deepest one it is
   about. A parent dossier **introduces and links**: a few sentences on what falls under it and why,
