@@ -7,7 +7,8 @@ reads it and shapes *how* the team works with them. It never shapes *what* the r
 ## Where it lives: your own `~/.claude/CLAUDE.md`
 
 Claude Code loads the user-level `~/.claude/CLAUDE.md` into every session, in every repo, on that
-person's machine. So the profile goes there, as a section of that file, and nowhere else:
+person's machine. So in Claude Code the profile goes there, as a section of that file. The one other
+home is the chat session below, and every other place is wrong:
 
 - **Not in a repo lens.** A lens belongs to one repo, so the same preferences would be copied into every
   repo and drift. That is the duplication the constitution exists to prevent.
@@ -16,6 +17,24 @@ person's machine. So the profile goes there, as a section of that file, and nowh
 - **Not in any repo at all.** Several repos are public, and a person's working profile is personal
   information. It stays in the person's home folder, and the team never quotes or paraphrases it into a
   repo file, a commit message, an issue or a pull request.
+
+### In a claude.ai or desktop chat: your personal preferences
+
+A chat session does not load `~/.claude/CLAUDE.md`. The only per-person text it always loads is the
+account's **personal preferences** (Settings > Profile), and that is also where the line that loads
+Chris goes ([#4451](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4451)). Those preferences
+hold three things and nothing else:
+
+1. **The line that loads the orchestrator skill** (`dkj-subagents-alpha:orchestrator`).
+2. **Standing instructions**, such as *"report lessons upstream to DKJ-Solutions/dkj-marketplace"*,
+   which stands as the owner's request to attach that repo
+   ([#4450](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4450)).
+3. **This working profile, kept short**: the template below, filled in as tersely as it will go.
+
+**They never hold a copy of a persona, a manual or a rule.** The skill reads the live plugin copy, while
+a pasted one is frozen on the day it was pasted and drifts from every release after it. A copy also
+loads in full into every chat: measured on #4451, the persona is about 3,300 words and the manual about
+7,400, and the manual is meant to be read only on demand.
 
 ## What it can and cannot change
 
@@ -30,7 +49,7 @@ once instead of quietly working around it.
 
 ## The template
 
-Copy this block into your `~/.claude/CLAUDE.md` and fill it in. Leave out a heading you have nothing to
+Copy this block into your `~/.claude/CLAUDE.md` (or, for chat sessions, your personal preferences) and fill it in. Leave out a heading you have nothing to
 say under: an absent heading means *no preference*, and the team's defaults apply. Write in whatever
 language you like.
 

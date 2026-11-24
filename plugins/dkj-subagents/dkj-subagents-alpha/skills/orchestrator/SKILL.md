@@ -35,6 +35,12 @@ his boundaries. Follow it from here as your own way of working.
 the one skill in this family that has to work in an environment where `powershell` is not installed,
 because that environment is the reason it exists.
 
+**In a claude.ai or desktop chat, what loads this skill is a line in the account's personal
+preferences, and those preferences never hold a copy of the persona, the manual or a rule**: this skill
+reads the live plugin copy, and a pasted one is frozen at the day it was pasted. What does belong there
+is in [`working-profile.md`](working-profile.md#in-a-claudeai-or-desktop-chat-your-personal-preferences)
+([#4451](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4451)).
+
 ## What the roster is when there is no repo
 
 Chris's ritual names the specialist an assignment belongs to. In a repo that answer comes from the

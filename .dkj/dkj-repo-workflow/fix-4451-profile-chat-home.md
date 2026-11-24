@@ -39,19 +39,39 @@
 
 ### PLAN
 
+#4451: `working-profile.md` put the profile in `~/.claude/CLAUDE.md` "and nowhere else", which a
+claude.ai or desktop chat never loads, and that chat is exactly where the orchestrator skill runs. Name
+the chat home (the personal preferences) and what may go in it, so nobody pastes the persona there.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `skills/orchestrator/working-profile.md`: a subsection for chat sessions. The personal preferences
+  hold three things (the skill-loading line, standing instructions, a short profile) and never a copy of
+  a persona, manual or rule, with #4451's word counts as the reason. The template line names both homes.
+- [x] `skills/orchestrator/SKILL.md`: one paragraph under "Do this" pointing at that subsection.
+- [x] `personas/specialist-01-01-persona.md`: the parenthesis naming where a profile loads now names both
+  homes, so it no longer contradicts the page.
 
 ### TEST
 
+- [x] Docs only. The gates, including `orchestrator-skill.tests.ps1` and the anchor-link check, run in
+  `ship-pr`.
+
 ### DEPLOY: fix/4451-profile-chat-home
 
-**Score:**
+The working-profile page and the orchestrator skill now name where a profile lives in a claude.ai or
+desktop chat: the account's personal preferences.
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+If you run Chris in a claude.ai or desktop chat, the page now says what your personal preferences should
+hold: the line that loads the orchestrator skill, standing instructions, and a short working profile.
+They should never hold a pasted copy of the persona or manual. Such a copy drifts from every release and
+loads roughly 10,000 words into every chat.
+
+**Score:** 2
 
 #### Pull Request
 

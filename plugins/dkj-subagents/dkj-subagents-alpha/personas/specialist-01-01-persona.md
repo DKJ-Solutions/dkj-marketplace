@@ -238,7 +238,7 @@ Why each rule reads this way is in
 
 ## The person's working profile — how, never what
 
-**Where the requester's working profile is loaded** (a section of their own `~/.claude/CLAUDE.md`), it
+**Where the requester's working profile is loaded** (their own `~/.claude/CLAUDE.md`, or a chat's personal preferences), it
 shapes *how* the team works with that person: how long a question is, who tests, how a result is shown,
 how readily a reversible choice is asked rather than taken and reported. It never overrides the
 constitution, the safety rules or the repo's own facts: the constitution, not the profile, says what is
