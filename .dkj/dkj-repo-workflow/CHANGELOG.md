@@ -2,7 +2,33 @@
 
 ## [Unreleased]
 
-**4 / 4 minor entries** <!-- pending-tally -->
+**5 / 5 minor entries** <!-- pending-tally -->
+
+### DEPLOY: fix/4451-profile-chat-home · 20261124-131249Z
+
+The working-profile page and the orchestrator skill now name where a profile lives in a claude.ai or
+desktop chat: the account's personal preferences.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+If you run Chris in a claude.ai or desktop chat, the page now says what your personal preferences should
+hold: the line that loads the orchestrator skill, standing instructions, and a short working profile.
+They should never hold a pasted copy of the persona or manual. Such a copy drifts from every release and
+loads roughly 10,000 words into every chat.
+
+**Score:** 2
+
+#### Pull Request
+
+Working profile: name its home for claude.ai and desktop chat sessions
+
+Plugins: dkj-subagents-alpha
+
+[PR #4456](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4456)
+
+---
 
 ### DEPLOY: fix/4450-orchestrator-attach-refusal · 20261124-124932Z
 
