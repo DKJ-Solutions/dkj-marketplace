@@ -147,3 +147,15 @@ cloud session the token reads as invalid until the repo is attached, and then wo
 under its **live** name (`DKJ-Solutions/dkj-marketplace` for this one); attaching a retired name
 succeeds, and every API call then fails on the redirect. Measured in
 [#4278](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4278).
+
+**In a session with no repo, attaching one may be refused until the owner asks for it**, even though
+filing the inbound issue itself needs nobody's permission. Measured in a claude.ai chat: `add_repo` for
+`DKJ-Solutions/dkj-marketplace`, unprompted, was refused by the auto-mode classifier as
+`[Unauthorized Access]`, and the same call went through one turn later after the owner wrote "make the
+connection" ([#4450](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4450)). So the refusal is a
+missing request, not the owner's policy against filing: **ask the owner once to approve the connection**,
+as a single menu option (close-out shape B), and do not retry it unprompted. Do not let the finding die
+in the reply either: it waits there, written out in full, until the connection is approved. **The standing
+fix is a line in the owner's preferences**, such as *"report lessons upstream to
+DKJ-Solutions/dkj-marketplace"*, which stands as that request from the first turn on. Whether the
+classifier accepts the preference line alone has not been measured yet.

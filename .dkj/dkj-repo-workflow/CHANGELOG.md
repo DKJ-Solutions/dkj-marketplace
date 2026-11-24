@@ -2,7 +2,62 @@
 
 ## [Unreleased]
 
-**2 / 2 minor entries** <!-- pending-tally -->
+**4 / 4 minor entries** <!-- pending-tally -->
+
+### DEPLOY: fix/4450-orchestrator-attach-refusal · 20261124-124932Z
+
+The orchestrator skill now says that in a session with no repo, attaching the source repo can be refused
+until the owner asks for it, and that the session then asks once instead of retrying or dropping the
+finding.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+In a claude.ai chat running the orchestrator skill, a refused `add_repo` no longer reads as a ban on
+filing upstream: the session asks you once to approve the connection. A line in your preferences such as
+"report lessons upstream to DKJ-Solutions/dkj-marketplace" is named as the standing request, but nobody has
+yet measured whether the classifier accepts that line on its own.
+
+**Score:** 2
+
+#### Pull Request
+
+Orchestrator skill: name the add_repo refusal in a no-repo session and what to do next
+
+Plugins: dkj-subagents-alpha
+
+[PR #4454](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4454)
+
+---
+
+### DEPLOY: fix/4449-refused-head-skips-picker · 20261124-124420Z
+
+The merge-on-green sweep no longer re-picks a pull request `ship-pr` refused: the runner marks the
+refused head, the picker skips it, and the next armed pull request gets its turn. The session check
+names the pull request that holds the queue when a refusal could not be recorded.
+
+**Score:** 3
+
+#### What makes this deploy extra special
+
+A repo running merge-on-green no longer has one refused pull request silently hold back every newer armed
+one. An existing `merge-on-green.yml` is not rewritten: `adopt-ci-floor` now prints a `[refusal]` line
+for a runner without the new step, and re-running it with `-Apply` after deleting the file places it.
+The step labels and comments with `FOLD_PUSH_TOKEN`, which already holds `Pull requests: write`. To
+re-arm a refused pull request by hand, remove its `merge-on-green-refused` label.
+
+**Score:** 3
+
+#### Pull Request
+
+Skip a refused head in the merge-on-green picker so it cannot starve the queue
+
+Plugins: dkj-repo-workflow
+
+[PR #4455](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4455)
+
+---
 
 ### DEPLOY: fix/4448-probe-failure-diagnosis · 20261124-122446Z
 

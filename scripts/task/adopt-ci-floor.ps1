@@ -1359,12 +1359,50 @@ $mergeOnGreenRunner = @(
     '          # BECAUSE its required check is green on this exact head, and that certificate is what the',
     '          # merge is allowed on. Re-running the local gates here would prove nothing it does not carry.',
     '          Write-Host "merge-on-green: running ship-pr.ps1 (trusted-tree mode) on ''$env:SHIP_BRANCH'' for PR #$env:SHIP_PR"',
+    '          # ran=true only once ship-pr itself runs (#4449): a refusal above is not its verdict on this head.',
+    '          ''ran=true'' | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8',
     ('          powershell -NoProfile -ExecutionPolicy Bypass -File ' + $pluginDir + '/release/ship-pr.ps1 -TrustedRoot (Join-Path $env:GITHUB_WORKSPACE ''trusted-main'') -SkipLint -SkipTests'),
     '          $shipExit = $LASTEXITCODE',
+    '          "exit=$shipExit" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8',
     '          # 75 is ship-pr''s held-merge refusal (Get-MergeHeldExitCode, #4198): GitHub did not confirm the',
     '          # merge after a 5xx or a held lock. The step still fails; held=true asks the job below to retry.',
     '          if ($shipExit -eq 75) { ''held=true'' | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8 }',
     '          exit $shipExit',
+    '',
+    '      # A refusal that is not a held merge is recorded against the head (#4449): the picker takes the',
+    '      # LOWEST-numbered eligible pull request, so one ship-pr keeps refusing would starve every armed pull',
+    '      # request above it. A label plus a marker comment; Get-MergeOnGreenRefusedHead skips that head until',
+    '      # a push, a person removing the label, or a session''s ship-pr re-arming it. Best-effort.',
+    '      - name: Refused -- record the head so the queue moves on',
+    '        if: ${{ always() && steps.ship.outputs.ran == ''true'' && steps.ship.outputs.held != ''true'' && steps.ship.outputs.exit != '''' && steps.ship.outputs.exit != ''0'' }}',
+    '        shell: pwsh',
+    '        env:',
+    '          GH_TOKEN: ${{ secrets.FOLD_PUSH_TOKEN }}',
+    '          GH_REPO: ${{ github.repository }}',
+    '          SHIP_PR: ${{ steps.pick.outputs.pr }}',
+    '          SHIP_SHA: ${{ steps.pick.outputs.sha }}',
+    '          SHIP_EXIT: ${{ steps.ship.outputs.exit }}',
+    '        run: |',
+    ('          . ./' + $pluginDir + '/lib/merge-on-green-lib.ps1'),
+    '          $runUrl = "$env:GITHUB_SERVER_URL/$env:GITHUB_REPOSITORY/actions/runs/$env:GITHUB_RUN_ID"',
+    '          $body = Get-MergeOnGreenRefusalComment -Sha $env:SHIP_SHA -ExitCode $env:SHIP_EXIT -RunUrl $runUrl',
+    '          if (-not $body -or $env:SHIP_PR -notmatch ''\A\d+\z'') { Write-Warning ''merge-on-green: the refusal could not be described safely, so it was not recorded (#4449).''; exit 0 }',
+    '          $view = gh pr view $env:SHIP_PR --json state,labels,headRefOid | ConvertFrom-Json',
+    '          $armed = Test-MergeOnGreenArmed -Record $view',
+    '          if (-not $view -or $view.state -ne ''OPEN'' -or -not $armed -or $view.headRefOid -ne $env:SHIP_SHA) {',
+    '            Write-Host "merge-on-green: PR #$($env:SHIP_PR) is no longer open, armed and on the refused head -- nothing to record (#4449)."',
+    '            exit 0',
+    '          }',
+    '          $refused = Get-MergeOnGreenRefusedLabel',
+    '          gh pr edit $env:SHIP_PR --add-label $refused',
+    '          if ($LASTEXITCODE -ne 0) {',
+    '            gh label create $refused --color ''B60205'' --description ''merge-on-green refused this head; skipped until a push or until this label is removed''',
+    '            gh pr edit $env:SHIP_PR --add-label $refused',
+    '          }',
+    '          if ($LASTEXITCODE -ne 0) { Write-Warning "merge-on-green: could not label PR #$($env:SHIP_PR) ''$refused'', so the next sweep picks it again (#4449)."; exit 0 }',
+    '          gh pr comment $env:SHIP_PR --body $body',
+    '          if ($LASTEXITCODE -ne 0) { Write-Warning "merge-on-green: could not post the refusal marker on PR #$($env:SHIP_PR), so the next sweep picks it again (#4449)."; exit 0 }',
+    '          Write-Host "merge-on-green: recorded the refusal of PR #$($env:SHIP_PR) at $($env:SHIP_SHA) -- later sweeps take the next armed pull request (#4449)."',
     '',
     '      # The next sweep is planned here, out of the pinned plugin tree this job already holds, so the',
     '      # redispatch job below needs no checkout (#4198). No token, no gh; the counter arrives through env:',
@@ -1725,6 +1763,26 @@ function Write-MergeOnGreenRedispatchVerdict {
     Write-Host '            delete this file and re-run adopt-ci-floor -Apply, or copy the redispatch job from the template.' -ForegroundColor Yellow
 }
 
+function Write-MergeOnGreenRefusalVerdict {
+    <#
+        One line about an existing merge-on-green.yml that has no refusal step (#4449): placed before this
+        scaffolder wrote one. It prints nothing when the step is there.
+
+        WHY THIS IS SAID AT ALL -- the redispatch verdict's reason. Without the step, a pull request ship-pr
+        refuses on every sweep is picked on every sweep, being the lowest-numbered eligible one, and every
+        armed pull request above it waits. The picker's skip reads a label and marker only that step writes.
+
+        READ IN THE SHAPE THIS SCAFFOLDER WRITES, AND NO FURTHER: a line calling
+        Get-MergeOnGreenRefusalComment. Its absence is reported, never judged clean.
+    #>
+    param([string]$Text)
+
+    if ($Text -match '(?m)^[^\n#]*Get-MergeOnGreenRefusalComment\b') { return }
+    Write-Host '            [refusal] it has no refusal step, so a pull request ship-pr keeps refusing is picked again on' -ForegroundColor Yellow
+    Write-Host '            every sweep and starves every armed pull request above it (#4449). A newer ref: alone does not' -ForegroundColor Yellow
+    Write-Host '            add it: delete this file and re-run adopt-ci-floor -Apply, or copy the refusal step from the template.' -ForegroundColor Yellow
+}
+
 function Write-RunnerGroupVerdict {
     <#
         One line about the concurrency group of an existing fold-on-merge.yml or verify-resolved.yml
@@ -2020,6 +2078,7 @@ foreach ($t in $targets) {
                 Write-MergeOnGreenScopeVerdict -Text $existing
                 Write-MergeOnGreenSettleVerdict -Text $existing
                 Write-MergeOnGreenRedispatchVerdict -Text $existing
+                Write-MergeOnGreenRefusalVerdict -Text $existing
             }
             else { Write-RunnerGroupVerdict -Rel $t.Rel -Text $existing -TemplateText $t.Content }
         }

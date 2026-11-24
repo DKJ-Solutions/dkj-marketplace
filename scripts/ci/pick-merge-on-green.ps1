@@ -118,9 +118,11 @@ function Invoke-PickPass {
 # `labels` as well as passing --label. See Test-MergeOnGreenArmed for what that second read closes.
 # --limit is generous rather than tight: an armed pull request that fell off the end of the page would
 # be an owed merge no sweep can ever see, and the page costs one call whatever its size.
+# `comments` CARRIES A SWEEP'S EARLIER REFUSAL OF A HEAD (#4449), read by Get-MergeOnGreenRefusedHead in the
+# same payload rather than one call per pull request.
 $listRead = Invoke-NativeCapture -FilePath 'gh' -DiscardStderr -Arguments @(
     'pr', 'list', '--state', 'open', '--label', $label, '--limit', '100', '--repo', $repo,
-    '--json', 'number,headRefName,headRefOid,isDraft,mergeable,labels,isCrossRepository,files,changedFiles')
+    '--json', 'number,headRefName,headRefOid,isDraft,mergeable,labels,isCrossRepository,files,changedFiles,comments')
 if ($listRead.ExitCode -ne 0) {
     Write-PickVerdict -Picked $false -Reason "the list of '$label' pull requests could not be read"
     exit 0
