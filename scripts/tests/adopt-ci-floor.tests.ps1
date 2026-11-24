@@ -609,6 +609,8 @@ try {
     Assert-True ($part1Mog -match '(?m)^\s+workflows:\s*\["Always-on budget", "Branch entry", "CI"\]\s*$') 'with Part 1''s callers present, both wake the sweep'
     Assert-True ($rPart1.Flat -notlike '*not in this tree, so the sweep does not wake on them*') 'and no missing-caller warning is printed (#4258)'
     Assert-True ($rApply.Flat -like '*Pull requests: Read and write*') 'and the run names the extra token scope the merge needs'
+    Assert-True ($rApply.Flat -like '*Checks,*Commit statuses, Actions and Issues, each Read-only*') 'and the four read scopes ship-pr reads with as that token (#4447)'
+    Assert-True ($part1Mog -match 'Commit statuses, Actions and Issues, each Read-only') 'and the scaffolded runner''s header names them too (#4447)'
 
     # A PULL_REQUEST WORKFLOW WITH NO TOP-LEVEL name: IS NOT GUESSED AT. GitHub then names it after its
     # path, which this reader never saw -- so the trigger is left out and the schedule carries the sweep.

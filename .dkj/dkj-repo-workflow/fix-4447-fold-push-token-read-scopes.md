@@ -39,19 +39,39 @@
 
 ### PLAN
 
+#4447: merge-on-green's Ship it step runs `ship-pr` under `FOLD_PUSH_TOKEN`, and the docs scope that PAT
+to `Contents` + `Pull requests` only. Verified before repairing: `ship-pr` reads the required check
+(`gh pr checks`, the status-check rollup) and the closing issues (`gh issue list/view`) as `GH_TOKEN`,
+which in that step is the PAT; the job's `permissions:` block (#3491, #3619) reaches only the picker's
+`GITHUB_TOKEN`. The issue's first option is taken -- name the scopes -- because splitting ship-pr's reads
+onto a second token is a larger change to the merge path. The probe that reads an error as "not
+registered" is #4448's own subject, and is left to it.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `adopt-ci-floor.ps1` (and its `scripts/task/` mirror): the scaffolded merge-on-green header and the
+      Part 3 console note name `Checks`, `Commit statuses`, `Actions` and `Issues`, each Read-only.
+- [x] `adopt-dkj-repo-workflow` SKILL.md: the merge-on-green section names the same four, and why.
+- [x] `adopt-ci-floor.tests.ps1`: two asserts pin the note and the scaffolded header.
 
 ### TEST
 
+- [x] The suites run under `ship-pr`'s gate.
+
 ### DEPLOY: fix/4447-fold-push-token-read-scopes
 
-**Score:**
+The adopt skill and its Part 3 scaffold now say that `FOLD_PUSH_TOKEN` needs four read scopes on the
+merge-on-green path, which the docs had left out.
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+A private repo running merge-on-green whose sweep refuses a green pull request after 1800s with "never
+registered" now finds the cause in the adopt skill: add `Checks`, `Commit statuses`, `Actions` and
+`Issues` (Read-only) to `FOLD_PUSH_TOKEN`. An existing runner is not rewritten; the fix is on the token.
+
+**Score:** 3
 
 #### Pull Request
 
