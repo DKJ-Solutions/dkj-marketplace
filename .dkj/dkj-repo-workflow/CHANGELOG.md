@@ -2,7 +2,32 @@
 
 ## [Unreleased]
 
-**7 / 7 minor entries** <!-- pending-tally -->
+**8 / 8 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/4463-ai-radar-topic-pages · 20261124-232732Z
+
+The `ai-radar` skill now describes the AI dossier's child pages by topic, at any depth, instead of one
+page per model family.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+An `ai-radar` run now places each item on the page of the topic it is about, as the hub's settings page
+lists those pages, including a page nested under a Products layer. An agent-building article from the
+vendor's blog lands on the agent-patterns page instead of a catch-all ecosystem page.
+
+**Score:** 2
+
+#### Pull Request
+
+ai-radar: place an item on the AI dossier's page for its topic
+
+Plugins: dkj-subagents-lifehub
+
+[PR #4469](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4469)
+
+---
 
 ### DEPLOY: feat/4462-ian-one-home-per-topic · 20261124-231438Z
 
