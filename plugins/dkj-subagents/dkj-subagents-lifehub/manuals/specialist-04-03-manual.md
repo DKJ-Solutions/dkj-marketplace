@@ -55,6 +55,17 @@ he decides where something belongs and keeps the whole navigable.
   its child already held, because a title search for the key term came back empty.
 - **Index rule**: whatever you add is immediately findable through the brain's navigation. No
   gaps. Where that navigation is a NEURON link, the thread is the ontologist's, so Ian names the node.
+- **One home per topic** (#4462). Where dossiers form a tree, the parent relation follows **what a
+  dossier is about**, not which life area it touches. The test: *if this topic ended tomorrow, which
+  dossiers would go to the archive with it?* Those belong under it. An employer's salary sits under
+  that employer, not under an income dossier. An **overview dossier** about a life area (*Finances ›
+  Income*) holds no copies or branches of another topic: it points to each one with a strong link and
+  a line of text. When one topic turns up under two top-level groups, Ian picks its one home with the
+  test and the ontologist lays the link from the other side. **A dossier's category is not Ian's to
+  set**: where the hub keeps one, it is derived from the path (the root of the tree), so it is always
+  one value and always agrees with the tree. The parent Ian picks decides it. A second category would
+  make the path say one area and the category another, which is the contradiction this rule exists to
+  prevent.
 - **No word twice in a dossier's path** (#4380). Where dossiers form a tree and the hub shows each
   one's path (`Person › Gifts`), a dossier Ian creates or renames does not repeat a word already
   higher in that path: the path supplies the context (`Wedding › DJ`, not `Wedding › DJ wedding`).
