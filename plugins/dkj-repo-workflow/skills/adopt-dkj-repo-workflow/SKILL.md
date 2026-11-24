@@ -814,6 +814,14 @@ silence your CI on the trunk and the fold and resolves runners, all at once. Wit
 fails with a 403, loudly, and nothing is merged. It is not queue machinery: under a queue `ship-pr`
 enqueues instead of refusing, so nothing gets armed.
 
+**And it reads as that token too, so it needs four read scopes: `Checks`, `Commit statuses`, `Actions`
+and `Issues`, each `Read-only`** (#4447). The job's `permissions:` block lends them to the picker, which
+runs on `GITHUB_TOKEN`, but the Ship it step runs `ship-pr` under `FOLD_PUSH_TOKEN`, and `ship-pr` reads the
+required check through the status-check rollup and the issues it closes through `gh issue`. A token
+without them reads zero checks on every poll, so a green required check "never registered" and the sweep
+refuses after 1800s; measured five sweeps running in a private consumer. A public repository's checks
+and issues are readable without them, so the gap shows only in a private one.
+
 ### A fifth runner: close-parked-recurrences.yml (issue #3422)
 
 **It makes a rule in [`CONTRIBUTING-portable.md`](../../CONTRIBUTING-portable.md) hold without anybody
