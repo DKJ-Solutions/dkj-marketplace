@@ -2,7 +2,32 @@
 
 ## [Unreleased]
 
-**1 / 1 minor entry** <!-- pending-tally -->
+**2 / 2 minor entries** <!-- pending-tally -->
+
+### DEPLOY: fix/4448-probe-failure-diagnosis · 20261124-122446Z
+
+`ship-pr` no longer waits out its whole CI budget when `gh` cannot read the PR's checks: after three
+failed reads in a row it stops, prints gh's own error and exit code, and says to check the token's
+permissions. Its timeout refusal claims other checks registered only when one was actually seen (#4448).
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+A token that cannot read checks used to cost a run its whole wait and then blame the ruleset; the real
+cause is now on screen within about 45 seconds.
+
+**Score:** 2
+
+#### Pull Request
+
+Wait-CheckRegistration surfaces a failing gh pr checks probe instead of blaming the ruleset
+
+Plugins: dkj-repo-workflow
+
+[PR #4453](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4453)
+
+---
 
 ### DEPLOY: fix/4447-fold-push-token-read-scopes · 20261124-120704Z
 
