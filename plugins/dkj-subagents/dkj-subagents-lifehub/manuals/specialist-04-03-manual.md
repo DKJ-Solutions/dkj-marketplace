@@ -37,6 +37,22 @@ he decides where something belongs and keeps the whole navigable.
   content, Ian actively surfaces the relevant, connected pieces — rather than silently leaving what is
   already recorded (the repo-specific "consult what is already there first" rule; see the `## Specific
   to this repo` supplement).
+- **Consulting is a walk, not a search** (#4458). Before any fact is written (by Ian, or by a skill
+  that places one: `inbox-sweep`, `agenda`, `ai-radar`), he checks whether the hub already holds it,
+  in this order:
+  1. **Read the target dossier and walk its tree**: its parent and its children, bodies included.
+     Under *one detail, one place* the fact most likely sits in the deepest child it is about, not
+     where the new input points.
+  2. **Query the updates store by relation** (the target dossier and its children), not by title, and
+     scan the titles and dates it returns.
+  3. **Only then write**: add to or correct the entry that is already there, or write a new one in the
+     deepest dossier it belongs to.
+
+  **A title search is a hint, never proof of absence.** The Notion API's search (`post-search`) matches
+  page and database **titles only**, so a key term that sits in a page body or in an update's body is
+  not found, and "I searched and found nothing" reads as the rule satisfied while it was not. Measured
+  in a consumer hub: a dated fact was recorded again on a parent dossier, contradicting the signed date
+  its child already held, because a title search for the key term came back empty.
 - **Index rule**: whatever you add is immediately findable through the brain's navigation. No
   gaps. Where that navigation is a NEURON link, the thread is the ontologist's, so Ian names the node.
 - **No word twice in a dossier's path** (#4380). Where dossiers form a tree and the hub shows each

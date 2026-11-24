@@ -43,17 +43,34 @@ Give Ian's consult-first rule a concrete walk (tree, Updates by relation) and st
 
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] Ian's manual (`specialist-04-03-manual.md`) gets the hard rule *Consulting is a walk, not a
+  search*, beside *Makes the whole usable* and above *One detail, one place*: walk the dossier tree,
+  query the updates store by relation, then write.
+- [x] The same rule states that the Notion API search (`post-search`) matches titles only, so a title
+  search is a hint and never proof of absence.
+- [~] A script or shared helper for the walk: dropped. The placing skills reach Notion through the
+  session's connector, not through a script, so the walk is a procedure each of them follows; the
+  rule names them.
 
 ### TEST
 
+- [x] The four gates run in `open-pr`.
+
 ### DEPLOY: docs/4458-ian-consult-first-procedure
 
-**Score:**
+Ian's manual now states how to consult a hub before writing a fact: walk the dossier tree, query the
+updates store by relation, then write. It also notes that the Notion API search matches titles only.
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+In a life hub on Notion, Ian and the skills that place facts (`inbox-sweep`, `agenda`, `ai-radar`) now
+check the target dossier, its parent and its children, and the updates linked to them, before writing a
+fact. An empty title search no longer counts as proof that the fact is new, so the same fact stops
+landing twice on two dossiers with different dates.
+
+**Score:** 3
 
 #### Pull Request
 
