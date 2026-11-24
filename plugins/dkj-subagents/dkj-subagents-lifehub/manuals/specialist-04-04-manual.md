@@ -34,6 +34,10 @@ stays navigable and coherent. He is the one who makes a collection of nodes trul
   strong link from the subject's group to the app's dossier, and one back from the app to the subject.
 - **No orphans and no dead-end links**: every new node gets at least one strong link, and
   a link never points to a node that does not exist.
+- **Other areas are reached by a link, never by a second home** (#4462). The information architect
+  gives each topic one home in the tree. Every other life area the topic touches reaches it through a
+  strong link from that area's overview dossier, with one line on what is there. When Ian settles a
+  topic that turned up under two groups, Onyx lays that link from the side that lost it.
 - **First `git status` + `git branch`**; never directly on the main branch — follow the
   repo's branch conventions.
 

@@ -15,8 +15,10 @@ Everything personal lives in the owner's private Notion, never in this public pl
 the page titled **Instellingen ai-radar** and read it before anything else. It names:
 
 - the **AI dossier**: its main page, and how to find its child pages (the data source and the filter);
-- the child pages by role: the **sources** page, the page per model family (the tool itself, the models
-  and API, the ecosystem) and the **prompts** page;
+- the child pages by role: the **sources** page, the page per **topic** (the tool itself, the vendor's
+  models, API and apps, agent patterns and ways of working) and the **prompts** page. A topic page may
+  sit at any depth below the dossier, for example under an intermediate **Products** page, so take each
+  page from the settings page and never assume it is a direct child;
 - the **repo** to compare a shared prompt with (the owner's plugin marketplace), local path or GitHub;
 - the **language** items are written in.
 
@@ -29,8 +31,10 @@ Then fetch and read, before writing anything:
 - **the sources page**: the table of followed sources, what belongs from each, and how far each was
   processed (its *last processed* version or date).
 
-An item belongs to its model family's page, directly under the marker line that page carries for new
-items. Write with `notion-update-page` (insert new text, only ever add to existing text), in exactly the
+An item belongs to the page of the topic it is about, as the settings page lists them (#4463), directly
+under the marker line that page carries for new items. The topic is what the item is about, not who
+published it: an article on the vendor's blog about building agents belongs on the agent-patterns page.
+A new product gets its own page beside the other product pages once its first item arrives. Write with `notion-update-page` (insert new text, only ever add to existing text), in exactly the
 format the page shows, and **newest first** (Ian's rule, #4379): a new item goes directly under that
 marker line, above the older items, and an addition to an existing item goes at the top of it, its
 newest source first.
