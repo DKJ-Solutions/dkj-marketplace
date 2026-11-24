@@ -39,19 +39,32 @@
 
 ### PLAN
 
+Inbound #4464 from a consumer life hub: a rule for whether siblings under one parent are comparable.
+It complements #4462's one-home rule, which says which parent a dossier goes under.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] Ian's manual: the "Siblings are of one kind" hard rule, with its one-word test, the intermediate
+  layer, and the catch-all signal.
 
 ### TEST
 
+- [x] Read back against the issue. It sits after the path rule, so its hunk stays apart from #4467's.
+  The gates run in `ship-pr`.
+
 ### DEPLOY: feat/4464-ian-siblings-one-kind
 
-**Score:**
+Ian's manual gains a rule that dossiers under one parent are of one kind and mutually exclusive.
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+In a life hub, Ian now checks that a new dossier matches its siblings' kind before placing it. Where
+it does not, he finds the right group or adds a layer that names the kind, so a catch-all page such as
+"Ecosystem" or "Other" no longer has to be spotted by eye.
+
+**Score:** 3
 
 #### Pull Request
 
