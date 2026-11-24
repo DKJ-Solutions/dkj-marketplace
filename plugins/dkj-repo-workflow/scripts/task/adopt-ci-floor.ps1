@@ -1169,6 +1169,12 @@ $mergeOnGreenRunner = @(
     '# those runners exist to close. Without the scope the merge fails with a 403, loudly; it can never',
     '# merge without folding.',
     '#',
+    '# AND IT NEEDS FOUR READ SCOPES THE JOB TOKEN''S permissions: BLOCK CANNOT LEND IT (#4447): Checks,',
+    '# Commit statuses, Actions and Issues, each Read-only. ship-pr reads the required check through the',
+    '# status-check rollup and the closing issues through gh issue, both AS THIS TOKEN. A PAT without them',
+    '# reads zero checks on every poll -- the green check "never registers" and the sweep refuses after',
+    '# 1800s -- and cannot see the issues it closes. A public repository needs none of the four.',
+    '#',
     '# ONE SWEEP AT A TIME, REPO-WIDE, AND NOT CANCELLED: this job merges and folds, and two concurrent',
     '# sweeps would race to ship the SAME pull request. A sweep re-reads the tracker when it starts, so a',
     '# dropped duplicate pending run costs nothing.',
@@ -2101,7 +2107,10 @@ if ($mergeOnGreenRunnerCreated) {
     Write-Host '  Pull requests: Read and write, beside Contents: Read and write. A merge made with the' -ForegroundColor Yellow
     Write-Host '  job-scoped GITHUB_TOKEN starts no workflow runs, so it would silence this repo''s CI on the' -ForegroundColor Yellow
     Write-Host '  trunk and the fold and resolves runners in one go. Without the scope the merge fails with a' -ForegroundColor Yellow
-    Write-Host '  403, loudly, and nothing is merged. Its workflow_run trigger names these workflows:' -ForegroundColor Yellow
+    Write-Host '  403, loudly, and nothing is merged. It also READS as that token (#4447): add Checks,' -ForegroundColor Yellow
+    Write-Host '  Commit statuses, Actions and Issues, each Read-only, or ship-pr reads zero checks and' -ForegroundColor Yellow
+    Write-Host '  refuses a green pull request after 1800s as "never registered".' -ForegroundColor Yellow
+    Write-Host '  Its workflow_run trigger names these workflows:' -ForegroundColor Yellow
     if ($mogWakeNames.Count -gt 0) {
         foreach ($n in $mogWakeNames) { Write-Host "    $(Get-DisplayRef -Ref $n)" -ForegroundColor DarkGray }
     } else {
