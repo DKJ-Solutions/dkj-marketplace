@@ -2,7 +2,32 @@
 
 ## [Unreleased]
 
-**9 / 9 minor entries** <!-- pending-tally -->
+**10 / 10 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/4465-ian-app-dossier-home · 20261124-235616Z
+
+Ian's and Onyx's manuals gain a placement rule for app dossiers: under the company overview, linked
+both ways with the subject they serve.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+In a life hub, Ian now files every app or repository the owner builds under the company overview, even
+one that serves a subject such as music or cooking. Onyx links the subject and the app both ways, so
+the list of the owner's apps sits in one place.
+
+**Score:** 2
+
+#### Pull Request
+
+Ian files an app's dossier under the company repos overview
+
+Plugins: dkj-subagents-lifehub
+
+[PR #4471](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4471)
+
+---
 
 ### DEPLOY: feat/4464-ian-siblings-one-kind · 20261124-234146Z
 
