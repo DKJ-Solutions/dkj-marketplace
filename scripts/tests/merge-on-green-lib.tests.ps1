@@ -841,10 +841,10 @@ Assert-Equal '' (Get-MergeOnGreenRefusalMarker -Sha 'abc --> <script>') 'a SHA t
 Assert-Equal '' (Get-MergeOnGreenRefusalMarker -Sha '') 'and so does an empty one'
 
 function New-RefusedRecord {
-    param([int]$Number = 10, [string]$Head = $sha, [string[]]$Labels = @('merge-when-green', 'merge-on-green-refused'), [string[]]$Bodies = @("x`n<!-- merge-on-green-refused: $sha -->"))
+    param([int]$Number = 10, [string]$Head = $sha, [string[]]$Labels = @('merge-when-green', 'merge-on-green-refused'), [string[]]$Bodies = @("x`n<!-- merge-on-green-refused: $sha -->"), [string]$Association = 'MEMBER')
     $r = New-PrRecord -Number $Number -Labels $Labels
     $r | Add-Member -NotePropertyName headRefOid -NotePropertyValue $Head
-    $r | Add-Member -NotePropertyName comments -NotePropertyValue @($Bodies | ForEach-Object { [pscustomobject]@{ body = $_ } })
+    $r | Add-Member -NotePropertyName comments -NotePropertyValue @($Bodies | ForEach-Object { [pscustomobject]@{ body = $_; authorAssociation = $Association } })
     return $r
 }
 
@@ -852,6 +852,9 @@ Assert-Equal $sha (Get-MergeOnGreenRefusedHead -Record (New-RefusedRecord)) 'lab
 Assert-Equal '' (Get-MergeOnGreenRefusedHead -Record (New-RefusedRecord -Head ('1' * 40))) 'a new push moves the head past the marker'
 Assert-Equal '' (Get-MergeOnGreenRefusedHead -Record (New-RefusedRecord -Labels @('merge-when-green'))) 'without the label a planted marker comment skips nothing'
 Assert-Equal '' (Get-MergeOnGreenRefusedHead -Record (New-RefusedRecord -Bodies @('no marker here'))) 'the label without a marker for this head skips nothing either'
+Assert-Equal '' (Get-MergeOnGreenRefusedHead -Record (New-RefusedRecord -Association 'NONE')) 'a marker from somebody without write access counts for nothing, label or not (Sebastian #23)'
+Assert-Equal '' (Get-MergeOnGreenRefusedHead -Record (New-RefusedRecord -Association '')) 'nor does one whose association could not be read'
+Assert-Equal $sha (Get-MergeOnGreenRefusedHead -Record (New-RefusedRecord -Association 'OWNER')) 'an owner''s marker counts'
 Assert-Equal '' (Get-MergeOnGreenRefusedHead -Record (New-PrRecord)) 'a record with no comments field is not refused'
 Assert-Equal '' (Get-MergeOnGreenRefusedHead -Record $null) 'nor is no record at all'
 

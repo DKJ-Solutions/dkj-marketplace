@@ -51,7 +51,13 @@ this lands on its own and covers any refusal that repeats.
 Design: the runner records a non-held refusal against the picked head (a `merge-on-green-refused` label
 plus a marker comment carrying the SHA); the picker skips a pull request while both hold for its current
 head. A push, a person removing the label, or a session's `ship-pr` re-arming it clears the skip. The
-label carries the authority, so a marker comment planted by anybody else skips nothing.
+label carries the authority, and only a marker from an owner, member or collaborator counts (Sebastian
+#23: the label outlives a push, so a stranger's marker for the new head would otherwise pin it).
+
+The trade (Victor #19): a transient `ship-pr` failure is recorded too, so that head waits for a push or a
+person rather than the next sweep's retry. That is the issue's ask, and it is not silent: after two quiet
+hours `check-stranded-sweep` reports it with the refusal as its reason. A `ship-pr` killed by the job
+timeout returns no exit code and is not recorded.
 
 ### CREATE
 

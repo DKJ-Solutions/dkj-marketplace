@@ -325,7 +325,12 @@ function Get-MergeOnGreenRefusedLabel {
         and every armed pull request above it waits forever. Measured in a consumer: one pull request
         refused five sweeps in a row while a newer one sat green, CLEAN and armed for 22 hours, never
         attempted. ship-pr already disarms on the refusals it KNOWS are judgements (#2393); this catches
-        every other refusal, at the one place that sees all of them: the runner's own ship step.
+        every other refusal ship-pr RETURNS, at the one place that sees all of them: the runner's own ship
+        step. A ship-pr the job timeout kills returns nothing and is not recorded.
+
+        THE TRADE, STATED (Victor #19): a transient failure is recorded too, so that head waits for a push
+        or a person instead of the next sweep's retry. That is the issue's own ask, and it is not silent:
+        after Get-MergeOnGreenStuckHours of quiet the stranded check reports it with this verdict's reason.
 
         WHY A LABEL AND A COMMENT, NOT ONE OF THEM. The comment carries the head SHA, so a new push makes
         the pull request eligible again by itself. The label carries the authority: only somebody with
@@ -411,6 +416,12 @@ function Get-MergeOnGreenRefusedHead {
     if (-not $Record.PSObject.Properties['comments']) { return '' }
     foreach ($comment in @($Record.comments)) {
         if ($null -eq $comment -or -not $comment.PSObject.Properties['body']) { continue }
+        # ONLY A WRITER'S MARKER COUNTS (Sebastian #23): the label outlives a push, so without this anybody
+        # could post a marker for the NEW head and hold the pull request out of the queue. An association
+        # that is missing or unreadable does not count -- the pull request is then picked, as before #4449.
+        $assoc = ''
+        if ($comment.PSObject.Properties['authorAssociation']) { $assoc = ([string]$comment.authorAssociation).Trim().ToUpperInvariant() }
+        if (@('OWNER', 'MEMBER', 'COLLABORATOR') -notcontains $assoc) { continue }
         if (([string]$comment.body).Contains($marker)) { return ([string]$Record.headRefOid).Trim().ToLowerInvariant() }
     }
     return ''
