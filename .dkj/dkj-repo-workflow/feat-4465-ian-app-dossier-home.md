@@ -39,19 +39,33 @@
 
 ### PLAN
 
+Inbound #4465 from a consumer life hub: an app's dossier goes under the company overview, and the
+subject it serves links to it. Ian's manual takes the placement, and Onyx's takes the two-way link.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] Ian's manual: the "An app the owner builds lives under the company overview" hard rule.
+- [x] Onyx's manual: an app and the subject it serves link both ways.
 
 ### TEST
 
+- [x] Read back against the issue. Both hunks sit apart from #4467's and #4470's. The gates run in
+  `ship-pr`.
+
 ### DEPLOY: feat/4465-ian-app-dossier-home
 
-**Score:**
+Ian's and Onyx's manuals gain a placement rule for app dossiers: under the company overview, linked
+both ways with the subject they serve.
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+In a life hub, Ian now files every app or repository the owner builds under the company overview, even
+one that serves a subject such as music or cooking. Onyx links the subject and the app both ways, so
+the list of the owner's apps sits in one place.
+
+**Score:** 2
 
 #### Pull Request
 
