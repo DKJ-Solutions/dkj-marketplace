@@ -39,19 +39,34 @@
 
 ### PLAN
 
+Issue #4497 (inbound): `inbox-sweep` step 3.3 says to write facts and a `Bron:` line but not where on a
+task card, so the sweep fills the card's one short text property. Verified against the tree: neither the
+skill nor Ian's manual names the card's page body. Repair: the rule in Ian's manual (every card writer)
+and a pointer to it in the skill's step 3.3.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] Ian's manual (`specialist-04-03-manual.md`): a task card's short text property holds one line; facts and source lines go in the page body or the linked dossier.
+- [x] `inbox-sweep` step 3.3: on a task card, facts and source lines go in the page body; a follow-up mail goes at the top of that body.
 
 ### TEST
 
+- [x] Doc-only change; the plugin-integrity and suite gates run through `ship-pr`.
+
 ### DEPLOY: feat/4497-task-card-short-note
 
-**Score:**
+A task card's short text property now holds one line, what the owner has to do, and its facts, source
+lines and URLs go in the card's page body. The rule is in Ian's manual for every card writer, and
+`inbox-sweep` step 3.3 applies it to a card the sweep fills (#4497).
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+A lifehub owner whose inbox sweep files action cards gets a board that reads as one line per card,
+instead of a short note that grows a paragraph with raw mail URLs on every follow-up mail.
+
+**Score:** 3
 
 #### Pull Request
 
