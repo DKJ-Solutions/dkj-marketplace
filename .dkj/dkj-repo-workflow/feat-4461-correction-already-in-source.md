@@ -39,19 +39,33 @@
 
 ### PLAN
 
+Inbound #4461 from a consumer life hub: a correction factor from an earlier review was applied to a
+source figure that already contained it. Verified on pickup: neither Fiona's nor Marlowe's manual
+carries a rule about it.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] Fiona's manual: a correction is checked against its source before it is applied, per input.
+- [x] Marlowe's manual: a correction he raises names the exact input it applies to.
 
 ### TEST
 
+- [x] Read back against the issue's two asks. Doc-only; the gates run in `ship-pr`.
+
 ### DEPLOY: feat/4461-correction-already-in-source
 
-**Score:**
+Fiona's and Marlowe's manuals gain a rule against double-counting a correction factor: checked against
+its source before it is applied, and tied to the input it was raised for.
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+In a life hub, Fiona now states per input whether a figure already contains a correction (a realised
+average usually does) before she applies it, and Marlowe names which figure his "not corrected for"
+applies to. A saving no longer disappears because a correction was subtracted twice.
+
+**Score:** 2
 
 #### Pull Request
 
