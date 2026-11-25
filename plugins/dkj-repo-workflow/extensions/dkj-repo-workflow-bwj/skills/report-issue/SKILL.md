@@ -392,6 +392,24 @@ about an issue that neither links nor mentions Asana (xoxowildhearts #401 and #4
 and never said so). It also names a task that is already linked from another open issue, because the
 rule is one issue per ticket. Step 3's marker is the link it reads.
 
+**First read the issue's `state`** (`gh issue view <n> --json state`), because linking a task to an
+issue that is already **closed** is a different act (#4480). Measured in
+`BWJ-Development/smartwatchbanden`, November 25, 2026: an issue closed at 09:07:47, its close's run of
+`asana-closed-message` found no task and told nobody, and a session linked the task 40 seconds later
+exactly as for an open issue. The card moved *backwards* into progress, it got the `created:` comment
+saying the work had started, and the closed message never came, so a colleague posted it by hand. On a
+closed issue:
+
+- **make no move and post no `created:` comment.** Both say the work is starting, and it is done.
+- **still write the link line below (write 1) and step 3's marker.** The marker is what brings the closed
+  message: `asana-closed-message` also runs on an edit that **adds** the `asana-task` marker to a closed
+  issue, and posts the message that issue's close would have posted, with its block and its card move.
+- **say so in step 4**: the task was linked after the close, and the closed message follows from the
+  workflow. A store whose placed workflow predates #4480 has no such run, and
+  `closed-message-sessioncheck` reports its copy as differing from the template.
+
+On an open issue:
+
 **That existing task then gets two more writes, both in this step** (#2653):
 
 1. **The issue link goes on top of its description.** Read the task's `html_notes` and insert the
