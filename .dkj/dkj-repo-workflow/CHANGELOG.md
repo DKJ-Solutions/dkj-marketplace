@@ -2,7 +2,33 @@
 
 ## [Unreleased]
 
-**2 / 2 minor entries** <!-- pending-tally -->
+**3 / 3 minor entries** <!-- pending-tally -->
+
+### DEPLOY: fix/4478-session-closes-asana-issue · 20261125-103612Z
+
+After a `-NoResolves` merge of an Asana-linked issue, the docs and the resolves-gate refusal now say that
+the shipping session closes the issue, not the task's assignee.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+A store's session no longer hands the close of an Asana-linked issue to the owner after the merge. It
+closes the issue itself with the `gh issue close` line the refusal now prints. A store already on the old
+`Get-ResolvesExemptMatchers` answer keeps the old refusal text until it copies the new template from
+`adopt-dkj-repo-workflow-bwj`.
+
+**Score:** 2
+
+#### Pull Request
+
+The shipping session, not the task's assignee, closes an Asana-linked issue after a -NoResolves merge
+
+Plugins: dkj-repo-workflow, dkj-repo-workflow-bwj
+
+[PR #4489](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4489)
+
+---
 
 ### DEPLOY: fix/4480-closed-issue-asana-link · 20261125-102352Z
 
