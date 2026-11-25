@@ -2,7 +2,32 @@
 
 ## [Unreleased]
 
-**3 / 3 minor entries** <!-- pending-tally -->
+**4 / 4 minor entries** <!-- pending-tally -->
+
+### DEPLOY: fix/4479-fold-standdown-retry · 20261125-104848Z
+
+When ship-pr pushed its own `fold:` commit right after a merge, the fold-on-merge runner for that merge
+stood down and left every other pending entry on the trunk unfolded, while reporting green. The runner
+now catches up with the moved trunk and folds what is still there, and fails red if it cannot.
+
+**Score:** 3
+
+#### What makes this deploy extra special
+
+Repos that take the CI floor get the fix the next time `adopt-ci-floor` places or refreshes their fold
+runner. Until then, leftover changelog entries can still pile up after a ship and need folding by hand.
+
+**Score:** 2
+
+#### Pull Request
+
+fold-on-merge retries a stood-down fold on the moved trunk instead of counting on a run a fold-only push never starts
+
+Plugins: dkj-repo-workflow
+
+[PR #4490](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4490)
+
+---
 
 ### DEPLOY: fix/4478-session-closes-asana-issue · 20261125-103612Z
 
