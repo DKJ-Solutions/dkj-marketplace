@@ -39,19 +39,31 @@
 
 ### PLAN
 
+Inbound #4466 from a consumer life hub: a dossier name carries the subject, never the task. Ian's
+manual takes the naming rule beside "No word twice in a dossier's path" (#4380).
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] Ian's manual: the "A dossier name is a subject, never a task" hard rule, with the *Done* test.
 
 ### TEST
 
+- [x] Read back against the issue. Doc-only; the gates run in `ship-pr`.
+
 ### DEPLOY: feat/4466-ian-dossier-name-subject
 
-**Score:**
+Ian's manual gains a naming rule: a dossier is named for its subject, never for the task that opened
+it.
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+In a life hub, Ian now names a new or renamed dossier for what it is about (`Tool X`, not
+`Replace tool X`), so the tree stops advertising work that is already done. The test is whether the
+name still reads right once the dossier's status is *Done*.
+
+**Score:** 2
 
 #### Pull Request
 
