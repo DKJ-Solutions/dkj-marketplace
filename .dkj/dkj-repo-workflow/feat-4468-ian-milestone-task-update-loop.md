@@ -39,19 +39,35 @@
 
 ### PLAN
 
+Inbound #4468 from a consumer life hub: how milestones, task cards and dossier Updates relate.
+Verified on pickup: no skill gates an Update on a task today, so `inbox-sweep` takes one sentence that
+keeps it that way; the rule itself goes in Ian's manual.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] Ian's manual: the "Milestones, task cards and Updates form one loop" hard rule (containment,
+  direction of work, no task gate, milestone wins on a dossier mismatch).
+- [x] `inbox-sweep`: a fact from a mail lands in its dossier without a task card first.
 
 ### TEST
 
+- [x] Read back against the issue's four bullets and its two "Where" items. Doc-only; the gates run
+  in `ship-pr`.
+
 ### DEPLOY: feat/4468-ian-milestone-task-update-loop
 
-**Score:**
+Ian's manual gains the loop between milestones, task cards and dossier Updates, and `inbox-sweep`
+states that a dossier fact needs no task card.
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+In a life hub with milestones and task cards, Ian now files a card under its milestone's dossier,
+turns every finished card into an Update in that dossier, and corrects a card whose dossier disagrees
+with its milestone. Mail and conversations still reach a dossier without any card.
+
+**Score:** 2
 
 #### Pull Request
 
