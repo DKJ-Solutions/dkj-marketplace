@@ -26,9 +26,12 @@ Chris goes ([#4451](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4451
 hold three things and nothing else:
 
 1. **The line that loads the orchestrator skill** (`dkj-subagents-alpha:orchestrator`).
-2. **Standing instructions**, such as *"report lessons upstream to DKJ-Solutions/dkj-marketplace"*,
-   which stands as the owner's request to attach that repo
-   ([#4450](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4450)).
+2. **Standing instructions**, such as *"report lessons upstream to DKJ-Solutions/dkj-marketplace"*.
+   Such a line does **not** stand as the owner's request to attach that repo: measured, the classifier
+   still refused the unprompted `add_repo` until the owner asked in the chat
+   ([#4450](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4450),
+   [#4460](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4460)). The orchestrator skill says
+   what to do instead, and which more explicit line is still to be measured.
 3. **This working profile, kept short**: the template below, filled in as tersely as it will go.
 
 **They never hold a copy of a persona, a manual or a rule.** The skill reads the live plugin copy, while
