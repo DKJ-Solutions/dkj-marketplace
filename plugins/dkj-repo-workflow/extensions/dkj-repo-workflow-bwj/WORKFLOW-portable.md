@@ -1237,6 +1237,16 @@ where one task became #401 and #402 by hand and neither issue could reach its re
 linked from two open issues
 ([#2928](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/2928)).
 
+**A request passed on in chat starts from a task too, until a search says otherwise**
+([#4477](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4477)). When a colleague's request
+arrives second-hand ("<colleague> asked for ..."), the session does not know whether a task exists, so it
+searches the board before it files. Measured in `smartwatchbanden`: #1567 named its requester and quoted
+the task, and was filed with no link, while the task, created 13 minutes earlier, was the first hit of one
+search; the card never moved and the requester would have heard nothing at the close.
+`guard-asana-origin` now refuses a create on a store repo whose body names a requester or quotes a task
+and links none. Where the search finds nothing, or the issue deliberately links no task (a follow-up,
+below), the body says so with the line `<!-- no-asana-task -->`.
+
 **A follow-up or sub-issue does not take its umbrella's task link**
 ([#3182](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/3182)). The closed message says
 *"this Asana task is now in review"*, which is a statement about the **task**, and it is posted per

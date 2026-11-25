@@ -96,6 +96,26 @@ rule (#3059) asked at filing, and the reasoning is in
 - **No** -- stop: no GitHub issue. Where a colleague has to act or decide, that goes to them as an Asana
   task, outside this skill.
 
+**Then ask whether it came from a colleague -- and search the board before you answer no** (#4477).
+Where the request names a colleague as its requester, or quotes a task -- *"<colleague> asked for ..."*,
+*"passed on by ..."*, *task "..."*, in whatever language -- a task most likely already exists, even when
+nobody gave you its link. Search the board for it (the Asana MCP's `search_tasks`, on a distinctive phrase
+from the request, in the project `Get-AsanaProjectGid` names) **before** the create:
+
+- **Found** -- this is a ticket that came from Asana. File it with the task's link already in the body
+  (`Asana: <task URL>` and `<!-- asana-task: <gid> -->`, as in step 3), with the reach label, and take
+  step 2's *"On a ticket that came the other way"*: move that card, write the link on top of it and post
+  the `created:` comment. Never a second task.
+- **Not found** -- file it as a finding of your own, with the line `<!-- no-asana-task -->` in the body,
+  which records that the search was made.
+
+Measured in `smartwatchbanden`, November 25, 2026: #1567 named its requester and quoted the task, was filed
+with no link, and the task -- the first hit of one search -- stayed in its inbox, so the requester would
+have heard nothing at the close. **`hooks/guard-asana-origin.ps1` refuses** a `gh issue create` on a store
+repo whose body names a requester or quotes a task while it carries neither the task's link nor
+`<!-- no-asana-task -->`. A body it cannot read (on stdin, built at run time, a template) passes with a
+warning, and an inbound issue on the plugin's source repo is not judged.
+
 Then file it **classified** -- every label on the create itself, never left for a later pass:
 
 ```bash

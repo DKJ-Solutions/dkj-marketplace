@@ -39,19 +39,41 @@
 
 ### PLAN
 
+Inbound #4477: `report-issue` files a colleague's request passed on in chat without looking for its
+Asana task, and `asana-link-pickupcheck` only warns after the work has started. Two builds: a search
+step in `report-issue` step 1, and a create-time guard beside `guard-kind-label`.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `scripts/lib/asana-origin-rules.ps1`: the signal (a requester named or a task quoted, EN/NL), the
+      settled test (Resolve-AsanaTaskRef's link, or `<!-- no-asana-task -->`) and the verdict; the source
+      repo is not judged
+- [x] `hooks/guard-asana-origin.ps1` + its `hooks.json` entry on `gh issue create`, failing open with a
+      warning on a body it cannot read
+- [x] `report-issue` step 1: search the board before filing a request that names a requester or a task
+- [x] `WORKFLOW-portable.md` section 8 and the plugin README's hook list name the guard
 
 ### TEST
 
+- [x] `scripts/tests/guard-asana-origin.tests.ps1` (47 asserts: lib, hook as a process, registration),
+      registered in `suite-groups.json`
+
 ### DEPLOY: feat/4477-asana-origin-guard
 
-**Score:**
+A new PreToolUse hook, `guard-asana-origin`, refuses a `gh issue create` on a store repo whose body names
+a requester or quotes a task but links no Asana task, and `report-issue` step 1 now searches the board for
+the colleague's task before filing. The line `<!-- no-asana-task -->` records a search that found none.
+
+**Score:** 3
 
 #### What makes this deploy extra special
 
-**Score:**
+A colleague's request passed on in chat is now filed as the issue for their own Asana task, so the card
+moves to Filed, gets its created: comment, and the requester hears about it when the work ships. Before,
+such an issue was filed unlinked and the colleague's card sat untouched in their inbox.
+
+**Score:** 3
 
 #### Pull Request
 
+Refuse a store issue that names a colleague's request but links no Asana task
