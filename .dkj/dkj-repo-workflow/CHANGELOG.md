@@ -2,7 +2,32 @@
 
 ## [Unreleased]
 
-**13 / 13 minor entries** <!-- pending-tally -->
+**14 / 14 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/4468-ian-milestone-task-update-loop · 20261125-013052Z
+
+Ian's manual gains the loop between milestones, task cards and dossier Updates, and `inbox-sweep`
+states that a dossier fact needs no task card.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+In a life hub with milestones and task cards, Ian now files a card under its milestone's dossier,
+turns every finished card into an Update in that dossier, and corrects a card whose dossier disagrees
+with its milestone. Mail and conversations still reach a dossier without any card.
+
+**Score:** 2
+
+#### Pull Request
+
+Ian: milestones, task cards and dossier Updates relate as one loop
+
+Plugins: dkj-subagents-lifehub
+
+[PR #4475](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4475)
+
+---
 
 ### DEPLOY: feat/4466-ian-dossier-name-subject · 20261125-010733Z
 
