@@ -39,19 +39,34 @@
 
 ### PLAN
 
+#4481: a cloud session had a shell but no PowerShell, so `count-words.ps1` could not run and the session
+rebuilt the counter in Python by hand. The owner decided (2026-11-25, on the issue) against a Python twin:
+the session installs `pwsh` first, and falls back to the existing no-shell path where that fails.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] Step 1 of `plugins/dkj-subagents/dkj-subagents-lifehub/skills/dossier-wordcount/SKILL.md`: a shell
+      without PowerShell installs `pwsh` and runs the same line with it; never a re-implementation; a
+      failed install falls back to the hand count.
 
 ### TEST
 
+- [x] Text-only change to a skill page; the gates run through `ship-pr`.
+
 ### DEPLOY: fix/4481-wordcount-install-pwsh
 
-**Score:**
+`dossier-wordcount` now says what a session with a shell but no PowerShell does: install `pwsh` and run
+the one counter, rather than rebuilding it in another language, so the word count means the same whoever
+wrote last (#4481).
+
+**Score:** 1
 
 #### What makes this deploy extra special
 
-**Score:**
+A lifehub owner whose dossiers are written from a cloud session gets counts from the same counter as on
+their own machine, instead of a per-session rebuild that can drift.
+
+**Score:** 2
 
 #### Pull Request
 

@@ -37,7 +37,12 @@ Fetch the page with `notion-fetch`, write its body as returned to a file in the 
 file. The first line printed is the count. A second line starting `OVER:` appears only when the count is
 above the threshold. The rule: a link keeps its text and loses its URL, every tag goes with its
 attributes (mentions, callouts, tables), bare URLs and HTML entities go, a code fence loses its marker,
-and a token counts when it holds a letter or a digit. **No shell to run it** (a Chat session): apply
+and a token counts when it holds a letter or a digit. **A shell without PowerShell** (a cloud session's
+Linux container): install PowerShell first -- `pwsh` from Microsoft's package source, for example
+`apt-get install -y powershell` once that source is configured -- and run the same line with `pwsh` in
+place of `powershell`. **Never rebuild the counter in another language**: a second implementation per
+session is exactly the drift this one counter exists to prevent (#4481). Where the install fails, treat
+the session as having no shell, below. **No shell to run it** (a Chat session, or the install failed): apply
 the same rule by hand and say the number is a hand count. The counter's suite is `scripts/tests/dossier-wordcount.tests.ps1`
 in the source repo.
 
