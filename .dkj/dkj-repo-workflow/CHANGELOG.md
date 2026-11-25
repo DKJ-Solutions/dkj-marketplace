@@ -2,7 +2,82 @@
 
 ## [Unreleased]
 
-**10 / 10 minor entries** <!-- pending-tally -->
+**13 / 13 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/4466-ian-dossier-name-subject · 20261125-010733Z
+
+Ian's manual gains a naming rule: a dossier is named for its subject, never for the task that opened
+it.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+In a life hub, Ian now names a new or renamed dossier for what it is about (`Tool X`, not
+`Replace tool X`), so the tree stops advertising work that is already done. The test is whether the
+name still reads right once the dossier's status is *Done*.
+
+**Score:** 2
+
+#### Pull Request
+
+Ian: a dossier name is a subject, never a task
+
+Plugins: dkj-subagents-lifehub
+
+[PR #4474](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4474)
+
+---
+
+### DEPLOY: feat/4461-correction-already-in-source · 20261125-010235Z
+
+Fiona's and Marlowe's manuals gain a rule against double-counting a correction factor: checked against
+its source before it is applied, and tied to the input it was raised for.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+In a life hub, Fiona now states per input whether a figure already contains a correction (a realised
+average usually does) before she applies it, and Marlowe names which figure his "not corrected for"
+applies to. A saving no longer disappears because a correction was subtracted twice.
+
+**Score:** 2
+
+#### Pull Request
+
+Fiona and Marlowe: a correction factor is checked against its source before it is applied
+
+Plugins: dkj-subagents-alpha, dkj-subagents-lifehub
+
+[PR #4473](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4473)
+
+---
+
+### DEPLOY: fix/4460-preference-line-add-repo · 20261125-004840Z
+
+The orchestrator skill's chat guidance now says a standing preference line does not make the classifier
+allow attaching the marketplace repo, as measured, where `working-profile.md` said it did.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+In a claude.ai chat without a repo, Chris now tries attaching the marketplace repo once before saying
+there is no connection, and asks you once after a refusal. Your preferences page no longer promises that
+a "report lessons upstream" line spares you that question.
+
+**Score:** 2
+
+#### Pull Request
+
+Orchestrator skill: a preference line does not make the classifier allow add_repo
+
+Plugins: dkj-subagents-alpha
+
+[PR #4472](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4472)
+
+---
 
 ### DEPLOY: feat/4465-ian-app-dossier-home · 20261124-235616Z
 

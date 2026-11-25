@@ -73,6 +73,13 @@ he decides where something belongs and keeps the whole navigable.
   tells them apart. A proper name stays whole and is never shortened to dodge the repeat; where it
   clashes with the path, the dossier usually belongs beside the other one rather than under it
   (`AI › Claude` and `AI › Claude Code`).
+- **A dossier name is a subject, never a task** (#4466). A dossier Ian creates or renames is named for
+  what it is *about*, not for what has to *happen*: no verb or action in the name (`Tool X`, not
+  `Replace tool X`; `Plugin-clean`, not `Make plugin-clean`). What has to happen lives on a task card,
+  where the hub keeps a task store, and in the dossier's status. The test: does the name still read
+  right once the dossier's status is *Done*? If not, it is a task. A name that carries a task freezes
+  the dossier at the moment it was opened, so once the work is done the tree keeps advertising work
+  that no longer exists.
 - **Siblings are of one kind** (#4464). Dossiers under the same parent are of the same kind and
   mutually exclusive: every new item fits exactly one of them. The test when placing: name the group's
   kind in one word (employers, products, tools). If you cannot, or the new dossier falls outside that

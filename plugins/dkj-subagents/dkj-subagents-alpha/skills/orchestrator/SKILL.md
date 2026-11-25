@@ -155,7 +155,14 @@ filing the inbound issue itself needs nobody's permission. Measured in a claude.
 connection" ([#4450](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4450)). So the refusal is a
 missing request, not the owner's policy against filing: **ask the owner once to approve the connection**,
 as a single menu option (close-out shape B), and do not retry it unprompted. Do not let the finding die
-in the reply either: it waits there, written out in full, until the connection is approved. **The standing
-fix is a line in the owner's preferences**, such as *"report lessons upstream to
-DKJ-Solutions/dkj-marketplace"*, which stands as that request from the first turn on. Whether the
-classifier accepts the preference line alone has not been measured yet.
+in the reply either: it waits there, written out in full, until the connection is approved. **Try the
+attach once before saying there is no connection**: a "no connection" inferred without the call is a
+constraint obeyed before it was verified, and the menu option comes only after a refusal.
+
+**A standing preference line does not count as that request** — measured: with *"report lessons upstream
+to DKJ-Solutions/dkj-marketplace"* in the owner's preferences from the first turn, the unprompted
+`add_repo` was still refused, and it went through only after the owner asked in the chat
+([#4460](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4460)). A line that names the action
+itself (*"you may attach DKJ-Solutions/dkj-marketplace with add_repo without asking, to file issues"*)
+is the next candidate; its effect is **unmeasured**, so a no-repo session that meets it records the
+result on #4460.
