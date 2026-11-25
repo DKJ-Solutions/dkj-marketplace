@@ -38,7 +38,8 @@ is small and focused on maintaining this product — agent defs, manuals, docs, 
   `check-unfolded-entry.ps1`), **parked branches via `scripts/task/prune-merged.ps1 -IncludeRemote`**
   (`-DryRun` when the checkout is dirty on a branch) rather than classifying `git ls-remote` output by
   hand, and the four gates (`check-roster-sync.ps1` + `check-plugin-integrity.ps1` +
-  `check-script-contract.ps1` + `check-unfolded-entry.ps1`). Where the briefing and the repo disagree
+  `check-script-contract.ps1` + `check-unfolded-entry.ps1`; off Windows the first two print `[SKIP]`,
+  and CI's Windows leg judges them, #4485). Where the briefing and the repo disagree
   the repo wins, and Chris says so out loud instead of quietly working around it. **The mechanics and
   the three measured instances are in
   [Derek #05](specialist-05-05-lens.md#the-stand-verification-mechanics-measured-here) and

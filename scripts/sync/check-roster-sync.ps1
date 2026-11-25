@@ -157,6 +157,15 @@ param(
     [string]$UserHomeOverride = ''
 )
 
+# A WINDOWS-ONLY GATE SAYS SO ON ANY OTHER HOST (#4485). It reads the plugin cache under $env:USERPROFILE,
+# which a Linux host does not set, so a cloud session got 'Cannot bind argument to parameter Path' and no
+# verdict. The tree is judged on Windows PowerShell 5.1 (ci.yml's windows-latest jobs), so elsewhere it
+# skips out loud rather than crash. OSVersion, not $IsWindows: 5.1 has no such variable.
+if ([System.Environment]::OSVersion.Platform -ne [System.PlatformID]::Win32NT) {
+    Write-Host "[SKIP] check-roster-sync is a Windows-only gate -- CI's windows-latest job is authoritative for this tree."
+    exit 0
+}
+
 # Test-FunctionDefined (issue #1729): the seam probes below read the function table directly rather
 # than through Get-Command, which parses the name as a wildcard pattern and pays a full PATH scan on
 # every miss -- and a miss is the normal case for an optional seam. $PSScriptRoot-relative, so it
