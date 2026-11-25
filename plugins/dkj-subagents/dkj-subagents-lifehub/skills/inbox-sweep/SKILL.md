@@ -24,7 +24,8 @@ the page titled **Instellingen inbox-sweep** and read it before anything else. I
 - the Gmail **labels**: the one a processed thread gets, and the one for a thread that waits on the
   owner's decision;
 - where **AI posts** go: the AI dossier, and the skill that collects them, if the consumer has one;
-- the **language** rows, notes and the report are written in.
+- the **language** rows, notes and the report are written in;
+- the **order** the inbox is processed in, if the owner keeps one (otherwise the default in step 1).
 
 **No settings page, or no Gmail, Google Calendar or Notion connector: stop and say so in one line.**
 Never guess a database. **Is the Gmail account not the private one** the settings name: stop and say so.
@@ -47,7 +48,8 @@ on the view the settings name, not in SQL or rows mode: those share an hourly qu
 ## 1. Fetch
 
 `search_threads` with `in:inbox`, `pageSize` 50 and `THREAD_VIEW_SUMMARY`; follow `nextPageToken` to
-the end. Process **oldest first**. Read a thread in full (`get_thread`, `PLAIN_TEXT`) only when the
+the end. Process **oldest first** by default; an order the settings page or the hub's conventions
+name takes precedence over this default (#4483). Read a thread in full (`get_thread`, `PLAIN_TEXT`) only when the
 snippet is not enough to decide. A thread is one unit: read every message in it.
 
 Make sure both labels from the settings exist (`list_labels`, otherwise `create_label`). The decision
