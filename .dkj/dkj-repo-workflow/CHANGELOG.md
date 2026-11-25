@@ -2,7 +2,32 @@
 
 ## [Unreleased]
 
-**9 / 9 minor entries** <!-- pending-tally -->
+**10 / 10 minor entries** <!-- pending-tally -->
+
+### DEPLOY: fix/4481-wordcount-install-pwsh · 20261125-115004Z
+
+`dossier-wordcount` now says what a session with a shell but no PowerShell does: install `pwsh` and run
+the one counter, rather than rebuilding it in another language, so the word count means the same whoever
+wrote last (#4481).
+
+**Score:** 1
+
+#### What makes this deploy extra special
+
+A lifehub owner whose dossiers are written from a cloud session gets counts from the same counter as on
+their own machine, instead of a per-session rebuild that can drift.
+
+**Score:** 2
+
+#### Pull Request
+
+dossier-wordcount: install pwsh in a shell without PowerShell
+
+Plugins: dkj-subagents-lifehub
+
+[PR #4495](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4495)
+
+---
 
 ### DEPLOY: feat/4477-asana-origin-guard · 20261125-113930Z
 
