@@ -39,19 +39,35 @@
 
 ### PLAN
 
+Issue #4484: the REST search form in the orchestrator skill lacked `is:issue`. The reported 422 did not
+reproduce from a desktop session (the bare query answered 27 hits), but those hits mixed pull requests
+into a duplicate search (16 with `is:issue`), so the repair stands on both grounds. `search/issues` is
+quoted nowhere else in the tree.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `skills/orchestrator/SKILL.md`: the search form carries `is:issue`, and a 422 is named as a
+  malformed query rather than an empty result.
 
 ### TEST
 
+- [x] Ran both forms against this repo's tracker: the bare query returned 27 hits, the `is:issue` form
+  16.
+
 ### DEPLOY: fix/4484-rest-search-is-issue
 
-**Score:**
+The REST search a session uses to look for a duplicate before filing, where GraphQL is refused, now
+includes `is:issue`. It no longer fails with a 422 in a cloud session, and it no longer counts pull
+requests as duplicates.
+
+**Score:** 1
 
 #### What makes this deploy extra special
 
-**Score:**
+A session in a Claude Code cloud environment can search the tracker before filing, where the old form
+failed on every query.
+
+**Score:** 2
 
 #### Pull Request
 
