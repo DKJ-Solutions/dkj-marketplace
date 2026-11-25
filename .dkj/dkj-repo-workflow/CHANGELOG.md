@@ -2,7 +2,32 @@
 
 ## [Unreleased]
 
-**6 / 6 minor entries** <!-- pending-tally -->
+**7 / 7 minor entries** <!-- pending-tally -->
+
+### DEPLOY: fix/4485-windows-only-gates-skip · 20261125-111106Z
+
+In a Linux session, such as a Claude Code cloud session, `check-roster-sync` and `check-plugin-integrity`
+now print a `[SKIP]` line naming CI's Windows leg as authoritative. Before, one crashed and the other
+reported over a thousand findings caused by the platform.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+A consumer's cloud session that runs `check-roster-sync` from `dkj-subagents-developers` gets a clear
+skip in place of a crash.
+
+**Score:** 1
+
+#### Pull Request
+
+Two of the four stand-verification gates cannot run in a Linux cloud session
+
+Plugins: dkj-subagents-developers
+
+[PR #4493](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4493)
+
+---
 
 ### DEPLOY: fix/4484-rest-search-is-issue · 20261125-105734Z
 
