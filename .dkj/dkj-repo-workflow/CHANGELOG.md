@@ -2,7 +2,32 @@
 
 ## [Unreleased]
 
-**4 / 4 minor entries** <!-- pending-tally -->
+**5 / 5 minor entries** <!-- pending-tally -->
+
+### DEPLOY: fix/4482-inbox-sweep-gmail-address · 20261125-105308Z
+
+An inbox sweep now recognises the owner's private Gmail account whichever way the address is spelled
+(with or without dots, with a `+tag`, or under `googlemail.com`), so the settings page needs only one
+spelling and the sweep no longer stops wrongly or skips the owner's own mail.
+
+**Score:** 1
+
+#### What makes this deploy extra special
+
+The owner running `/inbox-sweep` notices it the first time mail arrives at a second spelling of their
+address: the sweep processes it instead of stopping.
+
+**Score:** 3
+
+#### Pull Request
+
+inbox-sweep compares the recipient address literally, but Gmail ignores dots in the local part
+
+Plugins: dkj-subagents-lifehub
+
+[PR #4491](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4491)
+
+---
 
 ### DEPLOY: fix/4479-fold-standdown-retry · 20261125-104848Z
 
