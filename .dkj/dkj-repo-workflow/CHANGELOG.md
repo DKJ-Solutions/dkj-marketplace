@@ -2,7 +2,32 @@
 
 ## [Unreleased]
 
-**11 / 11 minor entries** <!-- pending-tally -->
+**12 / 12 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/4461-correction-already-in-source · 20261125-010235Z
+
+Fiona's and Marlowe's manuals gain a rule against double-counting a correction factor: checked against
+its source before it is applied, and tied to the input it was raised for.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+In a life hub, Fiona now states per input whether a figure already contains a correction (a realised
+average usually does) before she applies it, and Marlowe names which figure his "not corrected for"
+applies to. A saving no longer disappears because a correction was subtracted twice.
+
+**Score:** 2
+
+#### Pull Request
+
+Fiona and Marlowe: a correction factor is checked against its source before it is applied
+
+Plugins: dkj-subagents-alpha, dkj-subagents-lifehub
+
+[PR #4473](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4473)
+
+---
 
 ### DEPLOY: fix/4460-preference-line-add-repo · 20261125-004840Z
 
