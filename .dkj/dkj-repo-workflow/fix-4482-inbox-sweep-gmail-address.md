@@ -39,19 +39,34 @@
 
 ### PLAN
 
+Issue #4482: step 0's private-account check compared the recipient address literally, while Gmail
+delivers dotted, dot-less and `+tag` spellings of one address to the same mailbox.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `skills/inbox-sweep/SKILL.md` step 0: a Gmail address (`gmail.com`, `googlemail.com`) is compared
+  normalised (lowercase, no `+tag`, no dots in the local part, `googlemail.com` read as `gmail.com`);
+  every other domain stays literal apart from case.
 
 ### TEST
 
+- [~] No automated test: the skill has no script, and the check is the session's own reading of the
+  address. The rule names the measured case it repairs.
+
 ### DEPLOY: fix/4482-inbox-sweep-gmail-address
 
-**Score:**
+An inbox sweep now recognises the owner's private Gmail account whichever way the address is spelled
+(with or without dots, with a `+tag`, or under `googlemail.com`), so the settings page needs only one
+spelling and the sweep no longer stops wrongly or skips the owner's own mail.
+
+**Score:** 1
 
 #### What makes this deploy extra special
 
-**Score:**
+The owner running `/inbox-sweep` notices it the first time mail arrives at a second spelling of their
+address: the sweep processes it instead of stopping.
+
+**Score:** 3
 
 #### Pull Request
 
