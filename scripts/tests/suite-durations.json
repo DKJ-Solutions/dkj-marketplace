@@ -100,6 +100,7 @@
                     "dkj-repo-workflow-bwj.tests.ps1":  103.5,
                     "document-newline.tests.ps1":  10.8,
                     "dossier-wordcount.tests.ps1":  13.2,
+                    "entry-gate-live-sessioncheck.tests.ps1":  5.9,
                     "entry-scaffold.tests.ps1":  42,
                     "exception-message-guard.tests.ps1":  12.9,
                     "fanout-lib.tests.ps1":  23.3,

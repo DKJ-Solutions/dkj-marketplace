@@ -39,19 +39,38 @@
 
 ### PLAN
 
+#4476: a consumer adopted before #4376 keeps a branch-entry caller on `branches: [main]` while
+`Get-ShopifyLiveDeployBranch` names a live branch, and only a re-run of adoption says so. Surface the
+same advisory at every session start.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] New SessionStart check `plugins/dkj-repo-workflow/hooks/entry-gate-live-sessioncheck.ps1`, discovered by
+  the dispatcher: reads the live answer the way `adopt-workflow-folder` does, and warns with the line to add
+  when `.github/workflows/branch-entry.yml` leaves it out. Read-only, always exit 0.
+- [x] Suite `scripts/tests/entry-gate-live-sessioncheck.tests.ps1`, registered in `suite-groups.json` and
+  `suite-durations.json`.
+- [x] One sentence in the `adopt-dkj-repo-workflow` skill naming the session check.
 
 ### TEST
 
+- [x] The new suite passes 12/12 and `sessioncheck-dispatch.tests.ps1` 62/62; against this repo the hook prints
+  its nothing-to-check line and exits 0. The full gate runs in `ship-pr`.
+
 ### DEPLOY: fix/4476-entry-gate-live-sessioncheck
 
-**Score:**
+A new session check, `entry-gate-live-sessioncheck`, warns when the branch-entry CI caller leaves out the
+live deploy branch that `scripts/repo-config.ps1` declares, and prints the `branches:` line to use instead.
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+A Shopify store adopted before the live branch joined the branch-entry caller now hears about it at every
+session start, with the exact line to change. Before, hotfix PRs to the live branch landed malformed
+changelog entries unjudged and turned the fold red, and nothing said why until someone re-ran adoption.
+
+**Score:** 3
 
 #### Pull Request
 

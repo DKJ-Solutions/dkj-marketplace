@@ -235,7 +235,9 @@ part never overwrites a file. To take the caller, delete that file and re-run Pa
 ([#4374](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4374)). A repo whose `scripts/repo-config.ps1`
 answers `Get-ShopifyLiveDeployBranch` with a plain branch name gets `branches: [main, <live>]`, so hotfix PRs
 to the live branch meet the gate too; an unusable answer (a `VUL-IN` placeholder, `refs/...`, `main`) leaves
-`main` only and the run says why. An existing caller is reported with the line to add, never rewritten.
+`main` only and the run says why. An existing caller is reported with the line to add, never rewritten, and an existing caller that leaves the live
+branch out is also reported at every session start by `entry-gate-live-sessioncheck`
+([#4476](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4476)).
 
 **The branch-entry caller also holds the DEPLOY lock**
 ([#2429](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/2429)). The runner passes the PR
