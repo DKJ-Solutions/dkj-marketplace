@@ -39,19 +39,34 @@
 
 ### PLAN
 
+#4483: `inbox-sweep` step 1 hard-coded "oldest first", while step 0 says everything personal lives in the
+owner's settings page. A sweep on 2026-11-25 met an owner convention of newest first and had to choose by
+itself.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] Step 1 of `plugins/dkj-subagents/dkj-subagents-lifehub/skills/inbox-sweep/SKILL.md`: "oldest first"
+      is the default, and an order named on the settings page or in the hub's conventions takes precedence.
+- [x] Step 0's settings list gains an optional **order** row.
 
 ### TEST
 
+- [x] Text-only change to a skill page; the gates run through `ship-pr`.
+
 ### DEPLOY: fix/4483-inbox-sweep-order-default
 
-**Score:**
+`inbox-sweep` no longer contradicts its own step 0: the processing order is a default the owner's
+settings can override, instead of a fixed rule the session has to weigh against the hub's conventions
+(#4483).
+
+**Score:** 1
 
 #### What makes this deploy extra special
 
-**Score:**
+A lifehub owner whose conventions order work newest first now gets that order from the inbox sweep
+without the session having to decide which rule wins. Add an **order** row to the settings page to set it.
+
+**Score:** 2
 
 #### Pull Request
 
