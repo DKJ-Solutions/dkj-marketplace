@@ -39,21 +39,37 @@
 
 ### PLAN
 
+Inbound #4460: `working-profile.md` said a standing preference line stands as the owner's request to
+attach the marketplace repo; the measurement on #4460 says the classifier still refuses. Verified on
+pickup: `working-profile.md` made the claim, `SKILL.md` called it unmeasured, so the two disagreed.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `skills/orchestrator/working-profile.md`: the preference line no longer claims to stand as the
+  attach request; it cites the measurement and points at the skill.
+- [x] `skills/orchestrator/SKILL.md`: try the attach once before saying there is no connection; the
+  preference line is measured as not enough; the action-naming line is named as the unmeasured next
+  candidate, to be recorded on #4460.
 
 ### TEST
 
+- [x] Doc-only change in `dkj-subagents-alpha`; the gates run in `ship-pr`.
+
 ### DEPLOY: fix/4460-preference-line-add-repo
 
-**Score:**
+The orchestrator skill's chat guidance now says a standing preference line does not make the classifier
+allow attaching the marketplace repo, as measured, where `working-profile.md` said it did.
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+In a claude.ai chat without a repo, Chris now tries attaching the marketplace repo once before saying
+there is no connection, and asks you once after a refusal. Your preferences page no longer promises that
+a "report lessons upstream" line spares you that question.
+
+**Score:** 2
 
 #### Pull Request
 
 Orchestrator skill: a preference line does not make the classifier allow add_repo
-
