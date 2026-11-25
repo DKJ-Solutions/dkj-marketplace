@@ -29,6 +29,14 @@ the page titled **Instellingen inbox-sweep** and read it before anything else. I
 **No settings page, or no Gmail, Google Calendar or Notion connector: stop and say so in one line.**
 Never guess a database. **Is the Gmail account not the private one** the settings name: stop and say so.
 
+**Compare a Gmail address the way Gmail delivers to it, not letter for letter** (#4482). For
+`gmail.com` and `googlemail.com` alike, lowercase the address, drop a `+tag` after the local part, drop
+every dot in the local part, and read `googlemail.com` as `gmail.com`: `First.Last+news@googlemail.com`
+and `firstlast@gmail.com` are one mailbox. Any other domain is compared literally, lowercase only, since
+a dot there can name a different person. So the settings page needs one spelling of the address.
+Measured in an inbox sweep, November 25, 2026: mail to the dot-less spelling read as *not the private
+account*, which would either stop the sweep or skip the owner's own threads.
+
 **Google Calendar is the source for appointments.** An appointment from a mail goes into Google
 Calendar first (the primary calendar) and only then into the Agenda as a row, with the Google event `id`
 in the column **Google ID**. Check first whether it is already in Google (`list_events` around that

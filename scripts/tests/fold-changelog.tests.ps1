@@ -1749,14 +1749,14 @@ Assert-True ($wrapAt -gt $owed -and $wrapAt -lt $foldAt -and $shipSrcText.Contai
 $foldYml = Join-Path $RepoRoot '.github\workflows\fold-on-merge.yml'
 if (Test-Path -LiteralPath $foldYml) {
     $foldYmlText = [System.IO.File]::ReadAllText($foldYml, [System.Text.Encoding]::UTF8)
-    Assert-True ($foldYmlText -match '(?ms)if \(\$foldExitCode -eq 2\) \{.*?exit 0') `
-        'raced fold: fold-on-merge.yml stands down on exit 2 (#1586)'
+    Assert-True ($foldYmlText -match '(?ms)while \(\$foldExitCode -eq 2 -and \$attempt -lt 3\) \{.*?git merge --ff-only origin/main') `
+        'raced fold: fold-on-merge.yml retries on exit 2, bounded, on the fast-forwarded trunk (#4479)'
     Assert-True ($foldYmlText -match '(?ms)if \(\$foldExitCode -eq 3\) \{.*?exit 0') `
-        'raced fold: and on exit 3 too (#1796)'
-    Assert-Equal 2 (@([regex]::Matches($foldYmlText, '\$foldExitCode -eq \d')).Count) `
-        'raced fold: on exactly those two codes -- a third would need its own ground, so the count is pinned'
+        'raced fold: and stands down on exit 3 (#1796)'
+    Assert-Equal 3 (@([regex]::Matches($foldYmlText, '\$foldExitCode -eq \d')).Count) `
+        'raced fold: three comparisons -- code 2 in the loop and after it, code 3 once -- so a new code is pinned'
     Assert-True ($foldYmlText -notmatch '\$foldExitCode -ne 0') `
-        'raced fold: and neither stand-down is a blanket "any non-zero is fine"'
+        'raced fold: and neither is a blanket "any non-zero is fine"'
 } else {
     # Stated rather than skipped in silence: a consumer running this suite has no such workflow, and a
     # pass over a file that is not there proves nothing about the one that is.

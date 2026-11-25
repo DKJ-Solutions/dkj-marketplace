@@ -1805,7 +1805,17 @@ Assert-Equal "it's" (ConvertTo-AsanaXmlText -Text "it's") 'an apostrophe stays a
 Assert-Equal 'Zie <a href="https://x.nl/a">https://x.nl/a</a>.' (ConvertTo-AsanaStoryHtml -Markdown 'Zie https://x.nl/a.') 'a bare URL does not swallow the full stop after it'
 Assert-Throws { New-AsanaCommentRequest -Gid "123`n" -Html '<body/>' } 'a GID with a trailing newline is refused -- the guard is anchored with \z'
 $cmYml = [System.IO.File]::ReadAllText((Join-Path $PluginRoot 'templates\asana-closed-message.yml'))
-Assert-True ($cmYml -match 'types:\s*\[closed,\s*reopened\]') 'the workflow runs on a close and a reopen only (#2854)'
+Assert-True ($cmYml -match 'types:\s*\[closed,\s*reopened,\s*edited\]') 'the workflow runs on a close, a reopen (#2854) and an edit (#4480)'
+# THE EDIT IS A CLOSE THAT FOUND NO TASK (#4480): smartwatchbanden#1567 got its asana-task marker 40 seconds
+# after its close, whose run had told nobody. Only an edit that ADDS the marker to a CLOSED issue may run,
+# it is handed to the script as 'closed', and the group sits on the job so skipped edits never displace a
+# pending close.
+Assert-True ($cmYml -match "github\.event\.action != 'edited'") 'a close and a reopen pass the job''s if: unchanged'
+Assert-True ($cmYml -match "github\.event\.issue\.state == 'closed'") 'an edit runs only on a closed issue'
+Assert-True ($cmYml -match "!contains\(github\.event\.changes\.body\.from, 'asana-task:'\)" -and $cmYml -match "contains\(github\.event\.issue\.body, 'asana-task:'\)") 'and only where the edit added the asana-task marker'
+Assert-True ($cmYml -match 'github\.event\.changes\.body &&') 'and only where the edit touched the body at all -- a title edit has no from to read'
+Assert-True ($cmYml -match "ISSUE_EVENT:\s*\$\{\{\s*github\.event\.action == 'edited' && 'closed' \|\| github\.event\.action\s*\}\}") 'that edit reaches the script as the close it missed'
+Assert-True ($cmYml -notmatch '(?m)^concurrency:' -and $cmYml -match '(?m)^\s{4}concurrency:\s*\r?\n\s+group:\s*asana-closed-message-') 'the concurrency group is the job''s, not the workflow''s'
 Assert-True ($cmYml -notmatch '(?m)^\s*(schedule|workflow_dispatch|pull_request|push):') 'with no schedule, manual or other trigger -- and the types line above names no label event'
 Assert-True ($cmYml -match 'github\.event\.action' -and $cmYml -match '-Event \$env:ISSUE_EVENT') 'it hands the event to the script, which picks the message'
 Assert-True ($cmYml -match 'secrets\.ASANA_PAT' -and $cmYml -notmatch 'GH_PROJECT_TOKEN|ASANA_PROJECT_GID') 'and needs ASANA_PAT alone'

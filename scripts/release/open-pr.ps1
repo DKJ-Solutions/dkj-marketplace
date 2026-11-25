@@ -1528,7 +1528,7 @@ if (@($exemptSeam.Matchers).Count -gt 0 -and $closingAtMerge.Count -gt 0) {
     $exempt = @($exemptVerdict.Findings)
     if ($exempt.Count -gt 0) {
         $exemptLines = (@($exempt | ForEach-Object {
-            $why = if ($_.Why) { $_.Why } else { 'this repo declares that such an issue is closed by a person, not by a merge.' }
+            $why = if ($_.Why) { $_.Why } else { 'this repo declares that such an issue is closed after the merge, by the session that shipped it, not by the merge itself.' }
             "  #$($_.Issue) -- carries $($_.Name). $why"
         }) -join "`n")
         $publishedNote = ''

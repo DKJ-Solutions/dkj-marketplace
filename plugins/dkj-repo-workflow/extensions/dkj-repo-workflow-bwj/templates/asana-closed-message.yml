@@ -19,9 +19,13 @@ name: asana-closed-message
 
 on:
   issues:
-    # closed and reopened ONLY: no labeled, no schedule. The script decides on the close reason, and on
-    # a close as not planned on the labels the issue carries at that moment too.
-    types: [closed, reopened]
+    # closed and reopened, plus ONE kind of edit: no labeled, no schedule. The script decides on the close
+    # reason, and on a close as not planned on the labels the issue carries at that moment too.
+    # 'edited' is there for a task linked AFTER the close (#4480): the close's own run found no
+    # asana-task marker and told nobody, and nothing ran again. The job's if: below lets an edit through
+    # only when it ADDS the marker to an issue that is closed, and the run is then handed to the script as
+    # the close it missed. Every other edit is skipped before it holds ASANA_PAT.
+    types: [closed, reopened, edited]
 
 permissions:
   contents: read
@@ -45,12 +49,20 @@ permissions:
 # The group orders runs as GitHub CREATED them, which is not always the order the events happened
 # (xoxowildhearts#512: a reopen's run was created after the close's), so the script also reads the issue's
 # current state and posts nothing for an event that state has superseded (#3995).
-concurrency:
-  group: asana-closed-message-${{ github.event.issue.number }}
-  cancel-in-progress: false
-
+# The group sits on the JOB, not the workflow (#4480): with 'edited' among the types, a workflow-level
+# group would let a burst of ordinary edits -- each one a run that skips -- drop a close that was still
+# pending. A job its if: skips never enters the group, so only runs that post can displace each other.
 jobs:
   closed-message:
+    if: >-
+      github.event.action != 'edited' ||
+      (github.event.issue.state == 'closed' &&
+       github.event.changes.body &&
+       !contains(github.event.changes.body.from, 'asana-task:') &&
+       contains(github.event.issue.body, 'asana-task:'))
+    concurrency:
+      group: asana-closed-message-${{ github.event.issue.number }}
+      cancel-in-progress: false
     runs-on: ubuntu-latest
     # A job with no timeout-minutes runs to GitHub's six-hour default (#2296), holding ASANA_PAT.
     timeout-minutes: 10
@@ -82,7 +94,8 @@ jobs:
           ASANA_PAT: ${{ secrets.ASANA_PAT }}
           ISSUE_BODY: ${{ github.event.issue.body }}
           ISSUE_REF: ${{ github.repository }}#${{ github.event.issue.number }}
-          ISSUE_EVENT: ${{ github.event.action }}
+          # An edit that got this far linked a task to a closed issue: it is the close that found no task.
+          ISSUE_EVENT: ${{ github.event.action == 'edited' && 'closed' || github.event.action }}
           STATE_REASON: ${{ github.event.issue.state_reason }}
           # The label names as a JSON array (a name may hold a comma); the script reads them from the
           # environment (#2902).
