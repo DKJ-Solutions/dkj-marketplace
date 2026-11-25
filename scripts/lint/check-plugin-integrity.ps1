@@ -511,6 +511,15 @@
 [CmdletBinding()]
 param([string[]]$SkipCheck = @())
 
+# A WINDOWS-ONLY GATE SAYS SO ON ANY OTHER HOST (#4485). Its plugin-root and link checks resolve
+# Windows-separated paths, so a Linux cloud session read 1218 platform-caused findings as a broken tree.
+# The tree is judged on Windows PowerShell 5.1 (ci.yml's windows-latest jobs), so elsewhere it skips
+# out loud. OSVersion, not $IsWindows: 5.1 has no such variable.
+if ([System.Environment]::OSVersion.Platform -ne [System.PlatformID]::Win32NT) {
+    Write-Host "[SKIP] check-plugin-integrity is a Windows-only gate -- CI's windows-latest job is authoritative for this tree."
+    exit 0
+}
+
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
 

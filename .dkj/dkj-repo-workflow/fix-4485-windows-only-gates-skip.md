@@ -39,19 +39,40 @@
 
 ### PLAN
 
+Issue #4485, option 2: on Linux, `check-roster-sync` crashed on `$env:USERPROFILE`, and
+`check-plugin-integrity` reported 1218 findings caused by the platform. `ci.yml` already says the tree
+is judged on Windows PowerShell 5.1 only, so both gates now say so on any other host instead of
+crashing or flooding. Option 1, making them platform-neutral, would be a much larger port and is not
+taken.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `scripts/sync/check-roster-sync.ps1` (and its `dkj-subagents-developers` mirror) and
+  `scripts/lint/check-plugin-integrity.ps1`: a guard right after `param`, keyed on
+  `[Environment]::OSVersion.Platform`, prints `[SKIP] ... Windows-only gate` and exits 0.
+- [x] Chris's lens: where the four stand-verification gates are named, says the first two skip off
+  Windows.
 
 ### TEST
 
+- [x] `scripts/tests/roster-sync.tests.ps1`: pins, for both gates, the guard's shape and that it runs
+  before any lib or StrictMode, and that the plugin mirror is identical. The suites run on Windows, so
+  the skip itself is pinned on the source.
+
 ### DEPLOY: fix/4485-windows-only-gates-skip
 
-**Score:**
+In a Linux session, such as a Claude Code cloud session, `check-roster-sync` and `check-plugin-integrity`
+now print a `[SKIP]` line naming CI's Windows leg as authoritative. Before, one crashed and the other
+reported over a thousand findings caused by the platform.
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+A consumer's cloud session that runs `check-roster-sync` from `dkj-subagents-developers` gets a clear
+skip in place of a crash.
+
+**Score:** 1
 
 #### Pull Request
 
