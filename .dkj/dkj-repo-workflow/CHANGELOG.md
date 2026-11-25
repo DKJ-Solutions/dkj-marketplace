@@ -2,7 +2,32 @@
 
 ## [Unreleased]
 
-**7 / 7 minor entries** <!-- pending-tally -->
+**8 / 8 minor entries** <!-- pending-tally -->
+
+### DEPLOY: fix/4483-inbox-sweep-order-default · 20261125-112954Z
+
+`inbox-sweep` no longer contradicts its own step 0: the processing order is a default the owner's
+settings can override, instead of a fixed rule the session has to weigh against the hub's conventions
+(#4483).
+
+**Score:** 1
+
+#### What makes this deploy extra special
+
+A lifehub owner whose conventions order work newest first now gets that order from the inbox sweep
+without the session having to decide which rule wins. Add an **order** row to the settings page to set it.
+
+**Score:** 2
+
+#### Pull Request
+
+inbox-sweep: oldest first is a default, the owner's settings decide the order
+
+Plugins: dkj-subagents-lifehub
+
+[PR #4494](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4494)
+
+---
 
 ### DEPLOY: fix/4485-windows-only-gates-skip · 20261125-111106Z
 
