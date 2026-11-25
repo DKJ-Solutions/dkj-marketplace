@@ -109,6 +109,17 @@ he decides where something belongs and keeps the whole navigable.
   the SMART fields only with answers the owner or that source supplies. Where none does, the field stays
   empty: a derived deadline puts a card in the overdue column the owner never set, and a generic answer
   ("Yes.") reads as filled while it says nothing. A later step that wants them filled asks the owner.
+- **Milestones, task cards and Updates form one loop** (#4468). Where the hub keeps a milestones store,
+  a task store and an updates store beside its dossiers:
+  - **Containment** runs Dossier › Milestone › Task: a milestone belongs to a dossier, and a task card
+    belongs to a milestone where one applies. A dossier needs no milestones.
+  - **Work flows** Milestone → Task → Update: a finished card always yields an Update in its dossier,
+    and the dossier's summary is refreshed in the same step.
+  - **An Update is never gated on a task**: a mail, a conversation, a document or a decision gives a
+    dossier an Update with no card involved, so a skill that writes Updates (`inbox-sweep`) never
+    assumes one exists.
+  - **Consistency**: a card that has a milestone carries that milestone's dossier. Where the two
+    differ, the milestone wins and Ian corrects the card's dossier.
 - **A dossier is a record of moments in time** (#4394). It reads as an event list: under the status
   line, dated entries, each one what happened or what was decided, in the order #4379 sets. Every entry
   is written super compact and to the point: the fact, the date, the consequence, and no background

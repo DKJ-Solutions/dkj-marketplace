@@ -84,7 +84,8 @@ delivery is over. After that it is *nothing lasting*.
 3. **Write facts, not a copy of the mail**: what, when, how much, with whom, and what the owner has to
    do. End with a source line, `Bron: mail van <sender>, <date>` (in the language the settings name),
    with the thread's `viewUrl`. Attachments are not copied; name them in the source line. Where a
-   source line lists several mails, the newest comes first.
+   source line lists several mails, the newest comes first. A fact from a mail goes into its dossier
+   (or the hub's updates store) on its own: no task card has to exist first (#4468, Ian's manual).
 4. **Onyx lays the links** for a new dossier: strong and weak links, with the explanation where the
    conventions page says. No orphan neuron.
 
