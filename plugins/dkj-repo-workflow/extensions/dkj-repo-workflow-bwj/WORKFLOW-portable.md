@@ -273,7 +273,9 @@ Once the GitHub issue exists and carries the reach label, mirror it to Asana in 
 workflow's messages update the task: the closed message and the reopened message** (Dave, October 5 and 6, 2026,
 #2818 and #2854), and the on-hold message beside them (#2902). When the issue closes as completed, closes as
 not planned while parked under an `awaiting-*` label, or is reopened, the `asana-closed-message`
-workflow posts the matching one on the task (step 4). The prio sync came
+workflow posts the matching one on the task (step 4). A task linked only **after** the close gets its
+closed message too: the workflow also runs on the edit that adds the `asana-task` marker to a closed
+issue, and treats it as the close that found no task (#4480). The prio sync came
 back as its own workflow (step 5); the rest of the CI automation that used to follow the issue is
 retired (step 6). The Asana task is **not** a paste of the issue body. It is written for
 a BWJ colleague who does not read code and does not know the repo:
