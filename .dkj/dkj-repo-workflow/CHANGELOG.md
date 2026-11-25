@@ -2,7 +2,33 @@
 
 ## [Unreleased]
 
-**8 / 8 minor entries** <!-- pending-tally -->
+**9 / 9 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/4477-asana-origin-guard · 20261125-113930Z
+
+A new PreToolUse hook, `guard-asana-origin`, refuses a `gh issue create` on a store repo whose body names
+a requester or quotes a task but links no Asana task, and `report-issue` step 1 now searches the board for
+the colleague's task before filing. The line `<!-- no-asana-task -->` records a search that found none.
+
+**Score:** 3
+
+#### What makes this deploy extra special
+
+A colleague's request passed on in chat is now filed as the issue for their own Asana task, so the card
+moves to Filed, gets its created: comment, and the requester hears about it when the work ships. Before,
+such an issue was filed unlinked and the colleague's card sat untouched in their inbox.
+
+**Score:** 3
+
+#### Pull Request
+
+Refuse a store issue that names a colleague's request but links no Asana task
+
+Plugins: dkj-repo-workflow-bwj
+
+[PR #4496](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4496)
+
+---
 
 ### DEPLOY: fix/4483-inbox-sweep-order-default · 20261125-112954Z
 
