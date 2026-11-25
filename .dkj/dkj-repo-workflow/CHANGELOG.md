@@ -2,7 +2,32 @@
 
 ## [Unreleased]
 
-**11 / 11 minor entries** <!-- pending-tally -->
+**12 / 12 minor entries** <!-- pending-tally -->
+
+### DEPLOY: docs/4499-ian-file-tool-by-use · 20261125-192945Z
+
+Ian's manual now files a tool (a device, software, an AI service, an account) by what it is used for:
+under the one line of work it serves, or in a top-level tools group of its own when it is used for
+everything, never under the home branch (#4499).
+
+**Score:** 1
+
+#### What makes this deploy extra special
+
+A lifehub owner finds every computer, printer and AI subscription by one yardstick, instead of some
+filed by where they stand and others by what runs on them.
+
+**Score:** 2
+
+#### Pull Request
+
+Ian: file a tool under what it is used for, not who owns it
+
+Plugins: dkj-subagents-lifehub
+
+[PR #4501](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4501)
+
+---
 
 ### DEPLOY: feat/4497-task-card-short-note · 20261125-125025Z
 
