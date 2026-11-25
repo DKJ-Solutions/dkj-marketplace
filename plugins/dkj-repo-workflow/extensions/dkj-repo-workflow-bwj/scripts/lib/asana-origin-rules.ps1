@@ -15,7 +15,9 @@
     asks #2928's question at the create, where the answer can still change what is filed.
 
     THE SIGNAL is a phrase in the body, English or Dutch: a requester named ('requested by', 'reported by',
-    'on behalf of', 'passed on by', 'aangevraagd door', 'op verzoek van', 'namens', ...) or a task quoted
+    'on behalf of', 'passed on by', 'aangevraagd door', 'op verzoek van', 'namens', ...) followed by a name --
+    a capital or an '@', so 'reported by customers' is ordinary prose and not a colleague (Victor's review) --
+    or a task quoted
     ('task "..."', 'taak "..."', 'Asana task', 'Asana-ticket', ...). A body with neither is not judged.
 
     LINKED is whatever Resolve-AsanaTaskRef resolves -- the marker, the header row, a sole task URL -- or
@@ -44,7 +46,7 @@ $script:AsanaOriginRepos = @($script:AsanaMirrorAdmittedRepos | Where-Object { @
 # this file stays ASCII.
 $script:AsanaOriginQuote = '[' + '"' + "'" + [char]0x201C + [char]0x2018 + [char]0x201E + ']'
 
-$script:AsanaOriginRequesterPattern = '(?i)\b(?:requested|reported|asked)\s+by\b|\bon\s+behalf\s+of\b|\bpassed\s+on\s+by\b|\b(?:aangevraagd|gevraagd|gemeld|doorgegeven|ingediend)\s+door\b|\bop\s+verzoek\s+van\b|\bnamens\b'
+$script:AsanaOriginRequesterPattern = '(?i)(?:\b(?:requested|reported|asked)\s+by|\bon\s+behalf\s+of|\bpassed\s+on\s+by|\b(?:aangevraagd|gevraagd|gemeld|doorgegeven|ingediend)\s+door|\bop\s+verzoek\s+van|\bnamens)\s+(?-i:[A-Z@])'
 $script:AsanaOriginTaskPattern = '(?i)\b(?:task|taak|ticket)\s*[:(]?\s*' + $script:AsanaOriginQuote + '|\basana[\s-]?(?:task|taak|ticket|card|kaart)\b'
 $script:AsanaOriginOptOutPattern = '<!--\s*no-asana-task\s*-->'
 

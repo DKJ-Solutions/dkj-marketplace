@@ -51,11 +51,12 @@ step in `report-issue` step 1, and a create-time guard beside `guard-kind-label`
 - [x] `hooks/guard-asana-origin.ps1` + its `hooks.json` entry on `gh issue create`, failing open with a
       warning on a body it cannot read
 - [x] `report-issue` step 1: search the board before filing a request that names a requester or a task
+- [x] Review: a requester phrase needs a name after it (Victor), sample names neutral (Sebastian)
 - [x] `WORKFLOW-portable.md` section 8 and the plugin README's hook list name the guard
 
 ### TEST
 
-- [x] `scripts/tests/guard-asana-origin.tests.ps1` (47 asserts: lib, hook as a process, registration),
+- [x] `scripts/tests/guard-asana-origin.tests.ps1` (52 asserts: lib, hook as a process, registration),
       registered in `suite-groups.json`
 
 ### DEPLOY: feat/4477-asana-origin-guard

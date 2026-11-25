@@ -55,9 +55,13 @@ Assert-Equal 'pass'   (Get-Verdict 'The Belgium pop-up shows twice on mobile.') 
 Assert-Equal 'pass'   (Get-Verdict '') 'an empty body passes'
 Assert-Equal 'pass'   (Get-Verdict 'The task runner times out after 30 seconds.') 'the word task alone is not a quoted task'
 
-foreach ($b in @('Reported by Jordy via Asana.', 'Asked by the CRO team.', 'Filed on behalf of the SEO team.',
-                 'Aangevraagd door Jordy.', 'Op verzoek van Alejandro.', 'Doorgegeven door Sam.', 'Namens de klantenservice.')) {
+foreach ($b in @('Reported by Requester A via Asana.', 'Asked by CRO.', 'Filed on behalf of @seo-team.',
+                 'Aangevraagd door Aanvrager A.', 'Op verzoek van Collega B.', 'Doorgegeven door Collega C.', 'Namens Klantenservice.')) {
     Assert-Equal 'names a requester' (@(Get-AsanaOriginSignal -Body $b) -join ',') "requester: '$b'"
+}
+# Victor's review: ordinary bug-report prose names no colleague.
+foreach ($b in @('Fixes a bug reported by customers in checkout.', 'This was asked by the CI to run.', 'The user reported by mistake.', 'Gemeld door de klant via e-mail.', 'Namens de winkel tonen we twee prijzen.')) {
+    Assert-Equal 0 @(Get-AsanaOriginSignal -Body $b).Count "no requester: '$b'"
 }
 $curly = 'See task ' + [char]0x201C + 'cases link' + [char]0x201D + ' on the board.'
 foreach ($b in @('See taak "cases-link per model".', $curly, 'This is the Asana task for the header.', 'Uit het Asana-ticket van gisteren.', "Task: 'header fix'")) {
@@ -103,7 +107,7 @@ $r = Invoke-Hook "gh issue create $store --label bug --title x --body-file -"
 Assert-Equal 0 $r.Code 'a body on stdin passes'
 Assert-True ($r.Text -match 'did NOT judge it') 'with a warning'
 
-$r = Invoke-Hook ('gh issue create ' + $store + ' --label bug --title x --body "Requested by $who"')
+$r = Invoke-Hook ('gh issue create ' + $store + ' --label bug --title x --body "Requested by Alex $who"')
 Assert-Equal 0 $r.Code 'a run-time body naming a requester passes'
 Assert-True ($r.Text -match 'body built at run time') 'with a warning saying why'
 
