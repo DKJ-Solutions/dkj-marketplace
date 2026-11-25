@@ -58,11 +58,10 @@
 #
 #   2. THE FOLD REFUSING. It ran and declined; its own last lines say why. The #1497 misread of
 #      dkj-policy/CHANGELOG.md (2026-09-05 23:56 and 2026-09-06 07:32, repaired by #1498) was this.
-#      TWO refusals are excluded from this list and no longer turn the job red at all -- the trunk-gap
-#      guard, exit code 2 (#1586), and the redundant-fold verdict, exit code 3 (#1796), both of which
-#      the fold step translates into a stood-down green. The list stays three because neither is a
-#      failure mode: both are this job finding that the trunk already holds, or is about to hold, the
-#      entry it was triggered to put there. See THE RACE HAS TWO SIDES below.
+#      The redundant-fold verdict, exit code 3 (#1796), is excluded from this list: the fold step
+#      translates it into a stood-down green, because the trunk already holds the entry. The trunk-gap
+#      guard, exit code 2 (#1586), is retried on the moved trunk (#4479) and goes red only if the trunk
+#      keeps moving through all 3 re-reads with leftovers still on it. See THE RACE HAS TWO SIDES below.
 #
 #   3. THE FOLD SUCCEEDING and its push being rejected BY THE RULESET -- a clean fold above a GH013.
 #      READ THE REJECTION, because a push can also be refused as a NON-FAST-FORWARD, which looks like
@@ -98,17 +97,18 @@
 # and by 08:50:42 the shipping session had pushed that branch's own fold, leaving this checkout 1 behind
 # and the guard refusing on an entry already folded. The guard was right, and the trunk ended correct.
 #
-# SO THIS JOB STANDS DOWN ON THAT REFUSAL RATHER THAN GOING RED, and the argument is #1543's own,
-# one step further along: this job exists to answer "does the trunk carry a leftover NOW", and a trunk
-# that moved under it has changed what "now" means. The push that moved it is itself a push to main, so
-# it has its own run of this workflow queued behind this one (cancel-in-progress: false, constant group),
-# whose checkout is at-or-after that push -- and where cancellation drops a pending run, the run that
-# SURVIVES is the newest, which reads the tip. Nothing is lost, because the guard fires in a pre-pass
-# before a single entry is folded: the fold script signals it with exit code 2 and nothing else does.
+# THIS JOB USED TO STAND DOWN ON THAT REFUSAL (#1586), ARGUING THAT THE PUSH THAT MOVED THE TRUNK HAS ITS
+# OWN RUN OF THIS WORKFLOW. THAT IS FALSE WHEN THE PUSH WAS A LONE `fold:` COMMIT (#4479): the job's if:
+# skips exactly that push, so no run ever folds the leftovers. Measured in a consumer: 12 unfolded entries
+# found, stood down green, the fold-only successor skipped, 11 entries stranded. So on exit 2 the fold
+# step now retries on the moved trunk, at most 3 times (fetch, merge --ff-only, re-run the check, fold
+# again), stands down green only when the re-read check finds no leftover, and exits 1 if code 2 is
+# still the answer after the loop. Exit 2 means nothing was written, so the fast-forward is safe.
 #
 # FETCH + --ff-only BEFORE THE FOLD WAS THE OTHER CANDIDATE AND WAS DECLINED. It would shrink the window
-# from ~11s to ~1s without closing it, which leaves this job red RARELY -- worse than predictably red,
-# and still the fourth self-healing meaning the three modes below exist to keep out.
+# from ~11s to ~1s without closing it, which leaves this job red RARELY -- worse than predictably red.
+# The retry above is different: it runs AFTER the guard fired, so it closes the window instead of
+# shrinking it, and it needs no successor run to be owed anything.
 #
 # THE RACE HAS TWO SIDES, AND THE ~1s THAT SURVIVES ABOVE IS THE OTHER ONE (issue #1796). Everything
 # down to here is the WIDE half: the other fold landed before this job's pre-pass read the trunk, so the
@@ -264,21 +264,45 @@ jobs:
           powershell -NoProfile -ExecutionPolicy Bypass -File scripts/release/fold-changelog-entry.ps1 -Commit -Push *>&1 | Tee-Object -FilePath fold-output.txt
           $foldExitCode = $LASTEXITCODE
 
-          # EXIT 2 IS "THE TRUNK MOVED UNDER ME", AND THIS JOB STANDS DOWN ON IT (issue #1586). It is
-          # the fold's trunk-freshness pre-pass, which runs before a single entry is folded -- so this
-          # run has written nothing, and the push that made the checkout stale has its own run of this
-          # workflow queued behind it, reading a tip that includes that push. Green, with the reason on
-          # the log, rather than a red that describes a state gone by the time anybody opens it.
+          # EXIT 2 IS "THE TRUNK MOVED UNDER ME", AND THIS JOB RETRIES ON THE MOVED TRUNK (issues #1586,
+          # #4479). It is the fold's trunk-freshness pre-pass, which runs before a single entry is folded
+          # -- so this run has written nothing and a fast-forward is safe. It used to stand down, on the
+          # claim that the push that moved the trunk has its own run; that is false when that push was a
+          # lone `fold:` commit, which the job's if: skips (#4479: 12 unfolded entries, stood down green,
+          # 11 stranded). So: fetch, ff-only, re-read, and fold what is still left, at most 3 times.
           #
           # KEYED ON THE CODE AND ONLY ON THAT CODE. Two prose matches already cross from these scripts'
           # stdout into this file; a third would put this agreement on a sentence that travels to
           # consumers by a plugin release while this file travels by adopt-ci-floor.ps1's template.
           # An exit code is checkable from both sides -- and every OTHER non-zero code still fails
           # below, which is the half that keeps this from becoming a blanket "ignore the fold".
+          $attempt = 0
+          while ($foldExitCode -eq 2 -and $attempt -lt 3) {
+            $attempt++
+            Write-Host "The trunk moved between this job's checkout and the fold (nothing was written); re-reading it, attempt $attempt of 3 (#4479)."
+            git fetch origin main
+            git merge --ff-only origin/main
+            if ($LASTEXITCODE -ne 0) {
+              Write-Error "Could not fast-forward this checkout to origin/main after the trunk moved -- refusing to fold on a stale trunk."
+              exit 1
+            }
+            powershell -NoProfile -ExecutionPolicy Bypass -File scripts/lint/check-unfolded-entry.ps1 -Branch main *>&1 | Tee-Object -FilePath check-output.txt
+            $recheckCode = $LASTEXITCODE
+            if ($recheckCode -eq 0) {
+              Write-Host "Stood down: the moved trunk carries no leftover -- the push that moved it folded it."
+              exit 0
+            }
+            $checkOutput = Get-Content check-output.txt -Raw
+            if ($checkOutput -notmatch '\[ERROR\] the trunk carries') {
+              Write-Error "check-unfolded-entry.ps1 exited non-zero for a reason other than a reported leftover -- refusing to fold blind. Its output:`n$checkOutput"
+              exit 1
+            }
+            powershell -NoProfile -ExecutionPolicy Bypass -File scripts/release/fold-changelog-entry.ps1 -Commit -Push *>&1 | Tee-Object -FilePath fold-output.txt
+            $foldExitCode = $LASTEXITCODE
+          }
           if ($foldExitCode -eq 2) {
-            Write-Host "Stood down: the trunk moved between this job's checkout and the fold, so nothing was folded and nothing was written."
-            Write-Host "  The push that moved it has its own run of this workflow, whose checkout includes it. See fold-on-merge.yml's header (#1586)."
-            exit 0
+            Write-Error "The trunk kept moving through 3 re-reads and leftovers are still on it -- not reporting success with entries unfolded (#4479)."
+            exit 1
           }
 
           # EXIT 3 IS "SOMEBODY ELSE FOLDED THIS WHILE I WAS FOLDING IT", AND THIS JOB STANDS DOWN ON IT

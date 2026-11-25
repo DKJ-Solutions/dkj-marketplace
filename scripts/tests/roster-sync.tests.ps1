@@ -1921,6 +1921,21 @@ try {
     if (Test-Path -LiteralPath $Fixture) { Remove-Item -Recurse -Force -LiteralPath $Fixture }
 }
 
+# THE WINDOWS-ONLY GATES SKIP OUT LOUD ELSEWHERE (#4485): a Linux cloud session crashed in this gate on
+# $env:USERPROFILE and read 1218 platform findings from check-plugin-integrity. The suites run on
+# Windows, so the guard is pinned on the source: before any lib loads, keyed on OSVersion (5.1 has no
+# $IsWindows), exiting 0 with a [SKIP] line that names CI as authoritative.
+Write-Host "`n-- the Windows-only guard (#4485) --" -ForegroundColor Cyan
+foreach ($g in @(@{ Name = 'check-roster-sync'; Path = $Script; Anchor = "\. \(Join-Path \`$PSScriptRoot '\.\.\\lib\\" },
+                 @{ Name = 'check-plugin-integrity'; Path = (Join-Path $RepoRoot 'scripts\lint\check-plugin-integrity.ps1'); Anchor = 'Set-StrictMode' })) {
+    $src = [System.IO.File]::ReadAllText($g.Path)
+    $guard = [regex]::Match($src, 'if \(\[System\.Environment\]::OSVersion\.Platform -ne \[System\.PlatformID\]::Win32NT\) \{[^}]*\[SKIP\] ' + [regex]::Escape($g.Name) + ' is a Windows-only gate[^}]*exit 0\s*\}')
+    Assert-Equal $true $guard.Success "$($g.Name): a non-Windows host gets a [SKIP] line and exit 0"
+    $anchor = [regex]::Match($src, $g.Anchor)
+    Assert-Equal $true ($guard.Success -and $anchor.Success -and $guard.Index -lt $anchor.Index) "$($g.Name): the guard runs before anything that could fail on that host"
+}
+Assert-Equal ([System.IO.File]::ReadAllText($Script)) ([System.IO.File]::ReadAllText((Join-Path $RepoRoot 'plugins\dkj-subagents\dkj-subagents-developers\scripts\sync\check-roster-sync.ps1'))) 'the plugin mirror of check-roster-sync carries the same guard'
+
 Write-Host "`nResult: $($script:pass) pass, $($script:fail) fail." -ForegroundColor $(if ($script:fail -gt 0) { 'Red' } else { 'Green' })
 if ($script:fail -gt 0) { exit 1 }
 exit 0

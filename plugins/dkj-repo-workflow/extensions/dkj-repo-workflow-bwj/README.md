@@ -409,7 +409,7 @@ skill needs to know which workspace and project a mirrored task lands in:
   `adopt-dkj-repo-workflow-bwj`, being strictly additive, would have quietly re-created `tier-1` beside it.
 - `Get-ResolvesExemptMatchers` -- **which issues a merge must not close**, and the one function in this
   list that a `dkj-repo-workflow` gate reads directly rather than this plugin's own machinery. An issue with a
-  mirrored task is closed by a person, once the paste-ready block is on it, so `Closes #<n>` is the one
+  mirrored task is closed by the shipping session once its PR has landed and the paste-ready block is on it (#4478), so `Closes #<n>` is the one
   thing its pull request must not carry -- and until inbound
   [#2120](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/2120) nothing read that rule at all.
   Answer it with the marker and task-link shapes above and `open-pr`'s resolves gate refuses a

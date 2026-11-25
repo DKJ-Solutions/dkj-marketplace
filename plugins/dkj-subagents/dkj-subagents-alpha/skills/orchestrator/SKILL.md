@@ -137,10 +137,15 @@ is about the transport, not about your right to file:
 ```text
 gh api repos/<owner>/<repo>/issues -X POST -f title=... -F body=@<file> -f "labels[]=<label>"
 gh api "repos/<owner>/<repo>/issues?state=open"
-gh api -X GET search/issues -f q="repo:<owner>/<repo> <terms>"
+gh api -X GET search/issues -f q="repo:<owner>/<repo> is:issue <terms>"
 ```
 
-The first files, the second lists, the third searches (search the tracker before you file, as always).
+The first files, the second lists, the third searches (search the tracker before you file, as always;
+closed issues are included unless you add `is:open`). **`is:issue` is part of the form** (#4484):
+from a cloud session the endpoint refused a query without it with HTTP 422, *"Query must include
+'is:issue' or 'is:pull-request'"*, and where it does answer without it, it mixes pull requests in (27
+hits against 16 issues on the same terms). **A 422 is a malformed query, never an empty result**, so
+read it as "no duplicate" and you file one.
 
 **Whether a tracker is reachable is answered by trying a REST read, not by `gh auth status`**: in a
 cloud session the token reads as invalid until the repo is attached, and then works. Attach the repo

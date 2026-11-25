@@ -273,7 +273,9 @@ Once the GitHub issue exists and carries the reach label, mirror it to Asana in 
 workflow's messages update the task: the closed message and the reopened message** (Dave, October 5 and 6, 2026,
 #2818 and #2854), and the on-hold message beside them (#2902). When the issue closes as completed, closes as
 not planned while parked under an `awaiting-*` label, or is reopened, the `asana-closed-message`
-workflow posts the matching one on the task (step 4). The prio sync came
+workflow posts the matching one on the task (step 4). A task linked only **after** the close gets its
+closed message too: the workflow also runs on the edit that adds the `asana-task` marker to a closed
+issue, and treats it as the close that found no task (#4480). The prio sync came
 back as its own workflow (step 5); the rest of the CI automation that used to follow the issue is
 retired (step 6). The Asana task is **not** a paste of the issue body. It is written for
 a BWJ colleague who does not read code and does not know the repo:
@@ -899,8 +901,9 @@ September 17, 2026: of 14 open issues, **13** carried an Asana link and **6** ca
 **How this interacts with `dkj-repo-workflow`'s resolves gate, which is the half a consumer cannot infer.**
 `open-pr.ps1 -Resolves` writes `Closes #<n>` into the pull request body, so GitHub closes the issue at
 the **merge** -- before anybody has written a block, and with nobody's confirmation. So an Asana-linked
-issue ships with **`-NoResolves`** and cites the issue as context, and the task's assignee closes it by
-hand once the block is on it -- **as soon as the PR lands, never later** (#3945, above). A third flag that declares the citation deliberately without a closing keyword is named
+issue ships with **`-NoResolves`** and cites the issue as context, and the shipping session closes it as
+completed once the PR has landed and the block is on it -- **as soon as the PR lands, never later** (#3945,
+above), and never handed to the owner or the task's assignee (#4478). A third flag that declares the citation deliberately without a closing keyword is named
 in #2049 as a larger change and is not assumed here.
 
 **And since inbound
@@ -1161,7 +1164,7 @@ colleague with an open question in front of them reads as finished.
   reads the tasks with, from the session's environment, and an imported ticket often lives in the
   requester's own Asana organisation rather than the board's.
 - **Closing an Asana-linked issue, once the go-live block is on it.** Step 4's order: the session writes
-  the block while the issue is open, and the task's assignee closes it. That is why such a branch ships
+  the block while the issue is open, and closes it as completed once the PR has landed (#4478). That is why such a branch ships
   with `-NoResolves` -- a `Closes #<n>` would have GitHub close the issue at the merge, with nobody having
   confirmed anything. Where the repo has stated `Get-ResolvesExemptMatchers` (inbound #2120), the
   resolves gate refuses that `-Resolves` instead of leaving it to memory.
