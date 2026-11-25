@@ -293,6 +293,7 @@
                                       "closed-message-sessioncheck.tests.ps1",
                                       "filed-with-stamp.tests.ps1",
                                       "guard-asana-mirror.tests.ps1",
+                                      "guard-asana-origin.tests.ps1",
                                       "guard-kind-label.tests.ps1",
                                       "guard-reach-reason.tests.ps1",
                                       "guard-stale-paste-block.tests.ps1"
