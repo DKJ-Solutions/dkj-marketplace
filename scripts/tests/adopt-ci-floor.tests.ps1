@@ -708,13 +708,22 @@ try {
     # AND ref: TRUNK DOES NOT PUT THAT GUARD OUT OF REACH (#1586). The ref is read once, at the
     # checkout; the fold measures the same trunk again seconds later, so a second merge landing in that
     # gap still trips it -- and this template said the guard was unreachable until that was measured.
-    # The placed runner therefore stands down on the fold's exit code 2, and on that code alone.
-    Assert-True ($fold -match '(?m)^\s*if \(\$foldExitCode -eq 2\) \{\s*$') `
-        'the placed fold runner branches on the fold exit code 2 (#1586)'
-    Assert-True ($fold -match '(?ms)if \(\$foldExitCode -eq 2\) \{.*?exit 0') 'and exits 0 on it -- a stand-down, not a red'
+    # The placed runner RETRIES on the fold's exit code 2, and on that code alone (#4479): standing down
+    # was false when the push that moved the trunk was a lone `fold:` commit, which the job's if: skips.
+    Assert-True ($fold -match '(?m)^\s*while \(\$foldExitCode -eq 2 -and \$attempt -lt 3\) \{\s*$') `
+        'the placed fold runner retries on the fold exit code 2, bounded to 3 attempts (#4479)'
+    Assert-True ($fold -match '(?ms)while \(\$foldExitCode -eq 2.*?git fetch origin main.*?git merge --ff-only origin/main') `
+        'and the retry fetches and fast-forwards the trunk'
+    Assert-True ($fold -notmatch 'reset --hard') 'the retry does not discard anything with a hard reset'
+    Assert-True ($fold -match '(?ms)while \(\$foldExitCode -eq 2.*?check-unfolded-entry\.ps1.*?\$recheckCode -eq 0\) \{.*?Stood down.*?exit 0') `
+        'and re-runs the check, standing down (exit 0) only when the moved trunk carries no leftover'
+    Assert-True ($fold -match '(?ms)while \(\$foldExitCode -eq 2.*?fold-changelog-entry\.ps1 -Commit -Push.*?\$foldExitCode = \$LASTEXITCODE') `
+        'and otherwise folds again, taking the retried fold exit code'
+    Assert-True ($fold -match '(?ms)^\s*\}\s*\r?\n\s*if \(\$foldExitCode -eq 2\) \{\s*\r?\n\s*Write-Error[^\r\n]*#4479[^\r\n]*\r?\n\s*exit 1') `
+        'and code 2 still left after the loop exits 1 -- a run holding leftovers never reports success (#4479)'
     Assert-True ($fold -match '(?m)^\s*exit \$foldExitCode\s*$') 'while every other non-zero code is still propagated, so a real refusal stays red'
-    Assert-True ($fold -notmatch '\$foldExitCode -ne 0') 'and the stand-down is not a blanket "any non-zero is fine"'
-    Assert-True ($fold -like '*#1586*') 'and the runner carries the issue that explains why that one code is green'
+    Assert-True ($fold -notmatch '\$foldExitCode -ne 0') 'and the retry is not a blanket "any non-zero is fine"'
+    Assert-True ($fold -like '*#1586*' -and $fold -like '*#4479*') 'and the runner carries the issues that explain the code-2 handling'
 
     # AND ON THE NARROW HALF OF THE SAME RACE (#1796). Exit 2 is the other fold landing BEFORE the
     # pre-pass; exit 3 is it landing between the pre-pass and this runner's own push, which no check at
@@ -725,11 +734,12 @@ try {
         'the placed fold runner branches on the fold exit code 3 too (#1796)'
     Assert-True ($fold -match '(?ms)if \(\$foldExitCode -eq 3\) \{.*?exit 0') 'and exits 0 on that one as well -- the second stand-down'
     Assert-True ($fold -like '*#1796*') 'and carries the issue that explains why the narrow half needs its own code'
-    # THE TWO CODES ARE THE WHOLE STAND-DOWN LIST. A third would have to be argued for on its own
-    # ground, so this counts rather than merely checking the two are present -- the same property the
-    # fold script's own suite asserts at its source.
-    Assert-Equal 2 (@([regex]::Matches($fold, '\$foldExitCode -eq \d')).Count) `
-        'and exactly TWO exit codes are stood down on -- 2 and 3, and nothing else'
+    # CODES 2 AND 3 ARE THE WHOLE LIST OF FOLD EXIT CODES THE RUNNER ACTS ON. A third would have to be
+    # argued for on its own ground, so this counts. Three matches, not two: code 2 is read twice now (the
+    # loop condition and the after-loop refusal, #4479) and code 3 once -- and code 3 is still the only
+    # stand-down on a fold exit code.
+    Assert-Equal 3 (@([regex]::Matches($fold, '\$foldExitCode -eq \d')).Count) `
+        'and exactly three comparisons exist -- two on code 2 (retry loop, post-loop refusal) and one on code 3'
 
     # --- 3. Additive: a re-run never overwrites -----------------------------------------------------
     Write-Host '-- 3. a re-run is additive --' -ForegroundColor Cyan

@@ -39,19 +39,41 @@
 
 ### PLAN
 
+On the fold's exit 2 (the trunk moved under the checkout), `fold-on-merge` stood down green on the claim
+that the push that moved the trunk has its own run. A lone `fold:` push is skipped by the job's `if:`, so
+that run never comes and the leftovers stay on the trunk (#4479, measured in a consumer: 12 found, 11
+stranded). Retry on the moved trunk instead, bounded, and go red if leftovers are still in hand.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `.github/workflows/fold-on-merge.yml`: on exit 2, up to 3 times: `git fetch origin main`,
+  `git merge --ff-only origin/main`, re-run the check; stand down green only when the re-read finds no
+  leftover, otherwise fold again. Code 2 still left after the loop exits 1. Header and step comments
+  rewritten to the new ground.
+- [x] The same change in the consumer template (`scripts/task/adopt-ci-floor.ps1`, trunk and plugin
+  path parameterised) and its byte-identical plugin mirror.
+- [x] `adopt-ci-floor`, `workflow-concurrency` and `fold-changelog` suites updated to the new contract:
+  the bounded retry, no `reset --hard`, exit 1 on a trunk that keeps moving, code 3 still the one
+  stand-down on a fold exit code.
 
 ### TEST
 
+- [x] The three changed suites pass standalone (344, 40 and 306 asserts); the full gate runs in `ship-pr`.
+
 ### DEPLOY: fix/4479-fold-standdown-retry
 
-**Score:**
+When ship-pr pushed its own `fold:` commit right after a merge, the fold-on-merge runner for that merge
+stood down and left every other pending entry on the trunk unfolded, while reporting green. The runner
+now catches up with the moved trunk and folds what is still there, and fails red if it cannot.
+
+**Score:** 3
 
 #### What makes this deploy extra special
 
-**Score:**
+Repos that take the CI floor get the fix the next time `adopt-ci-floor` places or refreshes their fold
+runner. Until then, leftover changelog entries can still pile up after a ship and need folding by hand.
+
+**Score:** 2
 
 #### Pull Request
 
