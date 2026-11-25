@@ -2,7 +2,32 @@
 
 ## [Unreleased]
 
-**5 / 5 minor entries** <!-- pending-tally -->
+**6 / 6 minor entries** <!-- pending-tally -->
+
+### DEPLOY: fix/4484-rest-search-is-issue · 20261125-105734Z
+
+The REST search a session uses to look for a duplicate before filing, where GraphQL is refused, now
+includes `is:issue`. It no longer fails with a 422 in a cloud session, and it no longer counts pull
+requests as duplicates.
+
+**Score:** 1
+
+#### What makes this deploy extra special
+
+A session in a Claude Code cloud environment can search the tracker before filing, where the old form
+failed on every query.
+
+**Score:** 2
+
+#### Pull Request
+
+orchestrator skill's REST search form fails with 422 -- search/issues needs is:issue
+
+Plugins: dkj-subagents-alpha
+
+[PR #4492](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4492)
+
+---
 
 ### DEPLOY: fix/4482-inbox-sweep-gmail-address · 20261125-105308Z
 
