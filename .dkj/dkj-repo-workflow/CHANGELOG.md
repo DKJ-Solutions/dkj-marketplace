@@ -2,7 +2,32 @@
 
 ## [Unreleased]
 
-**10 / 10 minor entries** <!-- pending-tally -->
+**11 / 11 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/4497-task-card-short-note · 20261125-125025Z
+
+A task card's short text property now holds one line, what the owner has to do, and its facts, source
+lines and URLs go in the card's page body. The rule is in Ian's manual for every card writer, and
+`inbox-sweep` step 3.3 applies it to a card the sweep fills (#4497).
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+A lifehub owner whose inbox sweep files action cards gets a board that reads as one line per card,
+instead of a short note that grows a paragraph with raw mail URLs on every follow-up mail.
+
+**Score:** 3
+
+#### Pull Request
+
+inbox-sweep and Ian: a task card's short note holds one line, the facts go in its page body
+
+Plugins: dkj-subagents-lifehub
+
+[PR #4498](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4498)
+
+---
 
 ### DEPLOY: fix/4481-wordcount-install-pwsh · 20261125-115004Z
 
