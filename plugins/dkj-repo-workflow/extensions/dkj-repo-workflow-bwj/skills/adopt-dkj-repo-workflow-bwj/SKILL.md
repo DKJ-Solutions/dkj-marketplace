@@ -255,18 +255,18 @@ function Get-AsanaReviewFollowers { $null }
 function Get-ReachLabel { 'tier-1' }
 
 # WHICH ISSUES A MERGE MUST NOT CLOSE -- read by dkj-repo-workflow's resolves gate (inbound #2120). An issue
-# with a mirrored Asana task is closed by a PERSON, once the go-live block is on it, so `Closes #<n>`
-# is the one thing its pull request must not carry. These two matchers are the same marker and task-link
+# with a mirrored Asana task is closed by the SHIPPING SESSION once the PR has landed and the go-live
+# block is on it (#4478), so `Closes #<n>` is the one thing its pull request must not carry. These two matchers are the same marker and task-link
 # shapes the plugin uses to decide which task an issue belongs to -- deliberately not a third
 # definition. Without this function the rule still stands and nothing enforces it.
 function Get-ResolvesExemptMatchers {
     return @(
         @{ Name    = 'an Asana task marker'
            Pattern = '<!--\s*asana-task:\s*[0-9]+\s*-->'
-           Why     = 'the go-live block goes on while the issue is OPEN, and the task''s assignee closes it once the block is right -- ship with -NoResolves and close it by hand.' },
+           Why     = 'the go-live block goes on while the issue is OPEN -- ship with -NoResolves, and once the PR has landed this session closes it: gh issue close <n> --reason completed.' },
         @{ Name    = 'an Asana task link'
            Pattern = 'https://app\.asana\.com/'
-           Why     = 'the same rule: a mirrored ticket is closed by a person, not by a merge.' }
+           Why     = 'the same rule: a mirrored ticket is closed by the shipping session after the merge, not by the merge itself.' }
     )
 }
 ```

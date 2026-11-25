@@ -39,19 +39,43 @@
 
 ### PLAN
 
+#4478: after a `-NoResolves` merge, `WORKFLOW-portable.md` and the resolves-gate refusal named the task's
+assignee as the closer, while `golive-block` and the owner have the shipping session close it. The refusal's
+text is the consumer's `Get-ResolvesExemptMatchers` seam, so the source fix is the template that seam is
+copied from. ship-pr closing the issue itself (the issue's optional point 2) is left out.
+
+#### Scoped out, and why
+
+- [~] The issue's optional point 2 (ship-pr closes the issue itself after a `-NoResolves` merge) is not built:
+  the issue marks it optional, and the corrected refusal already prints the exact `gh issue close` line.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `WORKFLOW-portable.md` (bwj), both passages: the shipping session closes the issue as completed once
+  the PR has landed and the block is on it.
+- [x] The `Get-ResolvesExemptMatchers` template in `adopt-dkj-repo-workflow-bwj` and the bwj README say the
+  same, and its `Why` prints the `gh issue close <n> --reason completed` line.
+- [x] `open-pr`'s fallback `Why` (both mirrors, kept byte-identical) no longer says "closed by a person".
 
 ### TEST
 
+- [x] No suite asserts the changed strings (searched `scripts/tests`); the full gate runs in `ship-pr`.
+
 ### DEPLOY: fix/4478-session-closes-asana-issue
 
-**Score:**
+After a `-NoResolves` merge of an Asana-linked issue, the docs and the resolves-gate refusal now say that
+the shipping session closes the issue, not the task's assignee.
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+A store's session no longer hands the close of an Asana-linked issue to the owner after the merge. It
+closes the issue itself with the `gh issue close` line the refusal now prints. A store already on the old
+`Get-ResolvesExemptMatchers` answer keeps the old refusal text until it copies the new template from
+`adopt-dkj-repo-workflow-bwj`.
+
+**Score:** 2
 
 #### Pull Request
 
