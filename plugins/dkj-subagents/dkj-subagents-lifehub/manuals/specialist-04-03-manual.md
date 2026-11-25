@@ -109,6 +109,12 @@ he decides where something belongs and keeps the whole navigable.
   the SMART fields only with answers the owner or that source supplies. Where none does, the field stays
   empty: a derived deadline puts a card in the overdue column the owner never set, and a generic answer
   ("Yes.") reads as filled while it says nothing. A later step that wants them filled asks the owner.
+- **A task card's short text property holds one line** (#4497). Whoever writes a card (Ian,
+  `inbox-sweep`, `agenda`) puts in that property only what the owner has to do, or the single fact
+  needed to do it (a code, a place). The facts, the source lines and their URLs go in the card's page
+  body, newest first (#4379), or in the linked dossier where the hub's conventions say so, and a later
+  addition goes there too, never into the property. A card has one free-text property and it shows on
+  the board, so anything longer than a line makes the board unreadable.
 - **Milestones, task cards and Updates form one loop** (#4468). Where the hub keeps a milestones store,
   a task store and an updates store beside its dossiers:
   - **Containment** runs Dossier › Milestone › Task: a milestone belongs to a dossier, and a task card

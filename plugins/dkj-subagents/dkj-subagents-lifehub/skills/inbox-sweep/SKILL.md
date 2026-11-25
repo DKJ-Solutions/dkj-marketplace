@@ -96,6 +96,11 @@ delivery is over. After that it is *nothing lasting*.
    with the thread's `viewUrl`. Attachments are not copied; name them in the source line. Where a
    source line lists several mails, the newest comes first. A fact from a mail goes into its dossier
    (or the hub's updates store) on its own: no task card has to exist first (#4468, Ian's manual).
+   **On a task card, the facts and the source lines go in the card's page body, never in its short text
+   property** (#4497, Ian's manual). That property holds one line: what the owner has to do, or the one
+   fact needed to do it. A follow-up mail about the same card goes at the top of the page body, not in
+   the property. Measured in a consumer hub: after two mails the property held a paragraph with two source
+   lines and two raw URLs, unreadable on the board.
 4. **Onyx lays the links** for a new dossier: strong and weak links, with the explanation where the
    conventions page says. No orphan neuron.
 
