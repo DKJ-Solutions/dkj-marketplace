@@ -2,7 +2,32 @@
 
 ## [Unreleased]
 
-**10 / 10 minor entries** <!-- pending-tally -->
+**11 / 11 minor entries** <!-- pending-tally -->
+
+### DEPLOY: fix/4460-preference-line-add-repo · 20261125-004840Z
+
+The orchestrator skill's chat guidance now says a standing preference line does not make the classifier
+allow attaching the marketplace repo, as measured, where `working-profile.md` said it did.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+In a claude.ai chat without a repo, Chris now tries attaching the marketplace repo once before saying
+there is no connection, and asks you once after a refusal. Your preferences page no longer promises that
+a "report lessons upstream" line spares you that question.
+
+**Score:** 2
+
+#### Pull Request
+
+Orchestrator skill: a preference line does not make the classifier allow add_repo
+
+Plugins: dkj-subagents-alpha
+
+[PR #4472](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4472)
+
+---
 
 ### DEPLOY: feat/4465-ian-app-dossier-home · 20261124-235616Z
 
