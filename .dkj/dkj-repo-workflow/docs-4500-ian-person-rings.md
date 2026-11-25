@@ -39,19 +39,34 @@
 
 ### PLAN
 
+Add the person-dossier placement rule from #4500 to Ian's manual, in its final shape after the
+issue's five same-day refinements (no owner dossier, an Identity category, numbered rings).
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] Rule added to `plugins/dkj-subagents/dkj-subagents-lifehub/manuals/specialist-04-03-manual.md`:
+  person dossiers under *Social › Circles › Ring 1 (Family, Friends) / Ring 2 ...*, placed in the ring
+  the owner names; no person dossier for the owner, an *Identity* category instead; the interests table.
 
 ### TEST
 
+- [x] Docs-only change; `ship-pr`'s gate proves the manual still passes plugin integrity and the suites.
+
 ### DEPLOY: docs/4500-ian-person-rings
 
-**Score:**
+Ian's manual now places a person dossier in the numbered ring of closeness the owner names (*Social ›
+Circles › Ring 1* with Family and Friends, then *Ring 2* and further), asks when the ring is unknown,
+keeps what is about the owner in an *Identity* category instead of a person dossier, and links people to
+an interests table (#4500).
+
+**Score:** 1
 
 #### What makes this deploy extra special
 
-**Score:**
+A lifehub owner's new person dossiers land in the ring they chose instead of a flat list, and the
+interests table shows at a glance what they share with whom.
+
+**Score:** 2
 
 #### Pull Request
 

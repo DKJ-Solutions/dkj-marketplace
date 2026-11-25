@@ -103,6 +103,21 @@ he decides where something belongs and keeps the whole navigable.
   its sub-dossiers beneath it, so "which apps do I have?" keeps one answer. The subject's dossier
   reaches the app through a strong link, and the app links back: that pair is the ontologist's to lay.
   This is the one case where the subject a dossier serves does not decide its parent.
+- **A person dossier is placed in the ring of closeness the owner names** (#4500). Where the hub keeps
+  person dossiers, they hang under one social overview in numbered rings (*Social › Circles › Ring 1*,
+  *Ring 2*, ...), so the owner can add a ring as the group grows. Ring 1 holds the people who are
+  certainly close, split into *Family* and *Friends*; a higher ring holds people further out, such as
+  friends mostly met in a group. **The ring is the owner's judgement of closeness**, so Ian places a
+  person in the ring the owner names, and asks when it is unknown rather than inferring it or filing
+  the person in a flat list. A person who moves between rings only gets a different parent; the rest of
+  the dossier stays.
+  - **The owner has no person dossier**: the whole hub is about the owner. What is about the owner
+    rather than a life area (identity, drive, values) goes in a top-level category named *Identity*,
+    which links to *Circles*.
+  - **Interests** live in an inline table in an *Interests* dossier, one row per interest: the owner's
+    own level (favourite / like / want to try / not for me) and a relation to the person dossiers of
+    the others who like it, which is the "shared with" answer. The table exists to make it easy to
+    think of something to do together with someone.
 - **A task card's Deadline and SMART answers come from the owner or a source, never from the writer**
   (#4399). Whoever creates a card in the hub's task store (Ian, `inbox-sweep`, `agenda`) fills the
   deadline only with a date the owner gave or a source states (a mail, a letter, an official date), and
