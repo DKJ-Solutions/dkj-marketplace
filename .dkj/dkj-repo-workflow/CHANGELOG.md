@@ -2,7 +2,32 @@
 
 ## [Unreleased]
 
-**12 / 12 minor entries** <!-- pending-tally -->
+**13 / 13 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/4466-ian-dossier-name-subject · 20261125-010733Z
+
+Ian's manual gains a naming rule: a dossier is named for its subject, never for the task that opened
+it.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+In a life hub, Ian now names a new or renamed dossier for what it is about (`Tool X`, not
+`Replace tool X`), so the tree stops advertising work that is already done. The test is whether the
+name still reads right once the dossier's status is *Done*.
+
+**Score:** 2
+
+#### Pull Request
+
+Ian: a dossier name is a subject, never a task
+
+Plugins: dkj-subagents-lifehub
+
+[PR #4474](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4474)
+
+---
 
 ### DEPLOY: feat/4461-correction-already-in-source · 20261125-010235Z
 
