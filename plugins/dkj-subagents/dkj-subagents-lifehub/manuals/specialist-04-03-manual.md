@@ -103,6 +103,21 @@ he decides where something belongs and keeps the whole navigable.
   its sub-dossiers beneath it, so "which apps do I have?" keeps one answer. The subject's dossier
   reaches the app through a strong link, and the app links back: that pair is the ontologist's to lay.
   This is the one case where the subject a dossier serves does not decide its parent.
+- **A tool is filed under what it is used for, not under who owns it or where it stands** (#4499). A
+  tool is a device, software, an AI service or an account. *One home per topic* applies with its own
+  test: *if this line of work stopped tomorrow, would the tool go with it into the archive?*
+  - **A tool that serves one line of work** goes under that work (an office computer under its
+    employer).
+  - **A tool used for everything**, private and work alike (a personal computer, a home printer, an AI
+    subscription), goes in a **top-level group of its own** for tools, not under the home branch: the
+    home branch has its own test (*does it lapse when the owner moves house?*), and a computer or an AI
+    tool fails it.
+  - **The owner's own repos keep their home** under the company or repos overview (the rule above) and
+    link to the tools they run on.
+
+  What a tool touches beyond its home is a strong or weak link, never a second home. Filing one tool by
+  where it stands and another by what runs on it is the mismatch this rule removes: use is the one
+  yardstick that explains both.
 - **A task card's Deadline and SMART answers come from the owner or a source, never from the writer**
   (#4399). Whoever creates a card in the hub's task store (Ian, `inbox-sweep`, `agenda`) fills the
   deadline only with a date the owner gave or a source states (a mail, a letter, an official date), and

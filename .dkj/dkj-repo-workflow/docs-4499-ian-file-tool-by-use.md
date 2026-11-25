@@ -39,19 +39,33 @@
 
 ### PLAN
 
+Add the tool placement rule from #4499 (with its same-day refinement) to Ian's manual, beside the
+app-under-company-overview rule.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] Rule added to `plugins/dkj-subagents/dkj-subagents-lifehub/manuals/specialist-04-03-manual.md`: a
+  tool (device, software, AI, account) goes under the one line of work it serves, or in a top-level
+  tools group when it is used for everything; never under the home branch.
 
 ### TEST
 
+- [x] Docs-only change; `ship-pr`'s gate proves the manual still passes plugin integrity and the suites.
+
 ### DEPLOY: docs/4499-ian-file-tool-by-use
 
-**Score:**
+Ian's manual now files a tool (a device, software, an AI service, an account) by what it is used for:
+under the one line of work it serves, or in a top-level tools group of its own when it is used for
+everything, never under the home branch (#4499).
+
+**Score:** 1
 
 #### What makes this deploy extra special
 
-**Score:**
+A lifehub owner finds every computer, printer and AI subscription by one yardstick, instead of some
+filed by where they stand and others by what runs on them.
+
+**Score:** 2
 
 #### Pull Request
 
