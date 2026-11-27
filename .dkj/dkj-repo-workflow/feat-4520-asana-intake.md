@@ -39,19 +39,40 @@
 
 ### PLAN
 
+Inbound #4520: there is no front door for a colleague's Asana task. Verified on pickup: no skill in
+`dkj-repo-workflow-bwj` reads a task or judges readiness (`start-task` only cuts a branch,
+`report-issue` only files), and the path this one hands off to, report-issue's *"On a ticket that came
+the other way"*, exists. A procedure page, no script, as the issue proposes.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `skills/asana-intake/SKILL.md`: read, already-handled check (tracker open and closed, trunk, live
+  branch, merged PRs), cause verification, one outcome, readiness verdict, receipt (drafted by Tessa #16,
+  reviewed here).
+- [x] The skills table in the extension README names it, beside `report-issue`.
 
 ### TEST
 
+- [x] Every file, seam and marker the page names exists in the tree (`report-issue` and its paragraph,
+  `Get-ShopifyLiveDeployBranch` as a consumer seam, the `Asana:` / `asana-task` markers). ship-pr runs
+  the gates.
+
 ### DEPLOY: feat/4520-asana-intake
 
-**Score:**
+`dkj-repo-workflow-bwj` gains `asana-intake`, the front door for a colleague's Asana task that reaches
+development. It reads the task, checks whether it is already filed or resolved (tracker open and closed,
+the trunk and the live branch, merged PRs), verifies the cause the ticket states, and settles one
+outcome: already resolved, an issue filed through `report-issue`, or no repo change. It ends with a
+readiness verdict, and any question for the requester is drafted in the chat, never posted.
+
+**Score:** 3
 
 #### What makes this deploy extra special
 
-**Score:**
+A developer in a BWJ store repo no longer retypes the same three-step prompt for every Asana ticket, and
+a ticket an earlier PR already resolved is caught before a duplicate issue is filed.
+
+**Score:** 3
 
 #### Pull Request
 

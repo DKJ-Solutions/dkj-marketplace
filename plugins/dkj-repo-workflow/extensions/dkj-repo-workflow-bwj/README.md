@@ -329,6 +329,7 @@ matched, so the sibling check could see the pair only as `ALIASED`
 | skill | when |
 |---|---|
 | [`report-issue`](skills/report-issue/SKILL.md) | a real issue has been found in a BWJ store repo -- files it on GitHub with its type and reach label, mirrors it to Asana (in `Filed`) as the colleague-facing variant, and writes the cross-links |
+| [`asana-intake`](skills/asana-intake/SKILL.md) | a colleague's Asana task reaches development -- reads it, checks whether it is already filed or resolved (tracker, trunk, live branch), verifies the stated cause, decides the outcome and gives a readiness verdict; hands filing to `report-issue` and drafts any question in the chat, never posting it |
 | [`adopt-dkj-repo-workflow-bwj`](skills/adopt-dkj-repo-workflow-bwj/SKILL.md) | one-time setup in a store repo -- proposes the Asana config seam, checks the classification labels and scaffolds the sync log |
 | [`build-backlog-page`](skills/build-backlog-page/SKILL.md) | the minor-backlog page needs refreshing -- reads the open, reach-labelled issues and shows each one's mirrored Asana task text, never the issue's own |
 | [`publish-page`](skills/publish-page/SKILL.md) | a built page has to reach somebody outside the development work -- publishes it to the one worker both stores share, at an unguessable path, and verifies by reading the bytes back and fetching the public URL |
