@@ -39,19 +39,44 @@
 
 ### PLAN
 
+Inbound #4526 proposes three repairs. Items 2 (the session check reads the deploy branch's copy) and 3
+(the adoption docs say it out loud) land here. Item 1, a local gate at whatever opens a hotfix PR, needs a
+new mechanism because no plugin script opens one (`open-pr`/`ship-pr` hard-code `--base main`). It is
+filed as #4532.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `entry-gate-live-sessioncheck.ps1` also reads `origin/<live>:.github/workflows/branch-entry.yml`
+      (a local git read of the remote-tracking ref) and warns, with the remedy, when that copy is missing or
+      leaves the live branch out
+- [x] `adopt-dkj-repo-workflow/SKILL.md`: a caller change on the trunk reaches hotfix PRs only once it
+      reaches the live branch
+- [x] item 1 filed as #4532
 
 ### TEST
 
+- [x] `entry-gate-live-sessioncheck.tests.ps1`: five new asserts on git fixtures with a local
+      `refs/remotes/origin/live`, including the measured shape (trunk `[main, live]`, origin/live `[main]`)
+      -- 17/17 locally; the full gate is `ship-pr`'s
+
 ### DEPLOY: fix/4526-entry-gate-live-deploy-copy
 
-**Score:**
+`entry-gate-live-sessioncheck` now reads the live deploy branch's own copy of the branch-entry caller
+(`origin/<live>`), not only the working copy. GitHub runs a hotfix PR's `pull_request` workflow from the
+live branch's refs, so a trunk fix that had not reached `live` left hotfix PRs ungated while the check
+said OK ([#4526](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4526)). The adoption page now
+says when a caller change takes effect for hotfix PRs. A local gate at the hotfix opener is
+[#4532](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4532).
+
+**Score:** 3
 
 #### What makes this deploy extra special
 
-**Score:**
+A Shopify consumer with a hotfix lane now sees a `[WARN]` at session start, with the remedy, whenever its
+live branch still carries a caller that leaves `live` out. Before this, that state sat behind an OK line
+and surfaced only as stranded changelog entries, three times in three days.
+
+**Score:** 3
 
 #### Pull Request
 
