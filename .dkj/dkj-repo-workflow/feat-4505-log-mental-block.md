@@ -36,24 +36,44 @@
 >
 > The phase arc, the marks and the whole form: `DEVELOPMENT-portable.md`, which ships
 > with this workflow.
-
 ### PLAN
+
+Inbound #4505: port the consumer's bridge copy of the stuck button into `dkj-subagents-lifehub` as the
+skill `log-mental-block`, with every comment on the issue folded in (the running journal, the rename, the
+test-round findings, the reminder card). Generic English; everything personal is read from the owner's
+settings page in Notion. Creating the journal database on a first run stays out of scope: the Notion MCP
+server cannot create a database under a page.
 
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `plugins/dkj-subagents/dkj-subagents-lifehub/skills/log-mental-block/SKILL.md`: settings, rules,
+  steps 1-11 and the separate follow-up
+- [x] Hugo's manual points at the skill under what he handles
 
 ### TEST
 
+- [x] Read the page against the bridge copy and the issue thread: every behaviour carried, no personal
+  data, consumer-specific board values left to the settings
+- [x] Docs and skill only; the integrity and suite gates run through ship-pr
+
 ### DEPLOY: feat/4505-log-mental-block
 
-**Score:**
+`dkj-subagents-lifehub` ships a new skill, [`log-mental-block`](../../plugins/dkj-subagents/dkj-subagents-lifehub/skills/log-mental-block/SKILL.md),
+a stuck button Hugo runs: on a moment with no drive it takes the choice away through behavioral
+activation (body first, chance picks from the owner's menu, predict, ten minutes, measure), and records
+every moment as a chapter in one running journal in Notion, with triggers, sources, a follow-up and a
+Patterns section once enough moments exist (#4505).
+
+**Score:** 3
 
 #### What makes this deploy extra special
 
-**Score:**
+A lifehub owner who gets stuck gets a button that decides for them in the moment, and over weeks a
+journal that shows what preceded each moment, what helped and whether it lasted, instead of a local
+copy of the skill that only their own hub carries.
+
+**Score:** 3
 
 #### Pull Request
 
 dkj-subagents-lifehub: new skill log-mental-block, a stuck button and running journal
-
