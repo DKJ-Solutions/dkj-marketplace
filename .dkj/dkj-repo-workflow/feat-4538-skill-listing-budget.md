@@ -39,19 +39,39 @@
 
 ### PLAN
 
+Issue #4538, split off #4528: check 48 holds the published skill descriptions to the listing budget
+only in this source repo, while a consumer cannot see what its own enabled plugins spend there.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `measure-skill-lib.ps1`: one description parser (`Get-SkillDescriptionText`), `Measure-SkillListing`,
+      and the 250 / 8,000 constants
+- [x] check 48 of `check-plugin-integrity.ps1` reads descriptions through that parser and its 250
+- [x] `measure-skill.ps1`: a listing-budget section between pass 1 and pass 2, as `[INFO]`/`[OK]`, never `[ERROR]`
+- [x] the `measure-skill` skill page and the script's help describe it; the plugin mirror is rebuilt
+- [x] the integrity fixture copies `measure-skill-lib.ps1`, which check 48 now dot-sources
 
 ### TEST
 
+- [x] `measure-skill.tests.ps1` pins the parser (folded, literal, quoted, plain, absent) and `Measure-SkillListing`
+- [x] `check-plugin-integrity-skill-spans.tests.ps1` and the integrity gate stay green (46 skills, 7,843 of 10,000)
+- [x] run here: 4 enabled plugins, 3,178 of the 8,000-character fallback, nothing over 250
+
 ### DEPLOY: feat/4538-skill-listing-budget
 
-**Score:**
+Check 48's description parser moves into `measure-skill-lib.ps1`, so the gate and the new report read
+one parser and one 250-character ceiling.
+
+**Score:** 1
 
 #### What makes this deploy extra special
 
-**Score:**
+`measure-skill` now reports how many characters the model-invocable skill descriptions of the plugins a
+checkout enables spend on Claude Code's skill listing. It measures that total against the 8,000-character
+fallback and names any description over 250 characters as likely to arrive name-only. A consumer can now
+see the budget that #4528 found overrun, in its own plugin set, before a skill silently stops triggering.
+
+**Score:** 2
 
 #### Pull Request
 

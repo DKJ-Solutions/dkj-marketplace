@@ -72,6 +72,16 @@
     would under-report by a factor of a thousand and still look plausible, which is why the sum check
     exists rather than being a nicety.
 
+    THE LISTING BUDGET (#4538, after #4528's check 48). Between the two passes it sums the descriptions of the
+    model-invocable skills of the plugins this checkout enables, read from the copy its install record loads,
+    and reports the total against Claude Code's 8,000-character fallback for the skill listing (the real cap is
+    1% of the context window). A description that does not fit arrives name-only and never triggers, so every
+    listed skill over 250 characters is named as likely name-only. It is a character count from the files
+    because the budget is denominated in characters; pass 1's no-token-estimate rule is about token prices.
+    It is a measurement, not a gate: an over-budget listing is an [INFO], never an [ERROR]. It covers only
+    these plugins, not personal ~/.claude/skills, the project's .claude/skills, or built-in and MCP skills,
+    and the -Skill filter does not narrow it.
+
     PASS 2 -- SPEED. Opt-in via -IncludeSpeed. It times the script behind a skill n times and reports
     min/median/max with the machine state, following the .measure.ps1 convention already in
     scripts/tests/.
@@ -461,6 +471,64 @@ foreach ($id in $pluginIds) {
     $report.Add('')
     Write-Host ''
 }
+
+# --- listing budget (#4538) ---------------------------------------------------------------------
+# A CHARACTER COUNT FROM THE FILES, NOT A TOKEN ESTIMATE: Claude Code's skill-listing cap is denominated in
+# characters, so this does not conflict with pass 1's no-token-estimate rule, which concerns token prices.
+# The Skill filter does not narrow it, because the budget is the whole listing's.
+Write-Host 'Skill-listing budget -- do the descriptions of the model-invocable skills fit?' -ForegroundColor White
+$report.Add('### Skill-listing budget (#4538)')
+$report.Add('')
+$lbTotal = 0
+$lbLong = @()
+$lbSeen = 0
+foreach ($id in $pluginIds) {
+    $pluginId = $id
+    if ($pluginId -notmatch '@') { $pluginId = "$pluginId@dkj-marketplace" }
+    $lbPayload = Get-PayloadDirForPlugin -RepoRoot $repoRoot -PluginId $pluginId
+    if ($null -eq $lbPayload) {
+        Write-Info "$pluginId -- no copy of it is on disk (install record or plugin cache), so its skill descriptions are not counted in the listing figure."
+        $report.Add("- ``$pluginId``: no copy on disk, not counted.")
+        continue
+    }
+    $lbRows = @(Measure-SkillListing -SkillsDir (Join-Path $lbPayload.Dir 'skills'))
+    $lbListed = @($lbRows | Where-Object { $_.Listed })
+    $lbSum = 0
+    if ($lbListed.Count -gt 0) { $lbSum = [int](($lbListed | Measure-Object -Property Chars -Sum).Sum) }
+    $lbTotal += $lbSum
+    $lbSeen++
+    $lbShort = ($pluginId -split '@')[0]
+    foreach ($r in @($lbListed | Where-Object { $_.Chars -gt $script:SkillDescriptionMaxChars })) {
+        $lbLong += [pscustomobject]@{ Name = "$lbShort/$($r.Skill)"; Chars = $r.Chars }
+    }
+    $lbLine = "$pluginId v$($lbPayload.Version): $($lbListed.Count) listed skill(s), $(Format-Tok $lbSum) description characters ($(@($lbRows).Count - $lbListed.Count) not listed)"
+    Write-Info $lbLine
+    $report.Add("- ``$pluginId`` v$($lbPayload.Version): $($lbListed.Count) listed skill(s), **$(Format-Tok $lbSum)** characters.")
+}
+$lbBudget = $script:SkillListingFallbackBudget
+$lbVerdict = "$(Format-Tok $lbTotal) characters of the $(Format-Tok $lbBudget)-character fallback budget"
+Write-Coverage -Category 'skill listing' -Checked $lbSeen -Of @($pluginIds).Count `
+    -Note "plugin(s) with a copy on disk; $lbVerdict"
+$report.Add('')
+$report.Add("Total: **$lbVerdict**.")
+if ($lbTotal -gt $lbBudget) {
+    $over = $lbTotal - $lbBudget
+    Write-Info "the listing is $(Format-Tok $over) character(s) over the $(Format-Tok $lbBudget)-character fallback: the overflow arrives name-only on a window whose 1% is not larger, and a name-only skill never triggers on its own."
+    $report.Add("Over by $(Format-Tok $over): the overflow arrives name-only on a window whose 1% is not larger.")
+} else {
+    Write-Ok "the listed descriptions fit the $(Format-Tok $lbBudget)-character fallback."
+}
+foreach ($l in @($lbLong | Sort-Object -Property Chars -Descending)) {
+    Write-Info "likely name-only: $($l.Name) -- $(Format-Tok $l.Chars) characters, over the $($script:SkillDescriptionMaxChars) a listed description should stay within (#4528)."
+    $report.Add("- likely name-only: ``$($l.Name)`` ($(Format-Tok $l.Chars) characters)")
+}
+$lbScope = 'covers only the plugins measured above'
+if ($Plugin -and @($Plugin).Count -gt 0) { $lbScope = "covers only the plugin(s) named with -Plugin ($($Plugin -join ', '))" }
+Write-Info "this figure $lbScope; it does NOT cover personal ~/.claude/skills, this project's .claude/skills, or built-in and MCP skills, which share the same listing."
+$report.Add('')
+$report.Add("This figure $lbScope; it does not cover personal ``~/.claude/skills``, the project's ``.claude/skills``, or built-in and MCP skills, which share the same listing. The cap is 1% of the context window with an 8,000-character fallback.")
+$report.Add('')
+Write-Host ''
 
 # --- pass 2: speed ------------------------------------------------------------------------------
 if ($IncludeSpeed) {

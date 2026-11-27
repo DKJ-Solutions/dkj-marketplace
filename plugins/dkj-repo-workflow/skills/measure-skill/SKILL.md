@@ -105,6 +105,27 @@ Two notations share one table and both are handled: `~3.031` is **3031** (the do
 separator) while `~1.3k` is **1300**. A parser that read the first as 3.031 would under-report by a
 factor of a thousand and still look entirely plausible, which is why the sum check exists.
 
+## The listing budget (#4538)
+
+Between the two passes the script also answers a question pass 1 cannot: do the descriptions of the
+model-invocable skills this checkout enables **fit Claude Code's skill listing?** The listing is capped at 1%
+of the context window (8,000 characters as the fallback), shared by every enabled plugin, and a description
+that does not fit arrives **name-only**, so its trigger phrases never reach the model and the skill never
+fires on its own (#4528 measured about twenty such skills in one consumer).
+
+The script sums the description characters of every skill without `disable-model-invocation: true`, per
+plugin and in total, from the copy this checkout's install record loads, and prints the total against the
+8,000-character fallback. Every listed skill over 250 characters is named as likely name-only, and where the
+total passes 8,000 it says the overflow arrives name-only on a window whose 1% is not larger. It is a count of
+characters from the files, because the budget is denominated in characters; that does not conflict with pass
+1's rule of no token estimate. It is an `[INFO]` measurement, never a failure: this script is not a gate (the
+gate for the published plugins is check 48 of `check-plugin-integrity.ps1`, which reads descriptions with the
+same function).
+
+It does **not** cover personal `~/.claude/skills`, the project's `.claude/skills`, or built-in and MCP skills,
+which share the same listing, and with `-Plugin` it covers only the plugins named. The `-Skill` filter does not
+narrow it, because the budget is the whole listing's.
+
 ## Pass 2 — speed
 
 Opt-in. It times the script behind a skill and reports min/median/max with the machine state and `n`.
