@@ -238,6 +238,13 @@ to the live branch meet the gate too; an unusable answer (a `VUL-IN` placeholder
 `main` only and the run says why. An existing caller is reported with the line to add, never rewritten, and an existing caller that leaves the live
 branch out is also reported at every session start by `entry-gate-live-sessioncheck`
 ([#4476](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4476)).
+**A hotfix PR also meets a local check that needs no workflow file**
+([#4532](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4532)). No plugin script opens a PR to the
+live branch, so it is opened by hand with `gh pr create --base <live>`, and the live branch's own copy of the
+caller may lag the trunk's. The PreToolUse hook `guard-live-pr-entry` meets that command: where the base is the
+branch `Get-ShopifyLiveDeployBranch` declares, it runs `check-branch-entry` on the head branch and refuses the
+PR while the entry is not written. It is silent for every other base and in a repo that declares no live
+branch, and where it cannot read the base or the head it lets the PR through and says so to the session.
 
 **The branch-entry caller also holds the DEPLOY lock**
 ([#2429](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/2429)). The runner passes the PR

@@ -10,6 +10,16 @@
             "timeout": 30
           }
         ]
+      },
+      {
+        "matcher": "Bash|PowerShell",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "p=$(cat); printf '%s' \"$p\" | grep -Eiq 'gh(\\.exe)?[\"'\"'\"']?[[:space:]]+pr[[:space:]]+create' || exit 0; command -v powershell >/dev/null 2>&1 || exit 0; printf '%s' \"$p\" | powershell -NoProfile -ExecutionPolicy Bypass -File \"${CLAUDE_PLUGIN_ROOT}/hooks/guard-live-pr-entry.ps1\"",
+            "timeout": 30
+          }
+        ]
       }
     ],
     "PostToolUse": [

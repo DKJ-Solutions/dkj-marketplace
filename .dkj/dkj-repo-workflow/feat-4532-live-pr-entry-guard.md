@@ -39,19 +39,41 @@
 
 ### PLAN
 
+#### Shape
+
+Option 2 from #4532, as the parking comment chose it: a PreToolUse guard on `gh pr create` whose base is
+the declared live branch, because the leak is the hand-typed PR. A `-Base` route in open-pr/ship-pr would
+only help a session that chose to use it.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] Sylvester: `hooks/guard-live-pr-entry.ps1` -- reads the live branch as entry-gate-live-sessioncheck does, finds a running `gh pr create` through command-guard-lib's segments, runs `check-branch-entry.ps1` (the repo's own copy first) on the head and refuses on its exit 1; fails open with additionalContext
+- [x] Sylvester: registered in `hooks/hooks.json` behind a shell pre-gate, fail-open like the bwj guards
+- [x] Tessa: the adopt skill's branch-entry section names the guard
 
 ### TEST
 
+- [x] Tycho: `scripts/tests/guard-live-pr-entry.tests.ps1` -- live malformed and valid, `--base main` untouched, a variable base, the flag spellings, a mention in a grep (15 asserts green)
+- [x] The hooks.json shell wrapper run end to end through bash: refuses a malformed live PR (exit 2), passes `git status` (exit 0)
+- [x] A UTF-8 BOM on stdin silenced the first version; the payload is now trimmed to its first `{`, as guard-stale-paste-block does
+
 ### DEPLOY: feat/4532-live-pr-entry-guard
 
-**Score:**
+The plugin's own scripts and hooks gained a new PreToolUse guard, `guard-live-pr-entry`. It meets a
+hand-typed `gh pr create` whose base is the live deploy branch a repo declares, and refuses it while the
+head branch's changelog entry is not written, using the same check the CI gate runs.
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+A hotfix PR to the live branch is now checked before it opens, even when the live branch's own CI copy
+lags the trunk's. A malformed DEPLOY section can no longer land there unjudged and strand the fold later.
+Repos that declare no live branch see no change.
+
+**Score:** 2
 
 #### Pull Request
+
+A hotfix PR to the live branch is checked for a written changelog entry before it opens
 
