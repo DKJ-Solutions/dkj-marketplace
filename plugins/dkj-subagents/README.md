@@ -96,8 +96,10 @@ the page a reader consults precisely because they assume the two halves match.
   the handful of sources that define the field, each with a one-line key finding and a grade (#4516).
   Read on demand at the start of a task in that craft, never always-on, through the `knowledge-lookup`
   shared block, which only the specialists with such a page carry. The lookup order is the canon, then
-  the source store a repo lens names, then the web. A specialist never edits its own canon: a source
-  worth adding arrives through the inbound route, like any other change to the shared core.
+  the specialist's references, then the web. A specialist never edits its own canon: a source
+  worth adding arrives through the inbound route, like any other change to the shared core. It does
+  maintain its references itself; see
+  [References — the specialist's own research](#references--the-specialists-own-research).
 - **`skills/`, `hooks/`, `scripts/`, `personas/`** — optional, and only where a team genuinely needs
   them. In practice `dkj-subagents-developers` is the one carrying all four, because the adoption path, the roster
   session check and the sync scripts belong to the base team rather than to any domain team, and to its
@@ -545,6 +547,36 @@ therefore **lens-only**: only the repo-specific `## Specific to this repo` part,
 drift lint (see the [consumers README](../../consumers/README.md#maintenance-drift-lint)) recognizes
 such a lens-only extension and reports it as `LENS-ONLY`. The lint's agent-def↔manual coupling
 deliberately leaves personas alone (they have no agent def).
+
+### References — the specialist's own research
+
+A specialist points to up to five things of its own: its subagent def, its manual, its persona (main
+loop only), its repo lens, and its **references** (#4544); the canon of its craft is shared and read
+first. The lens and the references both extend the portable specialist, each from its own side:
+
+| | Extends the specialist by | Lives in | Maintained by |
+|---|---|---|---|
+| **Repo lens** | the preferences of one repo: what it serves there, its agreements | `.claude/specialists/lenses/` in the consuming repo, in git | the technical writer, through a branch + PR |
+| **References** | research: the sources it opened before, each with its key finding and grade | the source store the repo lens names (in a life hub, its Notion source library) | **the specialist itself**, in the same task |
+| **Canon** (`knowledge/`) | the handful of sources that define the craft | this plugin, public | nobody locally: the inbound route and a release |
+
+**References are where a specialist looks first when it has to back up a claim**, after its canon
+page: the research done last week is not done again. Only where they fall short does it search the
+web, and a find worth keeping goes straight back into its references, so they grow with the work
+instead of through a separate curation step. The rule is the `knowledge-lookup` shared block, which
+every specialist with a canon page carries.
+
+**Why not in git, beside the lens.** Research is data, not something that changes what an app does,
+and a row added per finding would pay the whole branch + PR cycle each time; that toll is what would
+stop references from growing. **Why not in the plugin.** The canon is public and changes only through
+a release, which is right for the curated core of a field and wrong for a store meant to grow every
+session. A source that turns out to define the craft moves from references to the canon through the
+inbound route.
+
+**Two guards travel with the write.** A row holds general knowledge only, never anything about a
+person, because a search and its sources are about the world and the person's own material stays in
+their notes. And where a specialist's tools cannot reach the store, it hands the row back with its
+deliverable, so a missing write permission costs the automation, not the source.
 
 ## Shared agent-def blocks — one source for the verbatim boundaries
 

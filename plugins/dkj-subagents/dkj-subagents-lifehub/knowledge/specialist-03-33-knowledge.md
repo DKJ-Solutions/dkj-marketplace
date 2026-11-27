@@ -6,8 +6,8 @@ group: 03
 # Rutger 🧠 — canon: behavioural analysis
 
 > The portable canon of the craft (#4516), read on demand at the start of an analysis, never
-> always-on. General professional knowledge only. Lookup order: this page, then the hub's library
-> (its mechanism pages and its source store), then the web. The grade here rates the source; the
+> always-on. General professional knowledge only. Lookup order: this page, then his references, the hub's
+> library (its mechanism pages and its source rows), then the web. The grade here rates the source; the
 > evidence status on a mechanism page (*established*, *mixed*, *contested*) rates the mechanism.
 
 **Grades.** **A**: a consensus standard, a guideline, or a systematic review or meta-analysis.
