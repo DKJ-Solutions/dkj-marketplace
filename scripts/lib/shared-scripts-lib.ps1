@@ -556,6 +556,7 @@ function Get-SharedScriptPairs {
             Source = 'scripts\maintenance\measure-references.ps1'
             Plugin = 'dkj-repo-workflow'
             Skill  = 'measure-references'
+            RepoRootExempt = 'it reads only ~/.claude/projects and writes nothing; no repo is involved'
         },
         @{
             # THE DECISION STOPS (#4005): how often a session stopped for an AskUserQuestion menu, and how
