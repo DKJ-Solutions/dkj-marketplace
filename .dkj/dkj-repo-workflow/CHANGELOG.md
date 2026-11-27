@@ -2,7 +2,32 @@
 
 ## [Unreleased]
 
-**22 / 22 minor entries** <!-- pending-tally -->
+**23 / 23 minor entries** <!-- pending-tally -->
+
+### DEPLOY: docs/4522-draft-in-owners-voice · 20261127-123501Z
+
+A message the session drafts for the owner to send (an Asana comment, a reply to a requester) is now
+written in the owner's own voice, first person singular, never as the team, unless the owner asks
+otherwise. The specialists stay visible in the session, never in a text one person signs.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+A user of the workflow no longer has to rewrite "we" into "I" before posting a drafted message under
+their own name.
+
+**Score:** 2
+
+#### Pull Request
+
+Constitution: a message drafted for the owner to send is written in their own voice
+
+Plugins: dkj-repo-workflow
+
+[PR #4524](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4524)
+
+---
 
 ### DEPLOY: feat/4520-asana-intake · 20261127-120841Z
 
