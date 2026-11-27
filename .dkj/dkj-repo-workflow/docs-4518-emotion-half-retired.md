@@ -81,5 +81,3 @@ nodes of their own, or links laid to archived colour dossiers.
 
 Lifehub: the emotion half is retired; the colour model is a library framework
 
-Plugins: dkj-subagents-lifehub
-
