@@ -2,7 +2,34 @@
 
 ## [Unreleased]
 
-**20 / 20 minor entries** <!-- pending-tally -->
+**21 / 21 minor entries** <!-- pending-tally -->
+
+### DEPLOY: docs/4518-emotion-half-retired · 20261127-114846Z
+
+The life hub's information architect and ontologist no longer treat the emotion half as live
+structure. Ian (04-03) places a framework, such as a colour model for emotions, as one reference page
+in the hub's library, even when the owner invented it, and routes a feeling as an update in the
+dossier of its topic, or in the identity dossier when it has none. Onyx (04-04) treats an emotion
+colour as a tag on a dossier, not as a neuron, and lays no links to colour dossiers a hub has archived.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+A life-hub user whose hub keeps its emotion model in the library no longer gets new feelings filed as
+nodes of their own, or links laid to archived colour dossiers.
+
+**Score:** 2
+
+#### Pull Request
+
+Lifehub: the emotion half is retired; the colour model is a library framework
+
+Plugins: dkj-subagents-lifehub
+
+[PR #4521](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4521)
+
+---
 
 ### DEPLOY: fix/4506-inbox-sweep-html-stub · 20261127-110818Z
 
