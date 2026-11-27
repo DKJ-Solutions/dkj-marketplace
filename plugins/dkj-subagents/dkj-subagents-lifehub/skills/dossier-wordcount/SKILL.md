@@ -1,6 +1,7 @@
 ---
 name: dossier-wordcount
-description: Keep a dossier's word-count property in the owner's Notion life hub in step with its page body -- recount after every write into a dossier, update the property in the same step, and say so when the page crosses the owner's split threshold; a recount mode catches edits made by hand. Use it after writing into a dossier, for /dossier-wordcount, or when asked "which dossiers are getting too long?", in whatever language it is asked.
+description: >-
+  Keep a Notion dossier's word-count property in step with its body and flag ones past the split threshold. Use after writing into a dossier, or for "which dossiers are getting too long?".
 ---
 
 # /dossier-wordcount: the word count follows the page

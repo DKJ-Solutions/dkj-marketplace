@@ -1,15 +1,7 @@
 ---
 name: prepare-release
 description: >-
-  Stage a store release days ahead of release day, so the day itself is push, verify, cut. Use it when
-  the release is coming up and you want to be ready now -- "the release goes out on Monday, get me
-  ready". It reads the trunk, the pending changelog entries and the bump they add up to, flags scores
-  worth a second look, derives the
-  theme push list by the same rules live-preflight uses, runs an early drift read, collects the
-  go-live obligations buried in entry prose, lists open pull requests that could still ride along, and
-  prints the release-day runbook. In a Git-connected store the early drift read is a back-flow check
-  and the runbook prints the promotion PR instead of the push. Read-only: it never pushes, cuts, tags, or writes the authorisation
-  marker.
+  Stage a store release days ahead so release day is push, verify, cut; read-only. Use when a release is coming up ("the release goes out on Monday, get me ready").
 ---
 
 # prepare-release -- the Friday before the Monday

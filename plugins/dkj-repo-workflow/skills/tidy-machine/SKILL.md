@@ -1,18 +1,7 @@
 ---
 name: tidy-machine
 description: >-
-  Clear the clutter this workflow leaves behind on a machine, in one command and thirteen lanes: finished
-  branches, stale worktree lanes, branches whose pull request was CLOSED without merging, expired
-  backup branches, old stashes, an unfolded changelog entry, the ~/.claude plugin administration,
-  install records pointing at a checkout that is gone or naming a plugin the marketplace has retired,
-  plugin/marketplace staleness, extracted plugin payload no install record points at any more,
-  fixture trees under the scratch root, and Admin servers and watchers that outlived the run that
-  started them. It DELETES only what
-  prune-merged can already prove -- an ancestor of the trunk, or a tip that is the head commit of a
-  merged PR -- plus install records whose checkout is gone (they hold no work), and everything else it
-  classifies and hands over with the command, paste-ready. Use it when branches have piled up, as the closing tidy-up
-  of a working session, when a lane worktree has outlived its branch, or when you want to know which
-  of the trees under your temp directory belong to runs that have ended.
+  Clear workflow clutter on this machine: merged branches, stale worktrees, old stashes, stale plugin records, leftover fixtures and processes. Use when branches pile up, or to tidy at session end.
 ---
 
 # tidy-machine -- the whole-machine tidy, in thirteen lanes

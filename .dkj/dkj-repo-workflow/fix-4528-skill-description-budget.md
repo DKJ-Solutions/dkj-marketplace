@@ -41,21 +41,49 @@
 
 Trim every model-invocable SKILL.md description to a trigger-first line, take one-time skills out of the listing, and add an integrity check that holds each description and the summed total under the budget.
 
+Measured before the change: 54 model-invocable skills whose descriptions summed to ~35,800 characters
+(longest 2,868), against a listing budget of 1% of context with an 8,000-character fallback. The
+overflow arrives name-only, so those skills never trigger on their own (#4528).
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `disable-model-invocation: true` on the eight one-time or owner-typed skills: adopt-dkj-repo-workflow,
+  adopt-dkj-repo-workflow-bwj, adopt-shopify-floor, scheduled-tasks, stopwatch-hide, stopwatch-prepare,
+  record-suite-durations, dependabot-entry.
+- [x] Every remaining model-invocable description rewritten to one trigger-first line of at most 200
+  characters (46 skills, 7,843 characters in all, longest 198). The detail stays in each page's body.
+- [x] Check 48 (`[skill-description]`) in `check-plugin-integrity.ps1`: each model-invocable description
+  at most 250 characters, their sum over every published plugin at most 10,000.
+- [x] The six printed instructions that told a session to run the now-barred adopt skill (check 33)
+  name the slash command the operator types instead, in the source scripts and their plugin mirrors.
+- [~] measure-skill reporting the sum against the budget: check 48's coverage line prints it on every
+  gate run here; the consumer-side report is a separate change, filed as #4538.
 
 ### TEST
 
+- [x] `check-plugin-integrity.ps1`: 0 errors, `[skill-description] checked 46`, sum 7,843 of 10,000.
+- [x] `check-plugin-integrity-skill-spans.tests.ps1`: scenarios 17 and 18 cover check 48 (a short
+  description passes, a 252-character folded description fails, a long barred one does not). 36/36 pass.
+
 ### DEPLOY: fix/4528-skill-description-budget
 
-**Score:**
+Every skill the plugins ship that a session can invoke on its own now has a short, trigger-first
+description, and eight one-time or owner-typed skills (the adopt skills, scheduled-tasks, the two
+stopwatch skills, record-suite-durations, dependabot-entry) left the model's listing and are typed as a
+slash command instead. The descriptions together went from about 35,800 characters to 7,843, and a new
+integrity check holds each one to 250 characters and their sum to 10,000.
+
+**Score:** 3
 
 #### What makes this deploy extra special
 
-**Score:**
+Skills such as asana-intake, day-plan and tidy-machine fire on their own again: Claude Code drops
+descriptions that do not fit its skill-listing budget, and they were arriving name-only. The eight
+skills above are now started by typing them, for example `/adopt-dkj-repo-workflow`.
+
+**Score:** 3
 
 #### Pull Request
 
-Skill descriptions fit Claude Code's listing budget
+Skill descriptions fit Claude Code's listing budget, so plugin skills trigger again
 

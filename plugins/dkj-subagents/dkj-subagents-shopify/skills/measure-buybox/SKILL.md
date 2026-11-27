@@ -1,6 +1,7 @@
 ---
 name: measure-buybox
-description: Measure where the add-to-cart button sits in a Shopify product page's buy box, on a really emulated phone viewport (a local headless Chrome, DevTools device emulation), with the offset of every block in the box, the box's place on the page and the sticky add-to-cart bar. Use it when a height requirement on the buy box has to be a number instead of a look, or to check that a layout change moved the button. With the store's expectation answered it prints PASS or FAIL. Read-only: it loads one public page and writes nothing to the store. Needs node 22+ and Chrome.
+description: >-
+  Measure where the add-to-cart button sits in a product page's buy box on an emulated phone. Use when a buy-box height requirement must be a number, or to check a layout change.
 argument-hint: "(-Url <url> | -Market <market> -Path <path> [-PreviewThemeId <id>]) [-Width 390] [-Height 900] [-SettleMs 5000] [-BoxSelector <css>] [-AtcSelector <css>] [-Json] [-PlanOnly]"
 ---
 

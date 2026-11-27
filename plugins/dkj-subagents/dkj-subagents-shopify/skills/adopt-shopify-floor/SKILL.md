@@ -1,6 +1,7 @@
 ---
 name: adopt-shopify-floor
 description: Place dkj-subagents-shopify's operational floor in this repo, in one move -- the live-theme guard's seam (which theme is live), a starter theme-check config that is green on arrival in a real theme, the CI workflow that runs it on every PR, and -- where the live theme is Git-connected -- the scheduled check for direct file writes to it. Use this right after enabling or refreshing dkj-subagents-shopify, since a plugin install writes nothing into a repo, and whenever the Shopify floor session check reports that the guard has not been told which theme is live. Strictly additive and dry-run by default; it never overwrites anything.
+disable-model-invocation: true
 ---
 
 # adopt-shopify-floor -- the floor arrives with the plugin, the answers do not

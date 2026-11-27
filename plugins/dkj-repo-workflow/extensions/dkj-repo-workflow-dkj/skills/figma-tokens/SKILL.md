@@ -1,6 +1,7 @@
 ---
 name: figma-tokens
-description: Check whether the brand book's colour variables in Figma still match house-style.css, and sync Figma from the stylesheet on request -- in one direction only, the repo being the source. Use when someone asks whether the Figma tokens are still in sync, after a brand book colour change has merged (a theme, a status colour, a graph slot), or when asked to update the Figma variables from the repo, in whatever language. Runs in dkj-marketplace, where the brand book lives, through the Figma MCP's use_figma. The drift check is read-only; the sync writes only on request.
+description: >-
+  Check whether Figma's brand-book colour variables match house-style.css, and sync Figma from the repo on request. Use for "are the Figma tokens in sync?" or after a brand-book colour change.
 ---
 
 # figma-tokens -- the brand book's colours, mirrored into Figma

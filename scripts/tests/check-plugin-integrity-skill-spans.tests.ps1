@@ -391,6 +391,29 @@ try {
     $r17 = Invoke-Integrity -FixtureRoot $Fixture
     Assert-True (-not ($r17.Out -match [regex]::Escape('fix-my-branch.md'))) 'scenario 16: after the fold removes it, the entry file is gone from the set without complaint'
 
+    # === check 48: a model-invocable skill's description fits the skill-listing budget (#4528) ========
+    # The fixture's skill-alpha is model-invocable and skill-beta carries disable-model-invocation, so the
+    # pair proves both halves: only alpha is counted, and a long description on beta is not a finding.
+    Write-Host "check 48 -- the fixture's short descriptions pass, and only the model-invocable skill counts" -ForegroundColor Cyan
+    Assert-True ($r17.Out -match '\[skill-description\] checked 1 --.*sum to 20 of a 10000') 'scenario 17: one model-invocable skill counted (skill-alpha, 20 chars); the barred skill-beta is outside the listing'
+    Assert-True (-not ($r17.Out -match '\[skill-description\] plugins/')) 'scenario 17: no [skill-description] finding on the fixture as written'
+
+    Write-Host "check 48 -- a model-invocable description past 250 characters is a finding; a barred one is not" -ForegroundColor Cyan
+    $sdAlphaPath = Join-Path $Fixture 'plugins\dkj-subagents\dkj-subagents-alpha\skills\skill-alpha\SKILL.md'
+    $sdBetaPath = Join-Path $Fixture 'plugins\dkj-subagents\dkj-subagents-alpha\skills\skill-beta\SKILL.md'
+    $sdAlphaOrig = [System.IO.File]::ReadAllText($sdAlphaPath)
+    $sdBetaOrig = [System.IO.File]::ReadAllText($sdBetaPath)
+    $sdLong = 'x' * 251
+    # A folded block scalar, the shape most shipped pages use, split over two lines to prove they are joined.
+    [System.IO.File]::WriteAllText($sdAlphaPath, ("---`nname: skill-alpha`ndescription: >-`n  " + $sdLong.Substring(0, 200) + "`n  " + $sdLong.Substring(200) + "`n---`n`n# Skill Alpha`n"), $Utf8NoBom)
+    [System.IO.File]::WriteAllText($sdBetaPath, ("---`nname: skill-beta`ndescription: " + ('y' * 400) + "`ndisable-model-invocation: true`n---`n`n# Skill Beta`n"), $Utf8NoBom)
+    $r18 = Invoke-Integrity -FixtureRoot $Fixture
+    Assert-Equal 1 $r18.Code 'scenario 18: exit 1 -- an over-long model-invocable description fails the gate'
+    Assert-True ($r18.Out -match '\[skill-description\] plugins/dkj-subagents/dkj-subagents-alpha/skills/skill-alpha/SKILL\.md has a 252-character description') 'scenario 18: the finding names skill-alpha and its length (two folded lines joined by one space)'
+    Assert-True (-not ($r18.Out -match '\[skill-description\] plugins/.*skill-beta')) 'scenario 18: the barred skill-beta, 400 characters long, is not a finding'
+    [System.IO.File]::WriteAllText($sdAlphaPath, $sdAlphaOrig, $Utf8NoBom)
+    [System.IO.File]::WriteAllText($sdBetaPath, $sdBetaOrig, $Utf8NoBom)
+
 } finally {
     if (Test-Path -LiteralPath $Fixture) { Remove-Item -Recurse -Force -LiteralPath $Fixture -ErrorAction SilentlyContinue }
 }

@@ -1,6 +1,7 @@
 ---
 name: which-theme
-description: Establish which theme id and name a Shopify storefront URL actually serves, and whether the content is fresh or a cached copy. Use it when reviewing a preview or checking a live push -- "am I really looking at the theme I think I am?" -- with optional fingerprints (-MustContain / -MustNotContain) and an expected theme id. On a failed fetch it prints the evidence Shopify needs (status, x-request-id, UTC time, URL). Read-only: it only fetches, never pushes or publishes.
+description: >-
+  Establish which theme a Shopify storefront URL actually serves, and whether it is fresh or cached. Use when reviewing a preview or checking a live push.
 argument-hint: "[-Url <url> | -Path <path>] [-ThemeId <id>] [-ExpectThemeId <id>]"
 ---
 

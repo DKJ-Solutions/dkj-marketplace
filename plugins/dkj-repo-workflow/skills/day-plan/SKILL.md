@@ -1,6 +1,7 @@
 ---
 name: day-plan
-description: Plan the owner's working day in the morning and close it at the end -- one day goal, items with an hour estimate and a mode (plan first or go), held strictly between 6 and 8 hours, and a close-out that matches the plan against the PRs merged and issues closed on GitHub. Use when the owner starts the day ("plan my day", "what are we doing today?", "good morning"), wants to add something during the day ("can I also do X today?"), ends the day or the week ("close the day", "what did I do this week?", "weekend"), in whatever language it is asked. Paula, the Project Planner, carries it.
+description: >-
+  Plan the owner's working day (6-8 hours) and close it against GitHub. Use for "plan my day", "good morning", "can I also do X today?", "close the day", "what did I do this week?".
 ---
 
 # day-plan -- a day with a goal, and an end

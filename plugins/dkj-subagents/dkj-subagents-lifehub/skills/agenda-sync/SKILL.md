@@ -1,6 +1,7 @@
 ---
 name: agenda-sync
-description: Sync the owner's Google Calendar into the Notion Agenda database of a life hub, with Google as the source. New events are added, changed ones updated, vanished ones marked Vervallen (never deleted), and a row that exists only in Notion goes to Google once. A likely duplicate or a same-day clash is reported to the owner as a question, once per pair, and never fixed by the sync itself. Built to run unattended, as a daily scheduled task or cloud routine. Use it for /agenda-sync, "sync the agenda", "put Google Calendar in Notion" or "is the agenda still right", in whatever language it is asked.
+description: >-
+  Sync Google Calendar into a life hub's Notion Agenda database, Google as source; runs unattended too. Use for /agenda-sync, "sync the agenda" or "is the agenda still right".
 ---
 
 # /agenda-sync: Google Calendar into the Notion Agenda

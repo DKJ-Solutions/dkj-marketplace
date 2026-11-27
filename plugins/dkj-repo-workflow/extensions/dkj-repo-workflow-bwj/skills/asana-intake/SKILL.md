@@ -1,12 +1,7 @@
 ---
 name: asana-intake
 description: >-
-  The front door for a colleague's Asana task that reaches development -- read the task, check whether it
-  is already handled (tracker open and closed, the trunk and the live branch, merged PRs), verify the cause
-  it states, decide one outcome (already resolved, issue needed, or no repo change), and give a readiness
-  verdict with the question for the requester drafted in the chat. Use it when "a colleague's Asana task
-  reaches development", "pick up this Asana ticket", or a pasted Asana task URL arrives, in whatever
-  language. It files through `report-issue` and posts nothing to a person.
+  Pick up a colleague's Asana task that reaches development: check it is not already handled, verify its cause, decide the outcome. Use for "pick up this Asana ticket" or a pasted Asana task URL.
 ---
 
 # asana-intake -- read the ticket, check it, decide, judge readiness

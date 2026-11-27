@@ -1,6 +1,7 @@
 ---
 name: ai-radar
-description: Collect Claude Code tips, tricks and updates into the AI dossier of a life hub in Notion, and merge duplicates into one item. Two modes -- the check walks the followed sources (the Claude Code changelog, the API release notes, Anthropic News, Engineering and the Claude blog) and adds what is new, built to run daily and unattended; the inbox processes a post the owner pastes (a link or text from LinkedIn, Instagram, a team chat). Use it for /ai-radar, "check the AI sources", "any new Claude Code updates?", or when the owner shares a post about Claude or AI to keep, in whatever language it is asked.
+description: >-
+  Collect Claude Code tips and updates into a life hub's Notion AI dossier, from followed sources or a pasted post. Use for /ai-radar, "any new Claude Code updates?" or a shared AI post.
 ---
 
 # /ai-radar: Claude Code tips into the AI dossier, without duplicates

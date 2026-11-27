@@ -1,6 +1,7 @@
 ---
 name: check-policy-drift
-description: Lay out every document that legislates in this repo in RANK ORDER -- the installed plugins' portable pages above this repo's own workflow folder, above its always-on CLAUDE.md closure -- and then read them against each other for contradictions. Use it when adopting this workflow into a repo that already had its own rules, when a session and a page disagree about how the cycle works, or before folding a shared rule into a root CLAUDE.md. The script locates and hands over; the judgement is yours, and nothing is ever edited.
+description: >-
+  List every document that legislates in this repo in rank order and read them for contradictions. Use when adopting the workflow into a repo with its own rules, or when a page and a session disagree.
 ---
 
 # check-policy-drift -- does this repo's own prose contradict the plugin?

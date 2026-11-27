@@ -1,12 +1,7 @@
 ---
 name: sync-trunk
 description: >-
-  Fast-forward this checkout's trunk to origin -- or, with -AllCheckouts, every checkout on this
-  machine that holds a plugin install record -- wherever that cannot touch anybody's work: on the
-  trunk, no uncommitted change to a tracked file, not diverged, and only `git merge --ff-only`. Use it
-  when a trunk is behind origin and you would otherwise pull by hand, for "sync all repos" in whatever
-  language it is asked, and after a merge that a CI fold followed. The session's own checkout is
-  already synced at every session start by the trunk-sync-sessionprep hook.
+  Fast-forward the trunk to origin where that cannot touch work, or every checkout with -AllCheckouts. Use when a trunk is behind origin, or for "sync all repos".
 ---
 
 # sync-trunk -- a clean trunk follows origin, here or everywhere

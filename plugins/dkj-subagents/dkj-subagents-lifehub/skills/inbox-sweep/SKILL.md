@@ -1,6 +1,7 @@
 ---
 name: inbox-sweep
-description: Walk the owner's Gmail inbox the way an issues sweep walks a backlog -- each thread is processed into the owner's Notion life hub and only then archived. Per thread Astrid picks the specialist (herself for appointments and official mail, Fiona for money, Hugo for health and sport, Ian for notes to self, an AI-collection skill for AI posts); Ian places, Onyx links, and a thread is archived only once its fact is verifiably in Notion. Use it for /inbox-sweep, "clean up my inbox", "process my mail" or "inbox zero", in whatever language it is asked.
+description: >-
+  Process the owner's Gmail inbox into their Notion life hub, archiving a thread only once its fact is in Notion. Use for /inbox-sweep, "clean up my inbox" or "inbox zero".
 ---
 
 # /inbox-sweep: the inbox into the Notion hub, then archived

@@ -7,6 +7,7 @@ description: >-
   release prep, when asked to "put the scheduled tasks on this machine" or "update the scheduled
   tasks", in whatever language, and after a release that changed a task prompt. It writes the prompt
   file and prints the schedule and folder to set once in the Desktop app; a dry run unless -Apply.
+disable-model-invocation: true
 argument-hint: "[task-name]"
 ---
 

@@ -1,12 +1,7 @@
 ---
 name: tip-check
 description: >-
-  Weigh a saved tip -- a social-media post, a link or a pasted text about Claude Code or AI tooling --
-  against the setup this session can see (the repo's .claude/ and CLAUDE.md, the enabled plugins, and,
-  in a plugin source, its own plugins/), and advise critically whether it is worth building: Build, Later or
-  Skip, with the path that proves what already exists. Use when the owner shares a tip and asks "is this
-  useful for us?", "do we have this already?", "should we build this?", or hands over saved items to
-  judge, in whatever language it is asked. Rebecca compares, Marlowe red-teams the advice.
+  Weigh a saved Claude Code or AI-tooling tip against this setup and advise Build, Later or Skip. Use when the owner shares a tip and asks "is this useful?" or "do we have this already?".
 ---
 
 # tip-check -- is this tip worth building, given what we already have?

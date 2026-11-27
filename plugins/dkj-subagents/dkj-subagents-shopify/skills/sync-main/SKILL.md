@@ -1,6 +1,7 @@
 ---
 name: sync-main
-description: Mirror the live Shopify theme into this repo's trunk without letting live overwrite the trunk's own work -- the sync that captures third-party drift, with the content rule that makes it safe. Run it before a live push, and before work that will edit theme files, since a live theme has no locking and third parties edit it through the theme editor while you work; NOT before a branch that cannot touch a theme file, where it buys nothing and can refuse on a standing predecessor. Reads from live into a mirror outside the repo and writes to git only: it never pushes to live, publishes a theme, or deletes one. Run it with -DryRun first to see every verdict without writing anything. Stops before the merge by default, so somebody sees what changed on live before it becomes the base of new branches.
+description: >-
+  Mirror the live Shopify theme into the trunk without letting live overwrite trunk work. Run before a live push and before work that edits theme files; -DryRun first.
 ---
 
 # sync-main -- mirror live into the trunk, without losing what the trunk did

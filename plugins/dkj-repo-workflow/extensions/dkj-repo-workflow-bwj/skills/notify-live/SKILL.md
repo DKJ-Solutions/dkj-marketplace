@@ -1,12 +1,7 @@
 ---
 name: notify-live
 description: >-
-  Tell the Asana task of every issue a store release carried that its work is now live -- run right
-  after the live push (or the promotion merge) and the cut, as the release-day runbook's step after the
-  cut. It finds the PRs merged in the release's tag range, the issues they carried, and tells only those
-  whose closed message named a planned release (the after-release marker): a -LiveSince issue was told
-  at the close and a research issue changed nothing. A dry run by default; -Post sends one comment per
-  task and marks the issue so nobody is told twice. Use it when a release has just gone live.
+  Tell the Asana tasks of the issues a store release carried that their work is now live. Use right after a release has gone live and been cut.
 ---
 
 # notify-live -- the message after the release

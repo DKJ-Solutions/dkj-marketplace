@@ -1,6 +1,7 @@
 ---
 name: check-jsonld
-description: Validate the JSON-LD structured data of Shopify storefront pages, per market and optionally on a preview theme -- every ld+json block is parsed, its @type named and the fields that tend to go wrong summarised (breadcrumb ids, offers, ratings, FAQ answer text, protocol-relative images). Use it after a change to structured data, or to prove a preview emits valid schema, because Google's Rich Results Test does not follow the preview cookie reliably. Read-only: it only fetches, never pushes or publishes.
+description: >-
+  Validate the JSON-LD structured data of Shopify storefront pages per market, also on a preview theme. Use after a structured-data change, or to prove a preview emits valid schema.
 argument-hint: "[-Path <path>[,<path>]] [-Market <market>] [-ThemeId <id>] | -Url <url> [-PlanOnly]"
 ---
 
