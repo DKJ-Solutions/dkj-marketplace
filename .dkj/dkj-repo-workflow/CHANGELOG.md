@@ -2,7 +2,33 @@
 
 ## [Unreleased]
 
-**19 / 19 minor entries** <!-- pending-tally -->
+**20 / 20 minor entries** <!-- pending-tally -->
+
+### DEPLOY: fix/4506-inbox-sweep-html-stub · 20261127-110818Z
+
+The life hub's `inbox-sweep` no longer files an HTML-only mail as having nothing in it. Some senders
+put only a "view online" stub in the plain-text part of a mail, with the real content in the HTML
+part. When the plain-text body is such a stub, the sweep now reads the thread again in full and takes
+the facts from the HTML. It never follows the "view online" link, because that is a tracking URL.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+A life-hub user no longer loses a mail such as a price change from a sender that writes only HTML,
+which the sweep used to sort as nothing lasting.
+
+**Score:** 2
+
+#### Pull Request
+
+inbox-sweep: read FULL_CONTENT when the plain-text body is a view-online stub
+
+Plugins: dkj-subagents-lifehub
+
+[PR #4517](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4517)
+
+---
 
 ### DEPLOY: feat/4513-bronnen-library · 20261127-110250Z
 
