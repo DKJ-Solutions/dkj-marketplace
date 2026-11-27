@@ -39,19 +39,33 @@
 
 ### PLAN
 
+Inbound #4522: a draft colleague-facing comment spoke as the team ("we") while the owner signs it
+alone. Verified on pickup: no page in the tree says in whose voice a draft is written. The rule it
+extends, "Sending a message to a person", is in the constitution, so the sentence goes there.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] The constitution's "Sending a message to a person" rule: a draft is written in the owner's own
+  voice, first person singular, never as the team, unless the owner asks otherwise.
 
 ### TEST
 
+- [x] One sentence on the always-on path; ship-pr's always-on budget gate measures it.
+
 ### DEPLOY: docs/4522-draft-in-owners-voice
 
-**Score:**
+A message the session drafts for the owner to send (an Asana comment, a reply to a requester) is now
+written in the owner's own voice, first person singular, never as the team, unless the owner asks
+otherwise. The specialists stay visible in the session, never in a text one person signs.
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+A user of the workflow no longer has to rewrite "we" into "I" before posting a drafted message under
+their own name.
+
+**Score:** 2
 
 #### Pull Request
 
