@@ -2,7 +2,34 @@
 
 ## [Unreleased]
 
-**21 / 21 minor entries** <!-- pending-tally -->
+**22 / 22 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/4520-asana-intake · 20261127-120841Z
+
+`dkj-repo-workflow-bwj` gains `asana-intake`, the front door for a colleague's Asana task that reaches
+development. It reads the task, checks whether it is already filed or resolved (tracker open and closed,
+the trunk and the live branch, merged PRs), verifies the cause the ticket states, and settles one
+outcome: already resolved, an issue filed through `report-issue`, or no repo change. It ends with a
+readiness verdict, and any question for the requester is drafted in the chat, never posted.
+
+**Score:** 3
+
+#### What makes this deploy extra special
+
+A developer in a BWJ store repo no longer retypes the same three-step prompt for every Asana ticket, and
+a ticket an earlier PR already resolved is caught before a duplicate issue is filed.
+
+**Score:** 3
+
+#### Pull Request
+
+dkj-repo-workflow-bwj: an asana-intake skill -- read a task, check whether it is handled, file if needed, judge dev-readiness
+
+Plugins: dkj-repo-workflow-bwj
+
+[PR #4523](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4523)
+
+---
 
 ### DEPLOY: docs/4518-emotion-half-retired · 20261127-114846Z
 
