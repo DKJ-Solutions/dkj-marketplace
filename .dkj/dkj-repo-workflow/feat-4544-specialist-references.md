@@ -50,6 +50,8 @@ the rule falls back to handing the row back. The security look and the reuse mea
 ### CREATE
 
 - [x] `subagent-shared/knowledge-lookup.md`: the lookup order names references, and the specialist maintains them itself, with a fallback where its tools cannot reach the store
+- [x] security review (Sebastian): the block bounds the write -- only the store, add or refresh and never delete, own summary plus the source's DOI/URL only, nothing from the user's data or copied from the page
+- [x] copy edit (Edith): Rutger's "delivers only, Ian places it" lines, his canon page and the README carve out his references
 - [x] `build-agent-defs.ps1` regenerated the block into the eight subagent defs that carry it
 - [x] Rutger (03-33): subagent step 6 and his manual write library pages and source rows himself; Ian places them only as the fallback
 - [x] `plugins/dkj-subagents/README.md`: a new section on references as the fifth layer beside the lens, with the canon/references/lens split and why references live in the repo store
@@ -57,7 +59,6 @@ the rule falls back to handing the row back. The security look and the reuse mea
 ### TEST
 
 - [x] `build-agent-defs.ps1 -Check`: all shared blocks in sync with the source
-- [x] the lint and test gates run through open-pr
 
 ### DEPLOY: feat/4544-specialist-references
 
