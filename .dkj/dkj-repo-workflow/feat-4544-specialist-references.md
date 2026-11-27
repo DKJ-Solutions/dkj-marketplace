@@ -81,5 +81,3 @@ teammate has to place it.
 #### Pull Request
 
 Specialists maintain their own references, a fifth layer beside the lens
-
-Plugins: dkj-subagents-alpha, dkj-subagents-developers, dkj-subagents-lifehub
