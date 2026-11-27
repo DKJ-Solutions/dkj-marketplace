@@ -39,19 +39,39 @@
 
 ### PLAN
 
+Inbound #4525: a consumer hub added a collection page with one database per kind of collection. Ian's
+manual carries the placement rule so it does not live only in that consumer's conventions page. The
+owner's addition on the issue: a collection row is not an Update. The catalog rule (#4503) pointed a
+list of liked films at the taste dossier; that pointer is replaced.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] Ian's manual (04-03): new rule "a collection item is a row, never a dossier" after the catalog
+  rule, with the item-in-a-series test, columns instead of a page tree, mood as a multi-select column,
+  a new kind as a new database, catalog vs. collection, and rows are not Updates.
+- [x] Ian's manual: the catalog rule's taste-dossier pointer now points to the collection.
+- [x] Ian's def: one line with the test and the not-an-Update clause.
 
 ### TEST
 
+- [x] `grep -n "taste" plugins/dkj-subagents/dkj-subagents-lifehub` returns no remaining pointer to the
+  taste dossier for item lists; the generated blocks in the def are untouched. ship-pr runs the gates.
+
 ### DEPLOY: docs/4525-ian-collection-placement
 
-**Score:**
+The life hub's information architect, Ian (04-03), places one item out of a series of similar items (a
+track, a film, a trip) as a row in a per-kind collection database rather than as a dossier, groups by
+columns rather than by a page tree, opens a new database for a new kind of collection, and does not
+log a row as an Update. What the owner has watched or done no longer goes to the taste dossier.
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+A life-hub user whose hub keeps a collection page gets tracks, films and trips filed as rows there,
+instead of as dossiers that bury the topics with a narrative.
+
+**Score:** 2
 
 #### Pull Request
 
