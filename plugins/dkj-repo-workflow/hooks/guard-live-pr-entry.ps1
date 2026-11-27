@@ -48,6 +48,7 @@
     Pure ASCII (repo convention for .ps1). Tested by scripts/tests/guard-live-pr-entry.tests.ps1 in the
     source repo -- change one, run the other.
 #>
+[CmdletBinding()]
 param(
     # A fixture root, for the test suite. In a session the root is CLAUDE_PROJECT_DIR.
     [string]$RepoRootOverride = ''

@@ -106,10 +106,12 @@ $stdinFile = Join-Path $Fixture 'stub-stdin.txt'
 & $bash -c ("chmod +x '" + ((Join-Path $stubDir 'powershell') -replace '\\', '/') + "'") | Out-Null
 
 function Get-WrapperCommand {
-    param([string]$HooksJson)
+    # BY THE GUARD'S OWN NAME, not by 'guard-' (#4532): a plugin may also ship a guard that fails OPEN on
+    # purpose (guard-live-pr-entry, beside guard-working-copy), and that one carries no wrapper to test.
+    param([string]$HooksJson, [string]$Name)
     $entries = @((Get-Content -Raw -LiteralPath $HooksJson | ConvertFrom-Json).hooks.PreToolUse.hooks |
-        Where-Object { $_.command -match 'guard-' })
-    Assert-Equal 1 $entries.Count "$(Split-Path (Split-Path (Split-Path $HooksJson)) -Leaf): exactly one PreToolUse guard entry"
+        Where-Object { $_.command -match [regex]::Escape("hooks/$Name.ps1") })
+    Assert-Equal 1 $entries.Count "$(Split-Path (Split-Path (Split-Path $HooksJson)) -Leaf): exactly one PreToolUse entry runs $Name"
     return [string]$entries[0].command
 }
 
@@ -182,7 +184,7 @@ try {
     foreach ($g in $guards) {
         Write-Host ""
         Write-Host "-- $($g.Name) --" -ForegroundColor Cyan
-        $cmd = Get-WrapperCommand -HooksJson $g.Json
+        $cmd = Get-WrapperCommand -HooksJson $g.Json -Name $g.Name
         Assert-True ($cmd -match [regex]::Escape("hooks/$($g.Name).ps1")) "the wrapper still names $($g.Name).ps1 -- it is registered, not dead"
         Assert-True ($cmd -match '-ExecutionPolicy Bypass') 'and still passes -ExecutionPolicy Bypass, which the lint holds every hook invocation to'
 

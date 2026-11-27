@@ -176,6 +176,7 @@
                                       "cycle-autopark.tests.ps1",
                                       "git-identity-gate.tests.ps1",
                                       "guard-working-copy.tests.ps1",
+                                      "guard-live-pr-entry.tests.ps1",
                                       "hook-check-lib.tests.ps1",
                                       "hook-fail-closed.tests.ps1",
                                       "hook-stdin-guard.tests.ps1",
@@ -192,7 +193,7 @@
                        "tips":  [
                                     "A session runs the installed plugin copy, not this tree, so a hook change reaches a session here only after a release."
                                 ],
-                       "split":  "the SessionStart checks (auto-memory, claude-home, companion-plugin, consumer, consumer-prose, entry-gate-live, forwarder-drift, git-content, git-identity, release-freshness) and the trunk-sync prep step; the tool-use guards (command-guard-lib, guard-working-copy, background-run-lib, hook-fail-closed); the Stop hooks and the close-out (cycle-autopark, closeout-gate, closeout-lib); and the hook plumbing (hook-check-lib, hook-stdin-guard, session-cache-lib, sessioncheck-dispatch)."
+                       "split":  "the SessionStart checks (auto-memory, claude-home, companion-plugin, consumer, consumer-prose, entry-gate-live, forwarder-drift, git-content, git-identity, release-freshness) and the trunk-sync prep step; the tool-use guards (command-guard-lib, guard-working-copy, guard-live-pr-entry, background-run-lib,hook-fail-closed); the Stop hooks and the close-out (cycle-autopark, closeout-gate, closeout-lib); and the hook plumbing (hook-check-lib, hook-stdin-guard, session-cache-lib, sessioncheck-dispatch)."
                    },
                    {
                        "key":  "adopt",
