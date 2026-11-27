@@ -79,6 +79,11 @@
 .PARAMETER MinRefreshSeconds
     The shortest interval between two re-runs that /refresh can cause.
 
+.PARAMETER AdminProbeTimeoutMs
+    How long '/' and '/admin' wait for the plugin admin to answer /whoami before treating it as not running
+    (one deadline for the connect and the read). 500 ms suits a browser visit; a test that has just started
+    the admin on a busy CI runner raises it, since a cold admin can take longer to answer (#4549).
+
 .PARAMETER RepoRootOverride
     (For tests) The repo root instead of the one this script sits in.
 #>
@@ -88,6 +93,7 @@ param(
     [ValidateRange(0, 86400)][int]$CacheSeconds = 60,
     [ValidateRange(100, 60000)][int]$ReadTimeoutMs = 1000,
     [ValidateRange(0, 3600)][int]$MinRefreshSeconds = 10,
+    [ValidateRange(100, 60000)][int]$AdminProbeTimeoutMs = 500,
     [string]$RepoRootOverride
 )
 
@@ -406,7 +412,7 @@ try {
             }
             if ($path -eq '/' -or $path -eq '/index.html') {
                 # The product's home page (#3540), with the plugin's admin as its first card where it answers.
-                $html = Format-ProductHomeHtml -Pages (Get-ProductPages) -AdminUrl (Get-GeneralPagesUrl -Root $root -TimeoutMs 500) -SourceCommit $(if ($loadedSha) { $loadedSha.Substring(0, 8) } else { '' })
+                $html = Format-ProductHomeHtml -Pages (Get-ProductPages) -AdminUrl (Get-GeneralPagesUrl -Root $root -TimeoutMs $AdminProbeTimeoutMs) -SourceCommit $(if ($loadedSha) { $loadedSha.Substring(0, 8) } else { '' })
                 Send-LoopbackResponse $stream 200 'OK' 'text/html; charset=utf-8' ($utf8.GetBytes($html)) -Method $method
                 continue
             }
@@ -596,7 +602,7 @@ try {
             if ($path -eq '/admin') {
                 # The way to the plugin's admin (#3540): a 303 to the url the state file names, once it answers as
                 # this checkout's; else a short text, never a redirect to a port another checkout may hold.
-                $adminUrl = Get-GeneralPagesUrl -Root $root -TimeoutMs 500
+                $adminUrl = Get-GeneralPagesUrl -Root $root -TimeoutMs $AdminProbeTimeoutMs
                 if ($adminUrl -cmatch '^http://localhost:[0-9]{4,5}/?\z') {
                     Send-LoopbackResponse $stream 303 'See Other' 'text/plain; charset=utf-8' ([byte[]]@()) @{ Location = $adminUrl } -Method $method
                 } else {

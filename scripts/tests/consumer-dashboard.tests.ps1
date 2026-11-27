@@ -517,8 +517,10 @@ if ([System.Environment]::OSVersion.Platform -eq [System.PlatformID]::Win32NT -a
         $realPath = $env:PATH
         $env:PATH = $stubBin + ';' + $realPath
         try {
+            # -AdminProbeTimeoutMs (#4549): the plugin admin this fixture starts below is a cold PowerShell server
+            # on a busy CI shard, and the 500 ms default for a browser visit read it as not running.
             $proc3 = Start-Process -FilePath 'powershell' -PassThru -WindowStyle Hidden -ArgumentList @(
-                '-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', "`"$(Join-Path $src 'scripts\dashboard\serve-consumer-dashboard.ps1')`"", '-Port', $port3)
+                '-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', "`"$(Join-Path $src 'scripts\dashboard\serve-consumer-dashboard.ps1')`"", '-Port', $port3, '-AdminProbeTimeoutMs', 5000)
         } finally { $env:PATH = $realPath }
         try {
             # Asserted on its own, so a recurrence says whether the server never came up or the page did not

@@ -2,7 +2,106 @@
 
 ## [Unreleased]
 
-**7 / 7 minor entries** <!-- pending-tally -->
+**9 / 11 minor entries** <!-- pending-tally -->
+
+### DEPLOY: fix/4526-entry-gate-live-deploy-copy · 20261127-202934Z
+
+`entry-gate-live-sessioncheck` now reads the live deploy branch's own copy of the branch-entry caller
+(`origin/<live>`), not only the working copy. GitHub runs a hotfix PR's `pull_request` workflow from the
+live branch's refs, so a trunk fix that had not reached `live` left hotfix PRs ungated while the check
+said OK ([#4526](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4526)). The adoption page now
+says when a caller change takes effect for hotfix PRs. A local gate at the hotfix opener is
+[#4532](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4532).
+
+**Score:** 3
+
+#### What makes this deploy extra special
+
+A Shopify consumer with a hotfix lane now sees a `[WARN]` at session start, with the remedy, whenever its
+live branch still carries a caller that leaves `live` out. Before this, that state sat behind an OK line
+and surfaced only as stranded changelog entries, three times in three days.
+
+**Score:** 3
+
+#### Pull Request
+
+entry-gate-live-sessioncheck reads the deploy branch's own copy of the branch-entry caller
+
+Plugins: dkj-repo-workflow
+
+[PR #4535](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4535)
+
+---
+
+### DEPLOY: fix/4542-reopen-guard-windows-path · 20261127-201550Z
+
+In a store repo running `dkj-repo-workflow-bwj`, a `gh issue reopen` that calls gh by its full Windows path
+(`& "C:\...\gh.exe" issue reopen 9`) is now judged by the reopen guard. It used to pass unseen, while the
+close guard already caught the same form.
+
+**Score:** 1
+
+#### What makes this deploy extra special
+
+N/A
+
+**Score:** N/A
+
+#### Pull Request
+
+guard-issue-reopen: a reopen through a Windows path to gh.exe is judged, as the close guard already judges it
+
+Plugins: dkj-repo-workflow-bwj
+
+[PR #4543](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4543)
+
+---
+
+### DEPLOY: fix/4549-admin-probe-timeout · 20261127-195649Z
+
+The consumer-dashboard suite's admin-card assert no longer flakes on a busy CI shard (#4549, superseding the record #3856). The product server asked the freshly started plugin admin for `/whoami` with a fixed 500 ms deadline, which a cold PowerShell admin on a four-lane shard can miss, so the home page rendered "Admin is not running" behind a healthy 200. `serve-consumer-dashboard.ps1` now takes that deadline as `-AdminProbeTimeoutMs` (default 500, unchanged for a browser visit), and the fixture raises it to 5000 ms.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+N/A -- a test fixture and a test-only server parameter; nothing a consumer runs behaves differently.
+
+**Score:** N/A
+
+#### Pull Request
+
+consumer-dashboard.tests: the product server's admin probe deadline is a parameter the fixture raises
+
+[PR #4551](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4551)
+
+---
+
+### DEPLOY: fix/4537-workflow-folder-caller-drift · 20261127-175516Z
+
+The composition of the two gate callers moves out of `adopt-workflow-folder.ps1` into a lib, with its
+output unchanged, and `Get-CiFloorRunnerDrift` shares its line diff with the new drift read.
+
+**Score:** 1
+
+#### What makes this deploy extra special
+
+A session start now reports `[BEHIND]` when a consumer's `branch-entry.yml` or `always-on-budget.yml`
+differs from the caller this plugin version would place, its release pin aside, as it already does for
+the CI-floor runners. A changed trigger or `permissions:` line, or a live branch declared after the caller
+was placed, no longer sits unnoticed until a hotfix entry lands unjudged.
+
+**Score:** 2
+
+#### Pull Request
+
+The branch-entry and always-on-budget callers are held to their templates, reported [BEHIND] like the CI-floor runners
+
+Plugins: dkj-repo-workflow
+
+[PR #4548](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4548)
+
+---
 
 ### DEPLOY: fix/4530-close-guard-variable-target · 20261127-171702Z
 

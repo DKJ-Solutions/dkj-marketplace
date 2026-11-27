@@ -238,7 +238,12 @@ answers `Get-ShopifyLiveDeployBranch` with a plain branch name gets `branches: [
 to the live branch meet the gate too; an unusable answer (a `VUL-IN` placeholder, `refs/...`, `main`) leaves
 `main` only and the run says why. An existing caller is reported with the line to add, never rewritten, and an existing caller that leaves the live
 branch out is also reported at every session start by `entry-gate-live-sessioncheck`
-([#4476](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4476)).
+([#4476](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4476)). **A caller change on the trunk
+reaches hotfix PRs only once it reaches the live branch**
+([#4526](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4526)): GitHub reads a `pull_request`
+workflow from the PR's own refs, and a hotfix branch is cut from and targets the live branch, so until the
+next promotion (or a one-file hotfix of the caller onto it) those PRs run the live branch's old copy. The
+same session check therefore reads `origin/<live>`'s copy too and warns when it leaves the live branch out.
 **A hotfix PR also meets a local check that needs no workflow file**
 ([#4532](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4532)). No plugin script opens a PR to the
 live branch, so it is opened by hand with `gh pr create --base <live>`, and the live branch's own copy of the
@@ -284,6 +289,16 @@ gates, `@vX.Y.Z` plus `with: scripts-ref: vX.Y.Z`, the tag read off the plugin's
 lines are needed because a called workflow cannot read its own `@ref`: without the input it would run a
 pinned runner around scripts at `main`. **Move both when you update the plugin**; a re-run of this command
 names a caller still on `@main`, and leaves the file as it is.
+
+**And a caller whose BODY is behind is reported at every session start, like a CI-floor runner's (#4537).**
+This command never rewrites a caller it finds, so a release that changed one (a trigger, a comment, a new
+input) reached no repo that already had it, and the pin advice above reads only the pin. The script-contract
+session check now holds `branch-entry.yml` and `always-on-budget.yml` to the template this plugin version
+composes, the release pin aside (the `@<ref>` of the `uses:` line and the `scripts-ref:` value, a tag or
+`main`), and the live branch included: a repo that declared one after placing the caller reads behind. It
+forwards a `[BEHIND]` line naming the file and the first line that differs. To take the change, delete the
+file, re-run with `-Apply`, and read `git diff` before you commit. Like `[UNADOPTED]` it counts toward
+nothing, and naming `adopt-workflow-folder` in `Get-DeclinedAdoptions` silences it.
 
 **Until #4237 the caller tracked `@main`, and the argument for that is kept below because the trade it
 weighs is still the trade.** A pinned gate keeps enforcing the shape it was pinned at -- and the entry's own

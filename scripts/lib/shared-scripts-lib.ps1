@@ -663,6 +663,14 @@ function Get-SharedScriptPairs {
             LibOnly = $true
         },
         @{
+            # THE TWO GATE CALLERS adopt-workflow-folder PLACES (#4537): composed there and read back by
+            # check-script-contract's drift line, so both reach them in the dkj-repo-workflow payload.
+            Name    = 'workflow-folder-callers-lib'
+            Source  = 'scripts\lib\workflow-folder-callers-lib.ps1'
+            Plugin  = 'dkj-repo-workflow'
+            LibOnly = $true
+        },
+        @{
             Name    = 'write-target-lib-bwj'
             Source  = 'scripts\lib\write-target-lib.ps1'
             Plugin  = 'dkj-repo-workflow-bwj'

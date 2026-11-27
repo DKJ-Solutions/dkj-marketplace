@@ -141,7 +141,7 @@ try {
     Assert-Equal 0 $code 'and it counts toward nothing -- the exit code is the contract''s, not the floor''s'
 
     $hookOut = (& powershell -NoProfile -ExecutionPolicy Bypass -File $Hook -CheckScriptOverride $Check -ConsumerPathOverride $c) -join $Nl
-    Assert-True ($hookOut -match 'a CI-floor runner in this repo is behind') 'the session hook leads the block'
+    Assert-True ($hookOut -match 'a CI-floor runner or gate caller in this repo is behind') 'the session hook leads the block'
     Assert-True ($hookOut -match '(?m)^\s+\[BEHIND\] \.github/workflows/fold-on-merge\.yml') 'and forwards the line into the session'
 
     # Declined: a repo that named adopt-ci-floor in Get-DeclinedAdoptions hears nothing about its runners.

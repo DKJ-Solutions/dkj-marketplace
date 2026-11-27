@@ -160,7 +160,8 @@ function New-FixtureConsumer {
     # above does, and for the same stated reason -- the contents of a scaffolded runner differ
     # legitimately per repo, so anything finer would need the per-repo exemption list this repo declines.
     # The CI-floor runners' CONTENT is read since #4529, composed per tree so no exemption list is needed;
-    # these empty files therefore also print [BEHIND] lines, which ci-floor-runners-lib.tests.ps1 owns.
+    # these empty files therefore also print [BEHIND] lines, which ci-floor-runners-lib.tests.ps1 owns (and
+    # workflow-folder-callers-lib.tests.ps1 for the two gate callers, #4537).
     foreach ($rel in $PlaceAdoptionFiles) {
         $abs = Join-Path $root ($rel -replace '/', '\')
         $dir = Split-Path -Parent $abs

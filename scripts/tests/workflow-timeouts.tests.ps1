@@ -154,7 +154,7 @@ Write-Host "== the scaffolders: every job composed for a consumer carries a cap 
 $scaffolders = @(
     'scripts\task\adopt-ci-floor.ps1',
     'scripts\lib\ci-floor-runners-lib.ps1',
-    'scripts\task\adopt-workflow-folder.ps1',
+    'scripts\lib\workflow-folder-callers-lib.ps1',
     'scripts\task\adopt-shopify-floor.ps1'
 )
 
