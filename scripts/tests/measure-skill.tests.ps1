@@ -519,6 +519,42 @@ try {
     Remove-Item -LiteralPath $spRoot -Recurse -Force -ErrorAction SilentlyContinue
 }
 
+# Get-SkillDescriptionText and Measure-SkillListing (#4538): the one description parser that check 48 and the
+# listing-budget section of measure-skill share. Each form of the description key is pinned.
+Write-Host "Get-SkillDescriptionText / Measure-SkillListing -- the skill-listing budget (#4538)" -ForegroundColor Cyan
+$dsRoot = Join-Path ([System.IO.Path]::GetTempPath()) ('measure-skill-desc-' + [guid]::NewGuid().ToString('N'))
+try {
+    $dsSkills = Join-Path $dsRoot 'skills'
+    $dsCases = [ordered]@{
+        folded  = "---`nname: folded`ndescription: >-`n  First line`n  second line.`n`n  Third.`n---`nBody`n"
+        literal = "---`nname: literal`ndescription: |`n  Alpha`n  beta`nallowed-tools: x`n---`nBody`n"
+        quoted  = "---`nname: quoted`ndescription: `"A quoted one-liner.`"`n---`nBody`n"
+        plain   = "---`nname: plain`ndescription: A plain one-liner.`n---`nBody`n"
+        hidden  = "---`nname: hidden`ndescription: Not in the listing.`ndisable-model-invocation: true`n---`nBody`n"
+    }
+    foreach ($k in $dsCases.Keys) {
+        $null = New-Item -ItemType Directory -Path (Join-Path $dsSkills $k) -Force
+        [System.IO.File]::WriteAllText((Join-Path $dsSkills "$k\SKILL.md"), $dsCases[$k])
+    }
+    Assert-Equal 'First line second line. Third.' (Get-SkillDescriptionText -Path (Join-Path $dsSkills 'folded\SKILL.md')) 'a folded >- block: indented lines trimmed and joined with single spaces'
+    Assert-Equal 'Alpha beta' (Get-SkillDescriptionText -Path (Join-Path $dsSkills 'literal\SKILL.md')) 'a | block ends at the next top-level key'
+    Assert-Equal 'A quoted one-liner.' (Get-SkillDescriptionText -Path (Join-Path $dsSkills 'quoted\SKILL.md')) 'a quoted one-liner loses its quotes'
+    Assert-Equal 'A plain one-liner.' (Get-SkillDescriptionText -Path (Join-Path $dsSkills 'plain\SKILL.md')) 'a plain one-liner'
+    Assert-True ($null -eq (Get-SkillDescriptionText -Path (Join-Path $dsSkills 'absent\SKILL.md'))) 'an absent file is $null, not an empty description'
+
+    $dsRows = @(Measure-SkillListing -SkillsDir $dsSkills)
+    Assert-Equal 5 $dsRows.Count 'one row per skill page'
+    $dsPlain = @($dsRows | Where-Object { $_.Skill -eq 'plain' })[0]
+    Assert-Equal 18 $dsPlain.Chars 'the row carries the description length'
+    Assert-True $dsPlain.Listed 'an unflagged skill is listed'
+    Assert-True (-not @($dsRows | Where-Object { $_.Skill -eq 'hidden' })[0].Listed) 'a disable-model-invocation: true skill is not listed'
+    Assert-Equal 0 @(Measure-SkillListing -SkillsDir (Join-Path $dsRoot 'nope')).Count 'a missing skills dir yields no rows'
+    Assert-Equal 250 $script:SkillDescriptionMaxChars 'the per-description ceiling is the 250 check 48 holds'
+    Assert-Equal 8000 $script:SkillListingFallbackBudget 'the fallback listing budget is 8,000 characters'
+} finally {
+    Remove-Item -LiteralPath $dsRoot -Recurse -Force -ErrorAction SilentlyContinue
+}
+
 # ---------------------------------------------------------------------------------------------------
 Write-Host ''
 Write-Host "Result: $($script:pass) pass, $($script:fail) fail." -ForegroundColor $(if ($script:fail -gt 0) { 'Red' } else { 'Green' })
