@@ -468,7 +468,7 @@ Re-run over every item the marketplace ships on November 17, 2026 (#4210), per p
 |---|---|---|---|
 | `dkj-subagents-alpha` | personas Chris `01-01` and Bianca `03-02`; all nine agent defs; the shared blocks in `subagent-shared/`; the `orchestrator` skill | — | — |
 | `dkj-subagents-developers` | — not published to the App (below); measured, Cody `04-13`, Tycho `04-18`, Tessa `06-16`, Victor `06-19`, Sebastian `06-23` and Nolan `06-25` pass tests 1 and 2 | Ravi `06-24` — his agent def names the shared-block generator and the lint gate, both of this source repo | personas Derek `05-05` and Rendall `05-06` (test 3); Sylvester `05-15` (test 3 — his manual names a script 13 times); the skills `specialists-init`, `specialists-teardown` and `sync-roster`; the `roster-sessioncheck` hook |
-| `dkj-subagents-lifehub` | all five agent defs (Astrid `02-10`, Fiona `03-08`, Hugo `03-14`, Ian `04-03`, Onyx `04-04`); the skills `agenda-sync` and `inbox-sweep`, which work through connectors only | — | — |
+| `dkj-subagents-lifehub` | all six agent defs (Astrid `02-10`, Fiona `03-08`, Hugo `03-14`, Ian `04-03`, Onyx `04-04`, Rutger `03-33`); the skills `agenda-sync` and `inbox-sweep`, which work through connectors only | — | — |
 | `dkj-subagents-ecomm` | — | Sergio `06-26`, Craig `06-27` and Sean `06-28` — the audit and the advice travel, implementing in the storefront's theme code does not | — |
 | `dkj-subagents-shopify` | — | Steven `05-22` — the CLI and auth reference travel, an estate overview needs the Shopify CLI | Liam `04-20` and Sandra `05-21` (test 3 — theme code and theme files in a checkout); all nine skills, each of which names a script or the Shopify CLI; both hooks |
 

@@ -16,7 +16,7 @@
     {
       "name": "dkj-subagents-lifehub",
       "source": "./plugins/dkj-subagents/dkj-subagents-lifehub",
-      "description": "Add-on team for life-hub-style repos (a personal information hub / brain-based knowledge repo): Astrid, Fiona, Hugo, Ian, Onyx. Only a life-hub-style repo enables this."
+      "description": "Add-on team for life-hub-style repos (a personal information hub / brain-based knowledge repo): Astrid, Fiona, Hugo, Ian, Onyx, Rutger. Only a life-hub-style repo enables this."
     },
     {
       "name": "dkj-subagents-shopify",
