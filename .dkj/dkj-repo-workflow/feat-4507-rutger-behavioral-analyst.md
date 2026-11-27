@@ -39,19 +39,36 @@
 
 ### PLAN
 
+The owner approved a new life-hub specialist (#4507): Rutger, the Behavioral Analyst, 03-33.
+The consumer register (`consumers/dkj-lifehub.json`) is left alone: it records the lenses the consumer
+HAS, and the life hub gains Rutger's lens through `sync-roster` after the release.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] Sylvester: `plugin.json` agents list and description, `marketplace.json` description
+- [ ] Tessa: subagent def and manual for 03-33, README rosters, Hugo's boundary line
 
 ### TEST
 
+- [ ] Edith: copy edit of the new and changed text
+- [ ] Gates green through open-pr (plugin integrity, roster sync, suites)
+
 ### DEPLOY: feat/4507-rutger-behavioral-analyst
 
-**Score:**
+The life-hub team gains a sixth specialist, Rutger 🧠, the Behavioral Analyst (03-33): a combination of
+the forensic psychologist's interviewing, the clinical psychologist's functional analysis and the social
+psychologist's view of context. He asks the questions that matter, recognises patterns in what the hub
+holds, and says plainly which mechanism explains how its owner feels in a situation. He gives no advice and
+no diagnoses, and refers to the GP or 113 on a crisis signal. Hugo advises; Rutger explains.
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+A life-hub user can now ask for a factual, unsoftened explanation of their own patterns, a craft the
+team did not have. It arrives with the next release and needs `sync-roster` in the hub for its lens.
+
+**Score:** 3
 
 #### Pull Request
 
