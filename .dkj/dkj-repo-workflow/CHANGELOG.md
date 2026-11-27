@@ -2,7 +2,42 @@
 
 ## [Unreleased]
 
-**23 / 23 minor entries** <!-- pending-tally -->
+**24 / 24 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/4516-specialist-knowledge-canon · 20261127-131227Z
+
+Eight specialists now ship with a canon of their craft: Rebecca, Marlowe and Uma in the core team,
+Sebastian and Nolan in the developers team, and Rutger, Hugo and Fiona in the life-hub team. Each canon
+is a short page beside the manual listing the sources that define the field, each with a one-line key
+finding and a grade (A, B or C). The specialist reads it on demand at the start of a task, so it costs
+nothing on turns that do not need it. Before searching the web, these specialists now look in three
+places, in order:
+- their own canon;
+- the source store the repo's lens names, if it names one (a life hub's `Bronnen` database, for example);
+- the web, citing only sources they opened.
+
+A web find worth keeping comes back with the deliverable as a row for that store. A source that belongs
+in the canon itself arrives through an inbound issue.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+The first answer of a research, security, UX, performance, behavioural, lifestyle or financial
+specialist now starts from the strongest sources of its field instead of a fresh web search, and a
+search done once can be reused by the next session.
+
+**Score:** 3
+
+#### Pull Request
+
+Eight specialists ship a canon of their craft and look it up before the web
+
+Plugins: dkj-subagents-alpha, dkj-subagents-developers, dkj-subagents-lifehub
+
+[PR #4519](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4519)
+
+---
 
 ### DEPLOY: docs/4522-draft-in-owners-voice · 20261127-123501Z
 
