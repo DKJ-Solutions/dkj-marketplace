@@ -2,7 +2,33 @@
 
 ## [Unreleased]
 
-**7 / 7 minor entries** <!-- pending-tally -->
+**8 / 8 minor entries** <!-- pending-tally -->
+
+### DEPLOY: fix/4537-workflow-folder-caller-drift · 20261127-175516Z
+
+The composition of the two gate callers moves out of `adopt-workflow-folder.ps1` into a lib, with its
+output unchanged, and `Get-CiFloorRunnerDrift` shares its line diff with the new drift read.
+
+**Score:** 1
+
+#### What makes this deploy extra special
+
+A session start now reports `[BEHIND]` when a consumer's `branch-entry.yml` or `always-on-budget.yml`
+differs from the caller this plugin version would place, its release pin aside, as it already does for
+the CI-floor runners. A changed trigger or `permissions:` line, or a live branch declared after the caller
+was placed, no longer sits unnoticed until a hotfix entry lands unjudged.
+
+**Score:** 2
+
+#### Pull Request
+
+The branch-entry and always-on-budget callers are held to their templates, reported [BEHIND] like the CI-floor runners
+
+Plugins: dkj-repo-workflow
+
+[PR #4548](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4548)
+
+---
 
 ### DEPLOY: fix/4530-close-guard-variable-target · 20261127-171702Z
 
