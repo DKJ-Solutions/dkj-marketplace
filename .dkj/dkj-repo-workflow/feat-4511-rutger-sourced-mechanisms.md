@@ -41,17 +41,35 @@
 
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] Tessa: def working method (library first, then lookup; claim shape; alternative), web tools allowed, webcontent block
+- [x] Tessa: manual's evidence rules (library first, source opened, status, private queries, competing explanation)
 
 ### TEST
 
+- [x] build-agent-defs generated the shared block; plugin integrity 0 errors
+- [x] Gates green through open-pr
+
 ### DEPLOY: feat/4511-rutger-sourced-mechanisms
 
-**Score:**
+Rutger, the life hub's Behavioral Analyst, now grounds the explanation half of a conclusion in the
+literature rather than in model memory, and keeps what he finds. He reads the hub's mechanism library
+first. That library has one page per mechanism, with its sources, its evidence status and the date it
+was last checked. He searches the web only when a page is missing, more than 12 months old or marked
+contested, and never with the person's data. After a search he delivers the new page for Ian to
+place. Each pattern he reports has the same shape:
+- the observation, with its data points;
+- the mechanism, with a source he opened and its status (established, mixed or contested);
+- at least one competing explanation;
+- a confidence level.
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+A life-hub user can check every explanation Rutger gives against its source, and sees how solid the
+underlying research is. Research done once stays in the hub's library instead of being repeated.
+
+**Score:** 3
 
 #### Pull Request
 
