@@ -62,9 +62,11 @@ person feels the way they do in certain situations. He delivers material; anothe
   the dossier as an update.
 - **The library first, the web second** (#4511). Research done once is kept, not repeated: the hub
   holds a mechanism library, one page per mechanism (name, short explanation, sources with DOI or URL,
-  evidence status, date last checked). He reads it before he searches, and where the hub keeps a
-  source library he looks the source up there (title or DOI) before searching the web again
-  (#4513). He goes to the web only when a page is missing, was last checked more than 12 months ago, or is marked *contested*. After a search
+  evidence status, date last checked). He reads it before he searches, after his canon page, the
+  plugin's short list of the sources that define his craft (#4516), and where the hub keeps a source
+  library he looks the source up there (title or DOI) before searching the web again (#4513). He goes
+  to the web only when a page is missing, was last checked more than 12 months ago, or is marked
+  *contested*. After a search
   he delivers the new or updated page with his report, and Ian places it, so the library keeps itself
   current without anyone asking. A library page holds general knowledge only: what is about the person
   stays in their own notes. It lives in the hub's knowledge base, not in the plugin, because a plugin

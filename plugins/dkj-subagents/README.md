@@ -92,6 +92,12 @@ the page a reader consults precisely because they assume the two halves match.
 - **`manuals/specialist-<group>-<id>-manual.md`** — the portable playbook the subagent def reads in on demand. The
   split between the two, and the repo lens that completes it on the consumer's side, is described under
   [Manuals — the split model](#manuals--the-split-model).
+- **`knowledge/specialist-<group>-<id>-knowledge.md`** — optional: the canon of a specialist's craft,
+  the handful of sources that define the field, each with a one-line key finding and a grade (#4516).
+  Read on demand at the start of a task in that craft, never always-on, through the `knowledge-lookup`
+  shared block, which only the specialists with such a page carry. The lookup order is the canon, then
+  the source store a repo lens names, then the web. A specialist never edits its own canon: a source
+  worth adding arrives through the inbound route, like any other change to the shared core.
 - **`skills/`, `hooks/`, `scripts/`, `personas/`** — optional, and only where a team genuinely needs
   them. In practice `dkj-subagents-developers` is the one carrying all four, because the adoption path, the roster
   session check and the sync scripts belong to the base team rather than to any domain team, and to its
@@ -574,8 +580,8 @@ listing is always the up-to-date enumeration: `inbound-behaviour`, `laziness-aut
 `lens-optional`, `browser-compatibility`, `webcontent-boundary`, `filecontent-boundary`,
 `changelog-entry-boundary`, `design-owner-boundary`,
 `storefront-preview-boundary`, `artifact-publishing-boundary`, `findings-become-issues`,
-`guard-exercised`, `working-copy-boundary`, and `deliverable-self-check` (the five producing specialists
-only, #4417) — eighteen. Nothing checks that count against the
+`guard-exercised`, `working-copy-boundary`, `deliverable-self-check` (the five producing specialists
+only, #4417), and `knowledge-lookup` (the specialists with a canon page, #4516) — nineteen. Nothing checks that count against the
 directory, which is how this sentence came to name twelve of them and later fourteen. The directory is the
 authority and this list is a convenience. This way changing a shared boundary
 costs one edit + one build, not a
