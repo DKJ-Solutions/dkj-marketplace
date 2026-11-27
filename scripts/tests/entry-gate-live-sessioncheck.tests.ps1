@@ -50,25 +50,21 @@ function Set-Caller([string]$Root, [string]$List) {
     Set-Text (Join-Path $Root '.github\workflows\branch-entry.yml') ("on:`n  pull_request:`n    branches: [$List]`n")
 }
 
-# git with its stderr discarded. Under 'Stop', Windows PowerShell 5.1 turns a native stderr line (a CRLF
-# warning) into a terminating NativeCommandError even when redirected, so the call runs under 'Continue'.
-function Invoke-FixtureGit([string]$Root, [string[]]$GitArgs) {
-    $ErrorActionPreference = 'Continue'
-    $all = @('-C', $Root, '-c', 'core.autocrlf=false', '-c', 'user.name=t', '-c', 'user.email=t@example.invalid', '-c', 'commit.gpgsign=false') + $GitArgs
-    & git @all 2>$null | Out-Null
-}
+# Fixture git goes through the shared lib (#1635): it lowers the EAP for the call, judges the exit code,
+# and counts a failure for Write-FixtureGitSummary below.
+. (Join-Path $PSScriptRoot '..\lib\fixture-git-lib.ps1')
 
 # A git repo with one empty commit, so origin/live can later be pointed at a commit.
 function New-GitRepo([string]$Root) {
-    Invoke-FixtureGit $Root @('init', '-q')
-    Invoke-FixtureGit $Root @('commit', '-q', '--allow-empty', '-m', 'base')
+    Invoke-FixtureGitIn $Root init -q
+    Invoke-FixtureGitIn $Root -c user.name=t -c user.email=t@example.invalid -c commit.gpgsign=false commit -q --allow-empty -m base
 }
 
 # Commit the tree as it stands and point refs/remotes/origin/live at that commit.
 function Set-RemoteLive([string]$Root) {
-    Invoke-FixtureGit $Root @('add', '-A')
-    Invoke-FixtureGit $Root @('commit', '-q', '--allow-empty', '-m', 'live')
-    Invoke-FixtureGit $Root @('update-ref', 'refs/remotes/origin/live', 'HEAD')
+    Invoke-FixtureGitIn $Root -c core.autocrlf=false add -A
+    Invoke-FixtureGitIn $Root -c user.name=t -c user.email=t@example.invalid -c commit.gpgsign=false commit -q --allow-empty -m live
+    Invoke-FixtureGitIn $Root update-ref refs/remotes/origin/live HEAD
 }
 
 function Invoke-Hook([string]$Root) {
@@ -193,8 +189,14 @@ finally {
 }
 
 Write-Host ''
+# A BROKEN FIXTURE FAILS THE RUN (issue #1635): the deploy-copy cases read repos git had to build.
+$fixtureBroken = Write-FixtureGitSummary -Subject 'entry-gate-live-sessioncheck.ps1'
 if ($script:fail -gt 0) {
     Write-Host "FAIL: $($script:fail) failed, $($script:pass) passed." -ForegroundColor Red
+    exit 1
+}
+if ($fixtureBroken) {
+    Write-Host "FAILED: every assert passed, but $(Get-FixtureGitFailureCount) fixture git command(s) did not." -ForegroundColor Red
     exit 1
 }
 Write-Host "OK: all $($script:pass) asserts passed." -ForegroundColor Green
