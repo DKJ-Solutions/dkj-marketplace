@@ -41,17 +41,28 @@
 
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `Get-IssueReopenInvocation` (`stale-paste-block-rules.ps1`) splits the command head with `[\\/]`,
+  as `Get-IssueCloseInvocation` does, where `[\/]` matched only `/` and so never reduced a Windows path
+  to `gh.exe`.
 
 ### TEST
 
+- [x] `guard-stale-paste-block.tests.ps1`: a reopen through `& "C:\Program Files\GitHub CLI\gh.exe"`
+  names its issue, beside the close case it mirrors. 157/157 pass.
+
 ### DEPLOY: fix/4542-reopen-guard-windows-path
 
-**Score:**
+In a store repo running `dkj-repo-workflow-bwj`, a `gh issue reopen` that calls gh by its full Windows path
+(`& "C:\...\gh.exe" issue reopen 9`) is now judged by the reopen guard. It used to pass unseen, while the
+close guard already caught the same form.
+
+**Score:** 1
 
 #### What makes this deploy extra special
 
-**Score:**
+N/A
+
+**Score:** N/A
 
 #### Pull Request
 

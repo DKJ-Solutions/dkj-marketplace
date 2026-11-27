@@ -256,7 +256,7 @@ function Get-IssueReopenInvocation {
         $at = 0
         while ($at -lt $tok.Count -and -not $tok[$at].Quoted -and ($tok[$at].Text -eq '&' -or $tok[$at].Text -eq '.' -or $tok[$at].Text -match '\A[A-Za-z_][A-Za-z0-9_]*=')) { $at++ }
         if ($at + 2 -ge $tok.Count) { continue }
-        if (($tok[$at].Text -split '[\/]')[-1] -notmatch '(?i)\Agh(?:\.exe)?\z') { continue }
+        if (($tok[$at].Text -split '[\\/]')[-1] -notmatch '(?i)\Agh(?:\.exe)?\z') { continue }
         if ($tok[$at + 1].Quoted -or $tok[$at + 1].Text -ne 'issue' -or $tok[$at + 2].Quoted -or $tok[$at + 2].Text -ne 'reopen') { continue }
 
         $repo    = ''

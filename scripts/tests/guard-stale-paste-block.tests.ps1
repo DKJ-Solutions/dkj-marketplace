@@ -129,6 +129,7 @@ Assert-Equal 'BWJ-Development/smartwatchbanden#395' (Format-Reopens (Get-IssueRe
 Assert-Equal 'o/r#5' (Format-Reopens (Get-IssueReopenInvocation -Command 'gh issue reopen 5 -Ro/r')) 'and so does an attached -Ro/r'
 Assert-Equal 'BWJ-Development/xoxowildhearts#414' (Format-Reopens (Get-IssueReopenInvocation -Command 'gh issue reopen https://github.com/BWJ-Development/xoxowildhearts/issues/414')) 'an issue URL carries its own repo'
 Assert-Equal '#9' (Format-Reopens (Get-IssueReopenInvocation -Command 'git push; GH_TOKEN=x gh.exe issue reopen 9')) 'gh.exe after another command and an environment prefix is a reopen'
+Assert-Equal '#9' (Format-Reopens (Get-IssueReopenInvocation -Command '& "C:\Program Files\GitHub CLI\gh.exe" issue reopen 9')) 'gh.exe by a quoted Windows path is a reopen, as it is a close (#4542)'
 Assert-Equal '#395' (Format-Reopens (Get-IssueReopenInvocation -Command 'gh issue reopen 395 -c 12')) 'the value of -c is a comment, not a second issue'
 Assert-True ($null -eq (Get-IssueReopenInvocation -Command 'git commit -m "gh issue reopen 395"')) 'a mention in a commit message is not a reopen'
 Assert-True ($null -eq (Get-IssueReopenInvocation -Command 'gh issue close 395')) 'a close is not a reopen'
