@@ -2,7 +2,33 @@
 
 ## [Unreleased]
 
-**6 / 6 minor entries** <!-- pending-tally -->
+**7 / 7 minor entries** <!-- pending-tally -->
+
+### DEPLOY: fix/4530-close-guard-variable-target · 20261127-171702Z
+
+A `gh issue close` whose issue comes from a variable, the way a loop closes a batch, no longer slips past
+the go-live block guard in silence. The hook read such a command as no close at all, so in
+smartwatchbanden three Asana-linked issues closed with only the "result message follows" line. It now
+asks a person first, with the reason and the fix: close one issue per command with a literal number.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+In a store repo running `dkj-repo-workflow-bwj`, closing issues in a loop now raises a permission prompt
+instead of posting a closed message with no go-live block on each Asana task.
+
+**Score:** 2
+
+#### Pull Request
+
+guard-stale-paste-block: a gh issue close whose target is a variable asks instead of passing silently
+
+Plugins: dkj-repo-workflow-bwj
+
+[PR #4541](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4541)
+
+---
 
 ### DEPLOY: feat/4544-specialist-references · 20261127-170042Z
 
