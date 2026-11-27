@@ -2,7 +2,27 @@
 
 ## [Unreleased]
 
-**8 / 8 minor entries** <!-- pending-tally -->
+**8 / 9 minor entries** <!-- pending-tally -->
+
+### DEPLOY: fix/4549-admin-probe-timeout · 20261127-195649Z
+
+The consumer-dashboard suite's admin-card assert no longer flakes on a busy CI shard (#4549, superseding the record #3856). The product server asked the freshly started plugin admin for `/whoami` with a fixed 500 ms deadline, which a cold PowerShell admin on a four-lane shard can miss, so the home page rendered "Admin is not running" behind a healthy 200. `serve-consumer-dashboard.ps1` now takes that deadline as `-AdminProbeTimeoutMs` (default 500, unchanged for a browser visit), and the fixture raises it to 5000 ms.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+N/A -- a test fixture and a test-only server parameter; nothing a consumer runs behaves differently.
+
+**Score:** N/A
+
+#### Pull Request
+
+consumer-dashboard.tests: the product server's admin probe deadline is a parameter the fixture raises
+
+[PR #4551](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4551)
+
+---
 
 ### DEPLOY: fix/4537-workflow-folder-caller-drift · 20261127-175516Z
 
