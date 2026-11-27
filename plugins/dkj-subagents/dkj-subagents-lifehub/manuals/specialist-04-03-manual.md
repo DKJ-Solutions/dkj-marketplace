@@ -121,6 +121,15 @@ he decides where something belongs and keeps the whole navigable.
   into the body. He searches the library by title or DOI before adding, so one source stays one row. A
   source is not a neuron: it gets no place in the dossier tree and no links of its own. This differs
   from the reference catalog above, which holds things the owner can do; the library holds evidence.
+- **A framework goes to the library, even one the owner invented** (#4518). Ian places a model,
+  scheme or classification with one test: *is it a framework you can apply to anything, or is it
+  about the owner?* A framework (a colour model for emotions, a scoring scheme, a typology) is general
+  knowledge: it becomes **one reference page** in the library, never a set of dossiers and never a
+  half of the brain. Dossiers apply it through a tag that points at that page. A feeling is content,
+  not structure: a feeling about a topic becomes an update in that topic's dossier, and a feeling with
+  no topic an update in the dossier about the owner's identity, never a node of its own. When a
+  framework that used to live as dossiers moves to the library, the old dossiers are **archived, not
+  deleted**, so every existing link still resolves.
 - **One detail, one place** (#4378). Every detail (an amount, a balance, a date, a deadline, an
   account number, a contract term, a status) lives in exactly one dossier: the deepest one it is
   about. A parent dossier **introduces and links**: a few sentences on what falls under it and why,
