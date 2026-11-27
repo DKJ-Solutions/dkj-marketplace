@@ -39,19 +39,54 @@
 
 ### PLAN
 
+Issue #4529: a consumer's `fold-on-merge.yml` from v7.0.0 kept the pre-#4479 stand-down and stranded five
+entries, and no session check said the runner was behind its template. `adopt-ci-floor.ps1` composed its
+runners inline and never rewrites one it finds, so nothing could ask what the current template is.
+
+#### Scope
+
+The five CI-floor runners. Part 1's two gate callers (`branch-entry.yml`, `always-on-budget.yml`) are left
+for #4537. #4476, the `branches:` gap the parked comment tied to them, is already closed.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] Move the runner composition, `Get-WorkflowFacts` and `Test-QuotedScalarSafe` into
+      `scripts/lib/ci-floor-runners-lib.ps1` (`Get-CiFloorConstants`, `Get-CiFloorWakeNames`,
+      `Get-CiFloorRunnerTargets`); `adopt-ci-floor.ps1` calls it. The generated runners were compared byte
+      for byte against the old script on one fixture: identical.
+- [x] `ConvertTo-PinNeutralRunnerText` + `Get-CiFloorRunnerDrift`: each placed runner against the template
+      composed for this tree (its trunk, its wake list), the shared-scripts `ref:` line aside.
+- [x] `check-script-contract.ps1` prints `[BEHIND]` (non-counting, silenced by declining adopt-ci-floor);
+      the session hook forwards it in a block of its own; a re-run of adopt-ci-floor prints `[behind]`.
+- [x] Registered the lib in `shared-scripts-lib.ps1` and built the mirrors.
+- [x] Docs: the adopt skill's Part 3, the check's and the hook's docstrings, the contract fixture's note.
 
 ### TEST
 
+- [x] `ci-floor-runners-lib.tests.ps1` (new, 28 asserts): current at four pin shapes, CRLF, a non-main trunk;
+      the pre-#4479 fold and an empty file behind; an absent runner not reported; the check's `[BEHIND]`
+      line and exit 0; the hook forwarding it; a declined floor silent.
+- [x] `adopt-ci-floor`, `pin-parity`, `workflow-timeouts`, `script-contract`, `script-contract-tables`,
+      `shared-scripts`: green (the first three now read the lib).
+
 ### DEPLOY: fix/4529-ci-floor-runner-drift
 
-**Score:**
+A consumer now hears at session start when a CI-floor runner it placed earlier is behind the template the
+installed plugin ships. The script-contract check holds `fold-on-merge.yml`, `verify-resolved.yml`,
+`merge-on-green.yml`, `repo-settings.yml` and `close-parked-recurrences.yml` to what `adopt-ci-floor`
+composes today, the shared-scripts pin aside, and prints a `[BEHIND]` line with the first differing line
+and how to take the change. A re-run of `adopt-ci-floor` reports the same.
+
+**Score:** 3
 
 #### What makes this deploy extra special
 
-**Score:**
+A consumer whose `fold-on-merge.yml` predates the #4479 retry is told so at the next session start,
+instead of finding stranded changelog entries on its trunk after a merge.
+
+**Score:** 3
 
 #### Pull Request
+
+A placed CI-floor runner behind its template is reported at session start
 
