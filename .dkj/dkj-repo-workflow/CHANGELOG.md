@@ -2,7 +2,33 @@
 
 ## [Unreleased]
 
-**16 / 16 minor entries** <!-- pending-tally -->
+**17 / 17 minor entries** <!-- pending-tally -->
+
+### DEPLOY: docs/4500-ian-person-rings · 20261127-102341Z
+
+Ian's manual now places a person dossier in the numbered ring of closeness the owner names (*Social ›
+Circles › Ring 1* with Family and Friends, then *Ring 2* and further), asks when the ring is unknown,
+keeps what is about the owner in an *Identity* category instead of a person dossier, and links people to
+an interests table (#4500).
+
+**Score:** 1
+
+#### What makes this deploy extra special
+
+A lifehub owner's new person dossiers land in the ring they chose instead of a flat list, and the
+interests table shows at a glance what they share with whom.
+
+**Score:** 2
+
+#### Pull Request
+
+Ian: place person dossiers in rings of closeness around the owner
+
+Plugins: dkj-subagents-lifehub
+
+[PR #4502](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4502)
+
+---
 
 ### DEPLOY: feat/4511-rutger-sourced-mechanisms · 20261127-095615Z
 
