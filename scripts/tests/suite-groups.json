@@ -214,7 +214,8 @@
                                       "sync-roster.tests.ps1",
                                       "teardown.tests.ps1",
                                       "teardown-protocol.tests.ps1",
-                                      "template-selfcontained.tests.ps1"
+                                      "template-selfcontained.tests.ps1",
+                                      "workflow-folder-callers-lib.tests.ps1"
                                   ],
                        "tips":  [
                                     "What these suites guard reaches a consumer by two channels: plugin code after a release, the CI runners scaffolded into it at once, since they track main."
