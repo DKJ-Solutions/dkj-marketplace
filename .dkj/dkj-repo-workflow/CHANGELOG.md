@@ -2,7 +2,33 @@
 
 ## [Unreleased]
 
-**13 / 13 minor entries** <!-- pending-tally -->
+**14 / 14 minor entries** <!-- pending-tally -->
+
+### DEPLOY: docs/4503-catalog-placement-test · 20261127-093451Z
+
+Ian's manual now places a new item in a reference catalog beside the dossiers by one test: what can be
+done more than once, with different people, goes in the catalog however concrete; a dated one-off
+becomes a task card or calendar appointment, and single works the owner likes go to their taste
+dossier (#4503).
+
+**Score:** 1
+
+#### What makes this deploy extra special
+
+A lifehub owner with a catalog of activities keeps it browsable, instead of filling it with film
+releases and one-night events that have expired by the time anyone looks.
+
+**Score:** 2
+
+#### Pull Request
+
+Ian: recurring-vs-one-off test for a reference catalog database
+
+Plugins: dkj-subagents-lifehub
+
+[PR #4508](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4508)
+
+---
 
 ### DEPLOY: feat/4507-rutger-behavioral-analyst · 20261127-092747Z
 
