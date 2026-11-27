@@ -2,7 +2,35 @@
 
 ## [Unreleased]
 
-**5 / 5 minor entries** <!-- pending-tally -->
+**6 / 6 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/4544-specialist-references · 20261127-170042Z
+
+Specialists with a canon page now maintain their own **references**: the source store their repo lens
+names. A web find worth keeping is written there by the specialist in the same task, one row per source,
+general knowledge only; where its tools cannot reach the store it is handed back as before. Rutger writes
+his mechanism pages and source rows himself. The plugins README describes references as the fifth layer
+beside the repo lens.
+
+**Score:** 3
+
+#### What makes this deploy extra special
+
+A life hub's source library now grows on its own: Rutger and the other specialists with a canon page
+add each source they look up to it themselves, so research done last week is not redone and no
+teammate has to place it.
+
+**Score:** 3
+
+#### Pull Request
+
+Specialists maintain their own references, a fifth layer beside the lens
+
+Plugins: dkj-subagents-alpha, dkj-subagents-developers, dkj-subagents-lifehub
+
+[PR #4546](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4546)
+
+---
 
 ### DEPLOY: fix/4529-ci-floor-runner-drift · 20261127-163926Z
 
