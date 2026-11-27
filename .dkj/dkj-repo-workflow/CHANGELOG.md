@@ -2,7 +2,36 @@
 
 ## [Unreleased]
 
-**8 / 10 minor entries** <!-- pending-tally -->
+**9 / 11 minor entries** <!-- pending-tally -->
+
+### DEPLOY: fix/4526-entry-gate-live-deploy-copy · 20261127-202934Z
+
+`entry-gate-live-sessioncheck` now reads the live deploy branch's own copy of the branch-entry caller
+(`origin/<live>`), not only the working copy. GitHub runs a hotfix PR's `pull_request` workflow from the
+live branch's refs, so a trunk fix that had not reached `live` left hotfix PRs ungated while the check
+said OK ([#4526](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4526)). The adoption page now
+says when a caller change takes effect for hotfix PRs. A local gate at the hotfix opener is
+[#4532](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4532).
+
+**Score:** 3
+
+#### What makes this deploy extra special
+
+A Shopify consumer with a hotfix lane now sees a `[WARN]` at session start, with the remedy, whenever its
+live branch still carries a caller that leaves `live` out. Before this, that state sat behind an OK line
+and surfaced only as stranded changelog entries, three times in three days.
+
+**Score:** 3
+
+#### Pull Request
+
+entry-gate-live-sessioncheck reads the deploy branch's own copy of the branch-entry caller
+
+Plugins: dkj-repo-workflow
+
+[PR #4535](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4535)
+
+---
 
 ### DEPLOY: fix/4542-reopen-guard-windows-path · 20261127-201550Z
 
