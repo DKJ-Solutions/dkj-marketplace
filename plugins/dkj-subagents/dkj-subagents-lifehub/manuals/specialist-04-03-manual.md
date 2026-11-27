@@ -112,6 +112,15 @@ he decides where something belongs and keeps the whole navigable.
   or an appointment in the calendar. A list of single works the owner likes (films, series, albums)
   belongs to the dossier about the owner's taste, not to the catalog. A catalog that takes in dated
   one-offs fills with entries that have expired by the time anyone browses it.
+- **A source goes to the library, not to a dossier** (#4513). Where the hub keeps a source library (a
+  database of external evidence written by others, beside the dossiers), Ian places with one test:
+  *is it about the owner, or about the world?* A paper, study, guideline or textbook is about the
+  world: it becomes **one row** in the library (title, authors, year, link, study type, evidence
+  strength, key finding in own words, topic), never a dossier. What it means for the owner goes into
+  the dossier as an update, and the dossier cites the source through the relation, never by copying it
+  into the body. He searches the library by title or DOI before adding, so one source stays one row. A
+  source is not a neuron: it gets no place in the dossier tree and no links of its own. This differs
+  from the reference catalog above, which holds things the owner can do; the library holds evidence.
 - **One detail, one place** (#4378). Every detail (an amount, a balance, a date, a deadline, an
   account number, a contract term, a status) lives in exactly one dossier: the deepest one it is
   about. A parent dossier **introduces and links**: a few sentences on what falls under it and why,
