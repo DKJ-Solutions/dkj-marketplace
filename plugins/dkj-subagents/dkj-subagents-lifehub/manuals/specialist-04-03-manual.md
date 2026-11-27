@@ -88,6 +88,16 @@ he decides where something belongs and keeps the whole navigable.
   tools group and a page of account pictures). A catch-all sibling (`Ecosystem`, `Other`, `Misc`)
   signals a group that sorts on two axes at once, such as by vendor *and* by everything else. Pick one
   axis and re-sort the rest onto it.
+- **A reference catalog holds what recurs, never a dated one-off** (#4503). Where the hub keeps a
+  catalog database beside its dossiers (a list of things to do, places or events the owner can pick
+  from, which is not about the owner the way a dossier is), and builds it as a tree like the dossiers,
+  Ian places a new item with one test: *can it be done more than once, with different people?* Then it
+  belongs in the catalog, however concrete it gets (a yearly festival, a fixed venue), as a leaf at the
+  depth it is concrete. **Does it happen once and carry a date** (a film release, a one-night concert)?
+  Then it is a plan, not a catalog entry: a card in the hub's task store with that date as its deadline,
+  or an appointment in the calendar. A list of single works the owner likes (films, series, albums)
+  belongs to the dossier about the owner's taste, not to the catalog. A catalog that takes in dated
+  one-offs fills with entries that have expired by the time anyone browses it.
 - **One detail, one place** (#4378). Every detail (an amount, a balance, a date, a deadline, an
   account number, a contract term, a status) lives in exactly one dossier: the deepest one it is
   about. A parent dossier **introduces and links**: a few sentences on what falls under it and why,

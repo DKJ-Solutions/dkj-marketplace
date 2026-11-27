@@ -39,21 +39,36 @@
 
 ### PLAN
 
+Inbound #4503: a consumer hub added a reference catalog database beside its dossiers and settled a
+placement rule for it. Ian's manual carries it next to "Siblings are of one kind", worded generically.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] Add "A reference catalog holds what recurs, never a dated one-off" to Ian's hard rules in
+  `plugins/dkj-subagents/dkj-subagents-lifehub/manuals/specialist-04-03-manual.md`
 
 ### TEST
 
+- [x] Docs only; the integrity and suite gates run through ship-pr
+
 ### DEPLOY: docs/4503-catalog-placement-test
 
-**Score:**
+Ian's manual now places a new item in a reference catalog beside the dossiers by one test: what can be
+done more than once, with different people, goes in the catalog however concrete; a dated one-off
+becomes a task card or calendar appointment, and single works the owner likes go to their taste
+dossier (#4503).
+
+**Score:** 1
 
 #### What makes this deploy extra special
 
-**Score:**
+A lifehub owner with a catalog of activities keeps it browsable, instead of filling it with film
+releases and one-night events that have expired by the time anyone looks.
+
+**Score:** 2
 
 #### Pull Request
 
 Ian: recurring-vs-one-off test for a reference catalog database
 
+Plugins: dkj-subagents-lifehub
