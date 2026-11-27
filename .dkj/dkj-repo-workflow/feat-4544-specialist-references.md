@@ -39,19 +39,46 @@
 
 ### PLAN
 
+#### Scope
+
+Steps 1 and 2 of the plan for #4544: the rule and the docs. A specialist's references are the source
+store its repo lens names, and the specialist writes a kept web find there itself instead of handing it
+back. Write access needs no change for a Notion store: the specialists carrying the block disallow file
+writes, not MCP tools, so a Notion library is reachable already; where the tools cannot reach the store,
+the rule falls back to handing the row back. The security look and the reuse measurement follow later.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `subagent-shared/knowledge-lookup.md`: the lookup order names references, and the specialist maintains them itself, with a fallback where its tools cannot reach the store
+- [x] `build-agent-defs.ps1` regenerated the block into the eight subagent defs that carry it
+- [x] Rutger (03-33): subagent step 6 and his manual write library pages and source rows himself; Ian places them only as the fallback
+- [x] `plugins/dkj-subagents/README.md`: a new section on references as the fifth layer beside the lens, with the canon/references/lens split and why references live in the repo store
 
 ### TEST
 
+- [x] `build-agent-defs.ps1 -Check`: all shared blocks in sync with the source
+- [x] the lint and test gates run through open-pr
+
 ### DEPLOY: feat/4544-specialist-references
 
-**Score:**
+Specialists with a canon page now maintain their own **references**: the source store their repo lens
+names. A web find worth keeping is written there by the specialist in the same task, one row per source,
+general knowledge only; where its tools cannot reach the store it is handed back as before. Rutger writes
+his mechanism pages and source rows himself. The plugins README describes references as the fifth layer
+beside the repo lens.
+
+**Score:** 3
 
 #### What makes this deploy extra special
 
-**Score:**
+A life hub's source library now grows on its own: Rutger and the other specialists with a canon page
+add each source they look up to it themselves, so research done last week is not redone and no
+teammate has to place it.
+
+**Score:** 3
 
 #### Pull Request
 
+Specialists maintain their own references, a fifth layer beside the lens
+
+Plugins: dkj-subagents-alpha, dkj-subagents-developers, dkj-subagents-lifehub
