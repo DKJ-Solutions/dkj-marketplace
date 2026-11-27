@@ -39,21 +39,47 @@
 
 ### PLAN
 
+Inbound #4518: a consumer hub retired the emotion half of its brain and moved the colour model to its
+library as one framework page. Verified against the tree: the portable layer carries only traces of
+the half (the routing itself lives in each consumer's lens): `halves (facts or emotion)` in Ian's
+def, `dossier/note/emotion` nodes in Onyx's def, and `corpus callosum` in Onyx's manual. No manual or
+skill copied the old Orange neighbour list (`magenta`: 0 hits). The `Plutchik` lock name stays, since
+the issue does not rename the brain.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] Ian's manual (04-03): a placement test for frameworks (library page, even when the owner
+  invented it), feelings routed as updates, and archived-not-deleted when a framework moves out.
+- [x] Ian's def: drop "which of its halves (facts or emotion)"; add the one-line framework test.
+- [x] Onyx's def: a node is a dossier or a note, no longer an emotion.
+- [x] Onyx's manual (04-04): an emotion colour is a tag, not a neuron; no links to archived colour
+  dossiers; no cross-hemisphere link; "corpus callosum" dropped from the lens pointer.
 
 ### TEST
 
+- [x] `grep -rnE "facts or emotion|corpus callosum|note/emotion"` over the plugins returns nothing
+  outside the new rules; the generated blocks in both defs are untouched. ship-pr runs the gates.
+
 ### DEPLOY: docs/4518-emotion-half-retired
 
-**Score:**
+The life hub's information architect and ontologist no longer treat the emotion half as live
+structure. Ian (04-03) places a framework, such as a colour model for emotions, as one reference page
+in the hub's library, even when the owner invented it, and routes a feeling as an update in the
+dossier of its topic, or in the identity dossier when it has none. Onyx (04-04) treats an emotion
+colour as a tag on a dossier, not as a neuron, and lays no links to colour dossiers a hub has archived.
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+A life-hub user whose hub keeps its emotion model in the library no longer gets new feelings filed as
+nodes of their own, or links laid to archived colour dossiers.
+
+**Score:** 2
 
 #### Pull Request
 
 Lifehub: the emotion half is retired; the colour model is a library framework
+
+Plugins: dkj-subagents-lifehub
 
