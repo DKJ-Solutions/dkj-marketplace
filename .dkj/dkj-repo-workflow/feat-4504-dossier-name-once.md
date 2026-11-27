@@ -39,19 +39,39 @@
 
 ### PLAN
 
+Inbound #4504: replace the "two dossiers may share a name" allowance in Ian's #4380 rule with a
+hub-wide uniqueness rule, and write the owner's decision on the gifts-under-a-person case
+(`Gifts <person>`) into it.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] Ian's manual (`specialist-04-03-manual.md`): dropped the allowance from "No word twice in a
+  dossier's path" and changed its `Person › Gifts` example; added "A dossier name occurs only once"
+  with the search test, the two clash routes, the grid-belongs-in-a-table case and the
+  `Gifts <person>` convention.
 
 ### TEST
 
+- [x] Read the rule against #4380 beside it: the `Gifts <person>` echo is named as the one place a
+  word may repeat its path, so the two rules do not contradict each other.
+
 ### DEPLOY: feat/4504-dossier-name-once
 
-**Score:**
+Ian, the life hub's information architect, now keeps every dossier name unique across the hub,
+compared case-insensitively. Before he creates or renames a dossier he searches for the exact name.
+On a clash he makes the new name more specific, or asks whether the items belong in a table instead
+of a tree of dossiers. The old allowance that two dossiers may share a name because their paths
+differ is gone. A per-person child dossier carries the person's name, so the gifts dossier under
+Anna is `Gifts Anna`.
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+A life-hub user can read a dossier name in a search result, a link or a mention and know which
+dossier it is, without opening its path.
+
+**Score:** 2
 
 #### Pull Request
 
