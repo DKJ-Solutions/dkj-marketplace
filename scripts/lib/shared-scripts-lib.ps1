@@ -655,6 +655,14 @@ function Get-SharedScriptPairs {
             LibOnly = $true
         },
         @{
+            # THE CI-FLOOR RUNNER TEMPLATES (#4529): composed by adopt-ci-floor and read back by
+            # check-script-contract's drift line, so both reach them in the dkj-repo-workflow payload.
+            Name    = 'ci-floor-runners-lib'
+            Source  = 'scripts\lib\ci-floor-runners-lib.ps1'
+            Plugin  = 'dkj-repo-workflow'
+            LibOnly = $true
+        },
+        @{
             Name    = 'write-target-lib-bwj'
             Source  = 'scripts\lib\write-target-lib.ps1'
             Plugin  = 'dkj-repo-workflow-bwj'
