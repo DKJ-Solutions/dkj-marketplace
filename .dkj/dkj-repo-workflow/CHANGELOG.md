@@ -2,7 +2,35 @@
 
 ## [Unreleased]
 
-**14 / 14 minor entries** <!-- pending-tally -->
+**15 / 15 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/4505-log-mental-block · 20261127-095104Z
+
+`dkj-subagents-lifehub` ships a new skill, [`log-mental-block`](../../plugins/dkj-subagents/dkj-subagents-lifehub/skills/log-mental-block/SKILL.md),
+a stuck button Hugo runs: on a moment with no drive it takes the choice away through behavioral
+activation (body first, chance picks from the owner's menu, predict, ten minutes, measure), and records
+every moment as a chapter in one running journal in Notion, with triggers, sources, a follow-up and a
+Patterns section once enough moments exist (#4505).
+
+**Score:** 3
+
+#### What makes this deploy extra special
+
+A lifehub owner who gets stuck gets a button that decides for them in the moment, and over weeks a
+journal that shows what preceded each moment, what helped and whether it lasted, instead of a local
+copy of the skill that only their own hub carries.
+
+**Score:** 3
+
+#### Pull Request
+
+dkj-subagents-lifehub: new skill log-mental-block, a stuck button and running journal
+
+Plugins: dkj-subagents-lifehub
+
+[PR #4510](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4510)
+
+---
 
 ### DEPLOY: docs/4503-catalog-placement-test · 20261127-093451Z
 
