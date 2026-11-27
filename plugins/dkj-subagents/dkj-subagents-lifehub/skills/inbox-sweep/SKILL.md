@@ -50,7 +50,12 @@ on the view the settings name, not in SQL or rows mode: those share an hourly qu
 `search_threads` with `in:inbox`, `pageSize` 50 and `THREAD_VIEW_SUMMARY`; follow `nextPageToken` to
 the end. Process **oldest first** by default; an order the settings page or the hub's conventions
 name takes precedence over this default (#4483). Read a thread in full (`get_thread`, `PLAIN_TEXT`) only when the
-snippet is not enough to decide. A thread is one unit: read every message in it.
+snippet is not enough to decide. A thread is one unit: read every message in it. **A plain-text body
+that is only a stub is not the mail** (#4506): where it just points to a web version or a link, or is
+far shorter than `sizeEstimate` suggests, read the thread again with `FULL_CONTENT` and take the facts
+from `htmlBody`. Never follow the "view online" link: it is a tracking URL. Measured: a tariff change
+from an HTML-only sender showed only the stub in `PLAIN_TEXT`, and its prices and date appeared only
+in the HTML part.
 
 Make sure both labels from the settings exist (`list_labels`, otherwise `create_label`). The decision
 label is named like the GitHub label `awaiting-decision` on purpose: the same notion, the same name.

@@ -67,12 +67,26 @@ he decides where something belongs and keeps the whole navigable.
   make the path say one area and the category another, which is the contradiction this rule exists to
   prevent.
 - **No word twice in a dossier's path** (#4380). Where dossiers form a tree and the hub shows each
-  one's path (`Person › Gifts`), a dossier Ian creates or renames does not repeat a word already
+  one's path (`Wedding › DJ`), a dossier Ian creates or renames does not repeat a word already
   higher in that path: the path supplies the context (`Wedding › DJ`, not `Wedding › DJ wedding`).
-  Two dossiers may therefore share a name (two `Ideas` under different parents), because the path
-  tells them apart. A proper name stays whole and is never shortened to dodge the repeat; where it
-  clashes with the path, the dossier usually belongs beside the other one rather than under it
-  (`AI › Claude` and `AI › Claude Code`).
+  A proper name stays whole and is never shortened to dodge the repeat; where it clashes with the
+  path, the dossier usually belongs beside the other one rather than under it (`AI › Claude` and
+  `AI › Claude Code`).
+- **A dossier name occurs only once** (#4504). When Ian creates or renames a dossier, no other dossier
+  in the hub carries the same name, compared case-insensitively. The path telling two of them apart is
+  not enough: a name read on its own (in a search result, a link, a mention) has to identify one
+  dossier. **The test:** search the dossier store for the exact name before creating it; one hit means
+  rename or rethink. On a clash:
+  1. **make the new name more specific** with what actually distinguishes it, but never with a word
+     already higher in its own path (the rule above still holds);
+  2. **or ask whether it should be a dossier at all.** A grid that repeats the same names at every
+     branch (tempo › variant › colour, where each colour recurs under every variant) belongs in a table
+     with those as columns, not in nested dossiers.
+
+  A per-person child dossier takes the person's name: the gifts dossier under a person is
+  `Gifts <person>` (`Anna › Gifts Anna`), the one place a word may echo its path, because a proper
+  name is what makes it unique. Measured in a consumer hub: a 148-dossier grid repeated one colour
+  name 16 times and each variant name 4 times.
 - **A dossier name is a subject, never a task** (#4466). A dossier Ian creates or renames is named for
   what it is *about*, not for what has to *happen*: no verb or action in the name (`Tool X`, not
   `Replace tool X`; `Plugin-clean`, not `Make plugin-clean`). What has to happen lives on a task card,
@@ -98,6 +112,24 @@ he decides where something belongs and keeps the whole navigable.
   or an appointment in the calendar. A list of single works the owner likes (films, series, albums)
   belongs to the dossier about the owner's taste, not to the catalog. A catalog that takes in dated
   one-offs fills with entries that have expired by the time anyone browses it.
+- **A source goes to the library, not to a dossier** (#4513). Where the hub keeps a source library (a
+  database of external evidence written by others, beside the dossiers), Ian places with one test:
+  *is it about the owner, or about the world?* A paper, study, guideline or textbook is about the
+  world: it becomes **one row** in the library (title, authors, year, link, study type, evidence
+  strength, key finding in own words, topic), never a dossier. What it means for the owner goes into
+  the dossier as an update, and the dossier cites the source through the relation, never by copying it
+  into the body. He searches the library by title or DOI before adding, so one source stays one row. A
+  source is not a neuron: it gets no place in the dossier tree and no links of its own. This differs
+  from the reference catalog above, which holds things the owner can do; the library holds evidence.
+- **A framework goes to the library, even one the owner invented** (#4518). Ian places a model,
+  scheme or classification with one test: *is it a framework you can apply to anything, or is it
+  about the owner?* A framework (a colour model for emotions, a scoring scheme, a typology) is general
+  knowledge: it becomes **one reference page** in the library, never a set of dossiers and never a
+  half of the brain. Dossiers apply it through a tag that points at that page. A feeling is content,
+  not structure: a feeling about a topic becomes an update in that topic's dossier, and a feeling with
+  no topic an update in the dossier about the owner's identity, never a node of its own. When a
+  framework that used to live as dossiers moves to the library, the old dossiers are **archived, not
+  deleted**, so every existing link still resolves.
 - **One detail, one place** (#4378). Every detail (an amount, a balance, a date, a deadline, an
   account number, a contract term, a status) lives in exactly one dossier: the deepest one it is
   about. A parent dossier **introduces and links**: a few sentences on what falls under it and why,

@@ -57,7 +57,10 @@ These rules take precedence over any convenience.
 - **Sending a message to a person.** When the owner asks you to write a reply or a message to someone
   (a colleague, a requester, a client), the text is delivered **in the chat** and the owner sends it
   themselves. Asking for the text is not asking for it to be sent: a message under the owner's name is
-  outward-facing, wherever it would land (an Asana task, an issue comment, a mail, a channel). Only the
+  outward-facing, wherever it would land (an Asana task, an issue comment, a mail, a channel). **The draft
+  is written in the owner's own voice, first person singular ("I"), never as the team ("we")**, unless
+  the owner asks otherwise: the specialists stay visible in the session, never in a text one person
+  signs (#4522). Only the
   writes a procedure makes by itself, such as `report-issue`'s own comment and link, are the session's to
   post ([#4343](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4343): a session posted a question
   straight onto the requester's Asana task, and the owner removed it).

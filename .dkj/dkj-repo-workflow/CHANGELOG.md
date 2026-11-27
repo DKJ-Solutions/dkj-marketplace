@@ -2,7 +2,170 @@
 
 ## [Unreleased]
 
-**17 / 17 minor entries** <!-- pending-tally -->
+**23 / 23 minor entries** <!-- pending-tally -->
+
+### DEPLOY: docs/4522-draft-in-owners-voice · 20261127-123501Z
+
+A message the session drafts for the owner to send (an Asana comment, a reply to a requester) is now
+written in the owner's own voice, first person singular, never as the team, unless the owner asks
+otherwise. The specialists stay visible in the session, never in a text one person signs.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+A user of the workflow no longer has to rewrite "we" into "I" before posting a drafted message under
+their own name.
+
+**Score:** 2
+
+#### Pull Request
+
+Constitution: a message drafted for the owner to send is written in their own voice
+
+Plugins: dkj-repo-workflow
+
+[PR #4524](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4524)
+
+---
+
+### DEPLOY: feat/4520-asana-intake · 20261127-120841Z
+
+`dkj-repo-workflow-bwj` gains `asana-intake`, the front door for a colleague's Asana task that reaches
+development. It reads the task, checks whether it is already filed or resolved (tracker open and closed,
+the trunk and the live branch, merged PRs), verifies the cause the ticket states, and settles one
+outcome: already resolved, an issue filed through `report-issue`, or no repo change. It ends with a
+readiness verdict, and any question for the requester is drafted in the chat, never posted.
+
+**Score:** 3
+
+#### What makes this deploy extra special
+
+A developer in a BWJ store repo no longer retypes the same three-step prompt for every Asana ticket, and
+a ticket an earlier PR already resolved is caught before a duplicate issue is filed.
+
+**Score:** 3
+
+#### Pull Request
+
+dkj-repo-workflow-bwj: an asana-intake skill -- read a task, check whether it is handled, file if needed, judge dev-readiness
+
+Plugins: dkj-repo-workflow-bwj
+
+[PR #4523](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4523)
+
+---
+
+### DEPLOY: docs/4518-emotion-half-retired · 20261127-114846Z
+
+The life hub's information architect and ontologist no longer treat the emotion half as live
+structure. Ian (04-03) places a framework, such as a colour model for emotions, as one reference page
+in the hub's library, even when the owner invented it, and routes a feeling as an update in the
+dossier of its topic, or in the identity dossier when it has none. Onyx (04-04) treats an emotion
+colour as a tag on a dossier, not as a neuron, and lays no links to colour dossiers a hub has archived.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+A life-hub user whose hub keeps its emotion model in the library no longer gets new feelings filed as
+nodes of their own, or links laid to archived colour dossiers.
+
+**Score:** 2
+
+#### Pull Request
+
+Lifehub: the emotion half is retired; the colour model is a library framework
+
+Plugins: dkj-subagents-lifehub
+
+[PR #4521](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4521)
+
+---
+
+### DEPLOY: fix/4506-inbox-sweep-html-stub · 20261127-110818Z
+
+The life hub's `inbox-sweep` no longer files an HTML-only mail as having nothing in it. Some senders
+put only a "view online" stub in the plain-text part of a mail, with the real content in the HTML
+part. When the plain-text body is such a stub, the sweep now reads the thread again in full and takes
+the facts from the HTML. It never follows the "view online" link, because that is a tracking URL.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+A life-hub user no longer loses a mail such as a price change from a sender that writes only HTML,
+which the sweep used to sort as nothing lasting.
+
+**Score:** 2
+
+#### Pull Request
+
+inbox-sweep: read FULL_CONTENT when the plain-text body is a view-online stub
+
+Plugins: dkj-subagents-lifehub
+
+[PR #4517](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4517)
+
+---
+
+### DEPLOY: feat/4513-bronnen-library · 20261127-110250Z
+
+The life-hub specialists now keep external evidence apart from the dossiers, where a hub keeps a
+source library. A paper, study, guideline or textbook becomes one row in that library, never a
+dossier. What it means for the person goes into the dossier as an update, citing the row through
+the relation. Ian places sources by asking whether a thing is about the person or about the world.
+Onyx lays no links to or between sources. Rutger delivers each source he opened as a row: the GRADE
+strength of that single source sits on the row, and the evidence status of the mechanism stays on the
+mechanism page. Rutger, Hugo and Fiona look a source up in the library before searching the web. So
+does Rebecca, when she researches for a hub.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+A life-hub user finds a source once and every specialist reuses it, instead of each one searching
+the web again for evidence another already found.
+
+**Score:** 3
+
+#### Pull Request
+
+Life hub: keep external evidence in a separate library, apart from the brain
+
+Plugins: dkj-subagents-alpha, dkj-subagents-lifehub
+
+[PR #4515](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4515)
+
+---
+
+### DEPLOY: feat/4504-dossier-name-once · 20261127-104946Z
+
+Ian, the life hub's information architect, now keeps every dossier name unique across the hub,
+compared case-insensitively. Before he creates or renames a dossier he searches for the exact name.
+On a clash he makes the new name more specific, or asks whether the items belong in a table instead
+of a tree of dossiers. The old allowance that two dossiers may share a name because their paths
+differ is gone. A per-person child dossier carries the person's name, so the gifts dossier under
+Anna is `Gifts Anna`.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+A life-hub user can read a dossier name in a search result, a link or a mention and know which
+dossier it is, without opening its path.
+
+**Score:** 2
+
+#### Pull Request
+
+Ian: a dossier name occurs only once in the hub
+
+Plugins: dkj-subagents-lifehub
+
+[PR #4514](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4514)
+
+---
 
 ### DEPLOY: docs/4500-ian-person-rings · 20261127-102341Z
 

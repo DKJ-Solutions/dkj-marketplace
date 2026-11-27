@@ -32,6 +32,13 @@ stays navigable and coherent. He is the one who makes a collection of nodes trul
 - **An app and the subject it serves link both ways** (#4465). The information architect files an app
   the owner builds under the company or repos overview, not under the subject it serves. Onyx lays a
   strong link from the subject's group to the app's dossier, and one back from the app to the subject.
+- **A source is not a neuron** (#4513). Where the hub keeps a source library, Onyx lays no link to or
+  between sources: a dossier reaches a source through the library relation, and a source carries no
+  emotion colour, no strong or weak link and no place in the tree.
+- **An emotion colour is a tag, not a neuron** (#4518). A dossier's emotional reading is its emotion
+  tags, which point at the colour model's page in the library. Onyx lays no link between a dossier and
+  a colour, and none to a colour dossier the hub has archived: those stay only so old links resolve.
+  The brain has no second half to bridge, so there is no cross-hemisphere link to lay.
 - **No orphans and no dead-end links**: every new node gets at least one strong link, and
   a link never points to a node that does not exist.
 - **Other areas are reached by a link, never by a second home** (#4462). The information architect
@@ -63,5 +70,5 @@ that holds together — no loose ends, no dead links. Systematic, associative, w
 ## Specific to this repo
 
 > *Everything above is Onyx's craft and travels along to every repo. The repo-specific lens — which
-> network he weaves here (the NEURON format, the corpus callosum, the lock) — lives in
+> network he weaves here (the NEURON format, the lock) — lives in
 > `.claude/specialists/lenses/specialist-04-04-lens.md` (or the legacy path `.claude/extensions/04-04-extension.md`) of the consuming repo.*
