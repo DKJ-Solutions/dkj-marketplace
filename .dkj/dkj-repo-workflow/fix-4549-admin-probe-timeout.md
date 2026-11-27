@@ -39,19 +39,28 @@
 
 ### PLAN
 
+- [x] Verify #4549's reason in the code: the `/whoami` probe is uncached (`serve-consumer-dashboard.ps1` L409, L599) and `Get-LoopbackWhoami` gives connect + read one 500 ms deadline
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `serve-consumer-dashboard.ps1`: a new `-AdminProbeTimeoutMs` (default 500) feeds both probes
+- [x] `consumer-dashboard.tests.ps1`: the fixture's product server starts with `-AdminProbeTimeoutMs 5000`
 
 ### TEST
 
+- [x] `consumer-dashboard.tests.ps1` locally: 258 passed, 0 failed
+
 ### DEPLOY: fix/4549-admin-probe-timeout
 
-**Score:**
+The consumer-dashboard suite's admin-card assert no longer flakes on a busy CI shard (#4549, superseding the record #3856). The product server asked the freshly started plugin admin for `/whoami` with a fixed 500 ms deadline, which a cold PowerShell admin on a four-lane shard can miss, so the home page rendered "Admin is not running" behind a healthy 200. `serve-consumer-dashboard.ps1` now takes that deadline as `-AdminProbeTimeoutMs` (default 500, unchanged for a browser visit), and the fixture raises it to 5000 ms.
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+N/A -- a test fixture and a test-only server parameter; nothing a consumer runs behaves differently.
+
+**Score:** N/A
 
 #### Pull Request
 
