@@ -206,6 +206,7 @@
                                       "adopt-triage-labels.tests.ps1",
                                       "adopt-workflow-folder.tests.ps1",
                                       "bootstrap-drift.tests.ps1",
+                                      "ci-floor-runners-lib.tests.ps1",
                                       "config-blueprint.tests.ps1",
                                       "orchestrator-skill.tests.ps1",
                                       "pin-parity.tests.ps1",

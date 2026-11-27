@@ -2,7 +2,88 @@
 
 ## [Unreleased]
 
-**4 / 4 minor entries** <!-- pending-tally -->
+**7 / 7 minor entries** <!-- pending-tally -->
+
+### DEPLOY: fix/4530-close-guard-variable-target · 20261127-171702Z
+
+A `gh issue close` whose issue comes from a variable, the way a loop closes a batch, no longer slips past
+the go-live block guard in silence. The hook read such a command as no close at all, so in
+smartwatchbanden three Asana-linked issues closed with only the "result message follows" line. It now
+asks a person first, with the reason and the fix: close one issue per command with a literal number.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+In a store repo running `dkj-repo-workflow-bwj`, closing issues in a loop now raises a permission prompt
+instead of posting a closed message with no go-live block on each Asana task.
+
+**Score:** 2
+
+#### Pull Request
+
+guard-stale-paste-block: a gh issue close whose target is a variable asks instead of passing silently
+
+Plugins: dkj-repo-workflow-bwj
+
+[PR #4541](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4541)
+
+---
+
+### DEPLOY: feat/4544-specialist-references · 20261127-170042Z
+
+Specialists with a canon page now maintain their own **references**: the source store their repo lens
+names. A web find worth keeping is written there by the specialist in the same task, one row per source,
+general knowledge only; where its tools cannot reach the store it is handed back as before. Rutger writes
+his mechanism pages and source rows himself. The plugins README describes references as the fifth layer
+beside the repo lens.
+
+**Score:** 3
+
+#### What makes this deploy extra special
+
+A life hub's source library now grows on its own: Rutger and the other specialists with a canon page
+add each source they look up to it themselves, so research done last week is not redone and no
+teammate has to place it.
+
+**Score:** 3
+
+#### Pull Request
+
+Specialists maintain their own references, a fifth layer beside the lens
+
+Plugins: dkj-subagents-alpha, dkj-subagents-developers, dkj-subagents-lifehub
+
+[PR #4546](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4546)
+
+---
+
+### DEPLOY: fix/4529-ci-floor-runner-drift · 20261127-163926Z
+
+A consumer now hears at session start when a CI-floor runner it placed earlier is behind the template the
+installed plugin ships. The script-contract check holds `fold-on-merge.yml`, `verify-resolved.yml`,
+`merge-on-green.yml`, `repo-settings.yml` and `close-parked-recurrences.yml` to what `adopt-ci-floor`
+composes today, the shared-scripts pin aside, and prints a `[BEHIND]` line with the first differing line
+and how to take the change. A re-run of `adopt-ci-floor` reports the same.
+
+**Score:** 3
+
+#### What makes this deploy extra special
+
+A consumer whose `fold-on-merge.yml` predates the #4479 retry is told so at the next session start,
+instead of finding stranded changelog entries on its trunk after a merge.
+
+**Score:** 3
+
+#### Pull Request
+
+A placed CI-floor runner behind its template is reported at session start
+
+Plugins: dkj-repo-workflow
+
+[PR #4540](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4540)
+
+---
 
 ### DEPLOY: fix/4528-skill-description-budget · 20261127-162005Z
 

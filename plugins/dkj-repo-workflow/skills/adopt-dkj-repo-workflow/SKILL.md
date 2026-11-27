@@ -746,6 +746,17 @@ you are running -- one `ref:` line per file, and the run prints the value to put
 cannot be resolved (offline), the tag itself is written and the run says so; where not even the version
 can be read, the runners fall back to `main`, and the run says that too.
 
+**And a runner whose BODY is behind is reported at every session start** (#4529). A release that changes
+a runner, as #4479 changed the fold's handling of a moved trunk, never reaches a copy you already have.
+Measured in a consumer: a `fold-on-merge.yml` from v7.0.0 stood down where the new one retries, and
+stranded five entries while nothing said so. So the script-contract session check holds every placed
+runner to the template this plugin version composes, its shared-scripts `ref:` line aside, and
+forwards a `[BEHIND]` line naming the file and the first line that differs. Re-running this part prints
+the same finding as `[behind]` under the file's `[exists]` line. To take the change, delete the file,
+re-run with `-Apply`, and read `git diff` before you commit: it shows what the template changed, and any
+edit of your own to carry back. Like `[UNADOPTED]`, it counts toward nothing, and naming
+`adopt-ci-floor` in `Get-DeclinedAdoptions` silences it.
+
 ### Exit code
 
 `0` while the queue is off and the floor is merely unbuilt -- that is a to-do, not a defect, and your
