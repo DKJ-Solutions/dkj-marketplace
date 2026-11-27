@@ -39,19 +39,41 @@
 
 ### PLAN
 
+Inbound #4527: the fold pre-pass (`fold-changelog-entry.ps1`) exited 1 on the first entry whose impact
+could not be honoured, so every valid entry stranded beside it stayed on the trunk and every later
+unrelated merge turned `fold-on-merge` red. Verified in the script: the `$tierProblems` block refused the
+whole run. The guardrail's intent (no half-folded state) is kept by judging in the pre-pass and only
+narrowing the list the loop walks.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `fold-changelog-entry.ps1` (and its byte-identical plugin mirror): malformed entries are set aside
+  in the pre-pass, the valid ones fold, and the run ends with exit 1 naming each set-aside entry and its
+  reason. All-malformed refuses up front as before; exit 2 is untouched.
+- [x] `fold-changelog.tests.ps1`: the pre-pass section now pins the new behaviour (good entry folded and
+  removed, bad entry left untouched and named, exit 1).
+- [x] Rendall's lens (05-06): the fold-all sentence describes the new behaviour.
 
 ### TEST
 
+- [x] `fold-changelog.tests.ps1` 309 pass / 0 fail; `entry-scaffold.tests.ps1` passes (the all-malformed
+  refusal still sits before the first changelog write). `fold-on-merge.yml` reads exit codes only, so it
+  needs no change. ship-pr runs the full gate.
+
 ### DEPLOY: fix/4527-fold-valid-entries-past-malformed
 
-**Score:**
+The changelog fold no longer refuses a whole fold-all run over one malformed entry. It sets that entry
+aside on the trunk, folds the valid entries beside it, and ends red naming the set-aside entry and why,
+so a release cut in the meantime no longer misses changes that were written correctly.
+
+**Score:** 3
 
 #### What makes this deploy extra special
 
-**Score:**
+A repo whose trunk holds one malformed entry no longer sees its valid entries stranded with it, or every
+unrelated merge's fold go red without folding anything.
+
+**Score:** 3
 
 #### Pull Request
 
