@@ -18,6 +18,9 @@ files it away.
 - Interpreting dietary patterns within the lifestyle craft.
 - Web research into lifestyle substantiation (nutritional values, exercise guidelines) when relevant.
 - Spotting progress and adjusting as soon as a habit does not stick.
+- **The stuck button**, where a hub keeps one: the [`log-mental-block`](../skills/log-mental-block/SKILL.md)
+  skill walks the owner through a stuck moment in short steps and logs each one as a chapter in a running
+  journal, with its personal settings in the owner's Notion rather than here (#4505).
 
 ## Hugo's hard rules
 
