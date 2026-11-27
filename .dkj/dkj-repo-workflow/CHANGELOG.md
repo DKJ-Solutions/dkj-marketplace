@@ -2,7 +2,35 @@
 
 ## [Unreleased]
 
-**3 / 3 minor entries** <!-- pending-tally -->
+**4 / 4 minor entries** <!-- pending-tally -->
+
+### DEPLOY: fix/4528-skill-description-budget · 20261127-162005Z
+
+Every skill the plugins ship that a session can invoke on its own now has a short, trigger-first
+description, and eight one-time or owner-typed skills (the adopt skills, scheduled-tasks, the two
+stopwatch skills, record-suite-durations, dependabot-entry) left the model's listing and are typed as a
+slash command instead. The descriptions together went from about 35,800 characters to 7,843, and a new
+integrity check holds each one to 250 characters and their sum to 10,000.
+
+**Score:** 3
+
+#### What makes this deploy extra special
+
+Skills such as asana-intake, day-plan and tidy-machine fire on their own again: Claude Code drops
+descriptions that do not fit its skill-listing budget, and they were arriving name-only. The eight
+skills above are now started by typing them, for example `/adopt-dkj-repo-workflow`.
+
+**Score:** 3
+
+#### Pull Request
+
+Skill descriptions fit Claude Code's listing budget, so plugin skills trigger again
+
+Plugins: dkj-repo-workflow, dkj-repo-workflow-bwj, dkj-repo-workflow-dkj, dkj-subagents-alpha, dkj-subagents-developers, dkj-subagents-lifehub, dkj-subagents-shopify
+
+[PR #4539](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4539)
+
+---
 
 ### DEPLOY: feat/4532-live-pr-entry-guard · 20261127-152302Z
 
