@@ -548,6 +548,17 @@ function Get-SharedScriptPairs {
             Skill  = 'retro'
         },
         @{
+            # WHAT THE REFERENCES SAVE (#4547): per specialist and per week, the sources taken from the
+            # references, the sources added and the web searches, reported beside the measured web calls.
+            # Mirrored for retro's reason: it reads ~/.claude/projects, needs no seam, always exits 0, and
+            # only counts leave it. Its own page, disable-model-invocation, so it costs no session anything.
+            Name   = 'measure-references'
+            Source = 'scripts\maintenance\measure-references.ps1'
+            Plugin = 'dkj-repo-workflow'
+            Skill  = 'measure-references'
+            RepoRootExempt = 'it reads only ~/.claude/projects and writes nothing; no repo is involved'
+        },
+        @{
             # THE DECISION STOPS (#4005): how often a session stopped for an AskUserQuestion menu, and how
             # often the owner then simply picked Recommended. Mirrored for retro's reason: it reads
             # ~/.claude/projects, needs no seam, always exits 0, and only counts leave it. The setting it
