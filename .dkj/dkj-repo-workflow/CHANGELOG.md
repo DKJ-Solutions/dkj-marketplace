@@ -2,7 +2,145 @@
 
 ## [Unreleased]
 
-**11 / 11 minor entries** <!-- pending-tally -->
+**16 / 16 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/4511-rutger-sourced-mechanisms · 20261127-095615Z
+
+Rutger, the life hub's Behavioral Analyst, now grounds the explanation half of a conclusion in the
+literature rather than in model memory, and keeps what he finds. He reads the hub's mechanism library
+first. That library has one page per mechanism, with its sources, its evidence status and the date it
+was last checked. He searches the web only when a page is missing, more than 12 months old or marked
+contested, and never with the person's data. After a search he delivers the new page for Ian to
+place. Each pattern he reports has the same shape:
+- the observation, with its data points;
+- the mechanism, with a source he opened and its status (established, mixed or contested);
+- at least one competing explanation;
+- a confidence level.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+A life-hub user can check every explanation Rutger gives against its source, and sees how solid the
+underlying research is. Research done once stays in the hub's library instead of being repeated.
+
+**Score:** 3
+
+#### Pull Request
+
+Rutger grounds each mechanism in a source he opened
+
+Plugins: dkj-subagents-lifehub
+
+[PR #4512](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4512)
+
+---
+
+### DEPLOY: feat/4505-log-mental-block · 20261127-095104Z
+
+`dkj-subagents-lifehub` ships a new skill, [`log-mental-block`](../../plugins/dkj-subagents/dkj-subagents-lifehub/skills/log-mental-block/SKILL.md),
+a stuck button Hugo runs: on a moment with no drive it takes the choice away through behavioral
+activation (body first, chance picks from the owner's menu, predict, ten minutes, measure), and records
+every moment as a chapter in one running journal in Notion, with triggers, sources, a follow-up and a
+Patterns section once enough moments exist (#4505).
+
+**Score:** 3
+
+#### What makes this deploy extra special
+
+A lifehub owner who gets stuck gets a button that decides for them in the moment, and over weeks a
+journal that shows what preceded each moment, what helped and whether it lasted, instead of a local
+copy of the skill that only their own hub carries.
+
+**Score:** 3
+
+#### Pull Request
+
+dkj-subagents-lifehub: new skill log-mental-block, a stuck button and running journal
+
+Plugins: dkj-subagents-lifehub
+
+[PR #4510](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4510)
+
+---
+
+### DEPLOY: docs/4503-catalog-placement-test · 20261127-093451Z
+
+Ian's manual now places a new item in a reference catalog beside the dossiers by one test: what can be
+done more than once, with different people, goes in the catalog however concrete; a dated one-off
+becomes a task card or calendar appointment, and single works the owner likes go to their taste
+dossier (#4503).
+
+**Score:** 1
+
+#### What makes this deploy extra special
+
+A lifehub owner with a catalog of activities keeps it browsable, instead of filling it with film
+releases and one-night events that have expired by the time anyone looks.
+
+**Score:** 2
+
+#### Pull Request
+
+Ian: recurring-vs-one-off test for a reference catalog database
+
+Plugins: dkj-subagents-lifehub
+
+[PR #4508](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4508)
+
+---
+
+### DEPLOY: feat/4507-rutger-behavioral-analyst · 20261127-092747Z
+
+The life-hub team gains a sixth specialist, Rutger 🧠, the Behavioral Analyst (03-33): a combination of
+the forensic psychologist's interviewing, the clinical psychologist's functional analysis and the social
+psychologist's view of context. He asks the questions that matter, recognises patterns in what the hub
+holds, and says plainly which mechanism explains how its owner feels in a situation. He gives no advice and
+no diagnoses, and refers to the GP or 113 on a crisis signal. Hugo advises; Rutger explains.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+A life-hub user can now ask for a factual, unsoftened explanation of their own patterns, a craft the
+team did not have. It arrives with the next release and needs `sync-roster` in the hub for its lens.
+
+**Score:** 3
+
+#### Pull Request
+
+dkj-subagents-lifehub: add Rutger, the Behavioral Analyst (03-33)
+
+Plugins: dkj-subagents-lifehub
+
+[PR #4509](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4509)
+
+---
+
+### DEPLOY: docs/4499-ian-file-tool-by-use · 20261125-192945Z
+
+Ian's manual now files a tool (a device, software, an AI service, an account) by what it is used for:
+under the one line of work it serves, or in a top-level tools group of its own when it is used for
+everything, never under the home branch (#4499).
+
+**Score:** 1
+
+#### What makes this deploy extra special
+
+A lifehub owner finds every computer, printer and AI subscription by one yardstick, instead of some
+filed by where they stand and others by what runs on them.
+
+**Score:** 2
+
+#### Pull Request
+
+Ian: file a tool under what it is used for, not who owns it
+
+Plugins: dkj-subagents-lifehub
+
+[PR #4501](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4501)
+
+---
 
 ### DEPLOY: feat/4497-task-card-short-note · 20261125-125025Z
 

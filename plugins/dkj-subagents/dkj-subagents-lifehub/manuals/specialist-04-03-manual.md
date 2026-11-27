@@ -88,6 +88,16 @@ he decides where something belongs and keeps the whole navigable.
   tools group and a page of account pictures). A catch-all sibling (`Ecosystem`, `Other`, `Misc`)
   signals a group that sorts on two axes at once, such as by vendor *and* by everything else. Pick one
   axis and re-sort the rest onto it.
+- **A reference catalog holds what recurs, never a dated one-off** (#4503). Where the hub keeps a
+  catalog database beside its dossiers (a list of things to do, places or events the owner can pick
+  from, which is not about the owner the way a dossier is), and builds it as a tree like the dossiers,
+  Ian places a new item with one test: *can it be done more than once, with different people?* Then it
+  belongs in the catalog, however concrete it gets (a yearly festival, a fixed venue), as a leaf at the
+  depth it is concrete. **Does it happen once and carry a date** (a film release, a one-night concert)?
+  Then it is a plan, not a catalog entry: a card in the hub's task store with that date as its deadline,
+  or an appointment in the calendar. A list of single works the owner likes (films, series, albums)
+  belongs to the dossier about the owner's taste, not to the catalog. A catalog that takes in dated
+  one-offs fills with entries that have expired by the time anyone browses it.
 - **One detail, one place** (#4378). Every detail (an amount, a balance, a date, a deadline, an
   account number, a contract term, a status) lives in exactly one dossier: the deepest one it is
   about. A parent dossier **introduces and links**: a few sentences on what falls under it and why,
@@ -118,6 +128,21 @@ he decides where something belongs and keeps the whole navigable.
     own level (favourite / like / want to try / not for me) and a relation to the person dossiers of
     the others who like it, which is the "shared with" answer. The table exists to make it easy to
     think of something to do together with someone.
+- **A tool is filed under what it is used for, not under who owns it or where it stands** (#4499). A
+  tool is a device, software, an AI service or an account. *One home per topic* applies with its own
+  test: *if this line of work stopped tomorrow, would the tool go with it into the archive?*
+  - **A tool that serves one line of work** goes under that work (an office computer under its
+    employer).
+  - **A tool used for everything**, private and work alike (a personal computer, a home printer, an AI
+    subscription), goes in a **top-level group of its own** for tools, not under the home branch: the
+    home branch has its own test (*does it lapse when the owner moves house?*), and a computer or an AI
+    tool fails it.
+  - **The owner's own repos keep their home** under the company or repos overview (the rule above) and
+    link to the tools they run on.
+
+  What a tool touches beyond its home is a strong or weak link, never a second home. Filing one tool by
+  where it stands and another by what runs on it is the mismatch this rule removes: use is the one
+  yardstick that explains both.
 - **A task card's Deadline and SMART answers come from the owner or a source, never from the writer**
   (#4399). Whoever creates a card in the hub's task store (Ian, `inbox-sweep`, `agenda`) fills the
   deadline only with a date the owner gave or a source states (a mail, a letter, an official date), and
