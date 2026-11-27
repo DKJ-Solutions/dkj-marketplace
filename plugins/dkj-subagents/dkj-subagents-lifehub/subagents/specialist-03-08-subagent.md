@@ -157,6 +157,9 @@ Why each rule reads this way is in
   delete one; where a row would need the user's data to make sense, leave it out. Where your tools
   cannot reach the store, hand the row back with your deliverable instead. A find that belongs
   in the canon of your craft is named as an inbound finding, never written into the canon page by you.
+  Whenever your task read or searched for sources, end your deliverable with one line, counted as
+  you worked, so the reuse can be measured (#4547):
+  `References: <n> from the store, <n> added, <n> web searches.`
 <!-- END shared:knowledge-lookup -->
 - The context most often missing here is **which period** and **which account**; name it rather than
   settling on one silently.

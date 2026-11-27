@@ -39,19 +39,40 @@
 
 ### PLAN
 
+#4547's step 1, the data source: both, kept apart. The knowledge-lookup block asks each specialist to end
+its deliverable with `References: <n> from the store, <n> added, <n> web searches.` (the store differs per
+repo, so only the specialist can count it), and the script counts the WebSearch/WebFetch calls in that
+subagent's own transcript beside it (the half nobody can talk up). Steps 3 (the Admin chart) and 4 (the
+measurement after a release) are split off to #4550, parked on `awaiting-release`: no transcript carries
+the line until a release ships it, so a chart now would show an empty state nobody can judge.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `subagent-shared/knowledge-lookup.md`: the References line, regenerated into the eight agent defs
+- [x] `scripts/maintenance/measure-references.ps1` (+ plugin mirror, shared-scripts registry), its skill page `measure-references` (disable-model-invocation)
+- [x] `scripts/tests/measure-references.tests.ps1`
 
 ### TEST
 
+- [x] the new suite: 26 passed
+- [x] a real run (`-All`) over this machine's 75 subagent runs: rebecca 42 measured web calls over 3 runs, nothing reported yet, exit 0
+
 ### DEPLOY: feat/4547-measure-references
 
-**Score:**
+Specialists carrying the knowledge-lookup block now end a deliverable that used sources with one line,
+`References: <n> from the store, <n> added, <n> web searches.` The new `measure-references` skill reads
+every subagent transcript and reports, per specialist and per ISO week, those counts beside the web calls
+measured in each run's own transcript, and the reuse share (from store over from store plus web).
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+Whether the self-maintained references actually save web searches is now a number you can run
+(`/measure-references`), week over week, instead of a guess.
+
+**Score:** 2
 
 #### Pull Request
 
+measure-references: what a specialist's references save, reported beside the measured web calls
