@@ -56,7 +56,7 @@ these eight get a canon page when they first need one.
 ### TEST
 
 - [x] build-agent-defs generated the block in all eight defs
-- [ ] Gates green through open-pr
+- [x] Gates green through open-pr
 
 ### DEPLOY: feat/4516-specialist-knowledge-canon
 
