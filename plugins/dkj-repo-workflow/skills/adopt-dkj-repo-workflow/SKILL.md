@@ -238,7 +238,12 @@ answers `Get-ShopifyLiveDeployBranch` with a plain branch name gets `branches: [
 to the live branch meet the gate too; an unusable answer (a `VUL-IN` placeholder, `refs/...`, `main`) leaves
 `main` only and the run says why. An existing caller is reported with the line to add, never rewritten, and an existing caller that leaves the live
 branch out is also reported at every session start by `entry-gate-live-sessioncheck`
-([#4476](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4476)).
+([#4476](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4476)). **A caller change on the trunk
+reaches hotfix PRs only once it reaches the live branch**
+([#4526](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4526)): GitHub reads a `pull_request`
+workflow from the PR's own refs, and a hotfix branch is cut from and targets the live branch, so until the
+next promotion (or a one-file hotfix of the caller onto it) those PRs run the live branch's old copy. The
+same session check therefore reads `origin/<live>`'s copy too and warns when it leaves the live branch out.
 **A hotfix PR also meets a local check that needs no workflow file**
 ([#4532](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4532)). No plugin script opens a PR to the
 live branch, so it is opened by hand with `gh pr create --base <live>`, and the live branch's own copy of the
