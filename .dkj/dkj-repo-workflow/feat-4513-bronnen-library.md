@@ -39,19 +39,46 @@
 
 ### PLAN
 
+Inbound #4513: a life hub keeps external evidence in a source library beside the dossiers. Carry
+its four rules into the manuals of the specialists who place, link or look up sources, written
+generically and conditional on the hub keeping such a library.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] Rutger (03-33): a source he opened is delivered as one library row linked to the dossier;
+  evidence status stays on the mechanism page, GRADE strength on the source row; library lookup
+  before the web.
+- [x] Ian (04-03): the brain/library placement test, one source one row, citing through the
+  relation, kept distinct from the reference-catalog rule (#4503).
+- [x] Onyx (04-04): a source is not a neuron.
+- [x] Hugo (03-14), Fiona (03-08) and Rebecca (alpha 03-07): look up the source library before
+  searching the web.
 
 ### TEST
 
+- [x] Read the diff: every addition carries `(#4513)`, names no consumer or person, and is
+  conditional on a hub keeping a source library; Rutger's mechanism-library rule (#4511) is kept and
+  reconciled rather than replaced.
+
 ### DEPLOY: feat/4513-bronnen-library
 
-**Score:**
+The life-hub specialists now keep external evidence apart from the dossiers, where a hub keeps a
+source library. A paper, study, guideline or textbook becomes one row in that library, never a
+dossier. What it means for the person goes into the dossier as an update, citing the row through
+the relation. Ian places sources by asking whether a thing is about the person or about the world.
+Onyx lays no links to or between sources. Rutger delivers each source he opened as a row: the GRADE
+strength of that single source sits on the row, and the evidence status of the mechanism stays on the
+mechanism page. Rutger, Hugo and Fiona look a source up in the library before searching the web. So
+does Rebecca, when she researches for a hub.
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+A life-hub user finds a source once and every specialist reuses it, instead of each one searching
+the web again for evidence another already found.
+
+**Score:** 3
 
 #### Pull Request
 

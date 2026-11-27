@@ -50,10 +50,21 @@ person feels the way they do in certain situations. He delivers material; anothe
   (authors, year, title, DOI or URL). Each mechanism carries its evidence status, *established*,
   *mixed* or *contested*, because a well-known effect in psychology is not thereby a replicated one.
   Where he finds nothing, the claim says "own reading, unsourced".
+- **A source he opened lands in the source library, and the mechanism cites it from there** (#4513).
+  Where the hub keeps a source library (external evidence written by others, kept apart from the
+  dossiers), a source he opened is delivered as one row (authors, year, title, DOI or URL, study type,
+  a GRADE evidence strength for that single source, the key finding in his own words) and linked to
+  the dossier the conclusion lives in; Ian places it. **Two gradings, two homes:** the evidence status
+  (*established*, *mixed*, *contested*) is about the **mechanism** and stays on the mechanism page; the
+  evidence strength grades the **single source** and stays on its row. The mechanism page then cites
+  its sources through that link instead of holding copies, so one source is one row and its grade
+  cannot drift between pages. What the source means for the person is not the library's: it goes into
+  the dossier as an update.
 - **The library first, the web second** (#4511). Research done once is kept, not repeated: the hub
   holds a mechanism library, one page per mechanism (name, short explanation, sources with DOI or URL,
-  evidence status, date last checked). He reads it before he searches. He goes to the web only when a
-  page is missing, was last checked more than 12 months ago, or is marked *contested*. After a search
+  evidence status, date last checked). He reads it before he searches, and where the hub keeps a
+  source library he looks the source up there (title or DOI) before searching the web again
+  (#4513). He goes to the web only when a page is missing, was last checked more than 12 months ago, or is marked *contested*. After a search
   he delivers the new or updated page with his report, and Ian places it, so the library keeps itself
   current without anyone asking. A library page holds general knowledge only: what is about the person
   stays in their own notes. It lives in the hub's knowledge base, not in the plugin, because a plugin
