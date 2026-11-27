@@ -67,12 +67,26 @@ he decides where something belongs and keeps the whole navigable.
   make the path say one area and the category another, which is the contradiction this rule exists to
   prevent.
 - **No word twice in a dossier's path** (#4380). Where dossiers form a tree and the hub shows each
-  one's path (`Person › Gifts`), a dossier Ian creates or renames does not repeat a word already
+  one's path (`Wedding › DJ`), a dossier Ian creates or renames does not repeat a word already
   higher in that path: the path supplies the context (`Wedding › DJ`, not `Wedding › DJ wedding`).
-  Two dossiers may therefore share a name (two `Ideas` under different parents), because the path
-  tells them apart. A proper name stays whole and is never shortened to dodge the repeat; where it
-  clashes with the path, the dossier usually belongs beside the other one rather than under it
-  (`AI › Claude` and `AI › Claude Code`).
+  A proper name stays whole and is never shortened to dodge the repeat; where it clashes with the
+  path, the dossier usually belongs beside the other one rather than under it (`AI › Claude` and
+  `AI › Claude Code`).
+- **A dossier name occurs only once** (#4504). When Ian creates or renames a dossier, no other dossier
+  in the hub carries the same name, compared case-insensitively. The path telling two of them apart is
+  not enough: a name read on its own (in a search result, a link, a mention) has to identify one
+  dossier. **The test:** search the dossier store for the exact name before creating it; one hit means
+  rename or rethink. On a clash:
+  1. **make the new name more specific** with what actually distinguishes it, but never with a word
+     already higher in its own path (the rule above still holds);
+  2. **or ask whether it should be a dossier at all.** A grid that repeats the same names at every
+     branch (tempo › variant › colour, where each colour recurs under every variant) belongs in a table
+     with those as columns, not in nested dossiers.
+
+  A per-person child dossier takes the person's name: the gifts dossier under a person is
+  `Gifts <person>` (`Anna › Gifts Anna`), the one place a word may echo its path, because a proper
+  name is what makes it unique. Measured in a consumer hub: a 148-dossier grid repeated one colour
+  name 16 times and each variant name 4 times.
 - **A dossier name is a subject, never a task** (#4466). A dossier Ian creates or renames is named for
   what it is *about*, not for what has to *happen*: no verb or action in the name (`Tool X`, not
   `Replace tool X`; `Plugin-clean`, not `Make plugin-clean`). What has to happen lives on a task card,
@@ -122,6 +136,21 @@ he decides where something belongs and keeps the whole navigable.
   its sub-dossiers beneath it, so "which apps do I have?" keeps one answer. The subject's dossier
   reaches the app through a strong link, and the app links back: that pair is the ontologist's to lay.
   This is the one case where the subject a dossier serves does not decide its parent.
+- **A person dossier is placed in the ring of closeness the owner names** (#4500). Where the hub keeps
+  person dossiers, they hang under one social overview in numbered rings (*Social › Circles › Ring 1*,
+  *Ring 2*, ...), so the owner can add a ring as the group grows. Ring 1 holds the people who are
+  certainly close, split into *Family* and *Friends*; a higher ring holds people further out, such as
+  friends mostly met in a group. **The ring is the owner's judgement of closeness**, so Ian places a
+  person in the ring the owner names, and asks when it is unknown rather than inferring it or filing
+  the person in a flat list. A person who moves between rings only gets a different parent; the rest of
+  the dossier stays.
+  - **The owner has no person dossier**: the whole hub is about the owner. What is about the owner
+    rather than a life area (identity, drive, values) goes in a top-level category named *Identity*,
+    which links to *Circles*.
+  - **Interests** live in an inline table in an *Interests* dossier, one row per interest: the owner's
+    own level (favourite / like / want to try / not for me) and a relation to the person dossiers of
+    the others who like it, which is the "shared with" answer. The table exists to make it easy to
+    think of something to do together with someone.
 - **A tool is filed under what it is used for, not under who owns it or where it stands** (#4499). A
   tool is a device, software, an AI service or an account. *One home per topic* applies with its own
   test: *if this line of work stopped tomorrow, would the tool go with it into the archive?*

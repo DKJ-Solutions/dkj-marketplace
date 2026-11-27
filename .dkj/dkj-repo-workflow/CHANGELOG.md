@@ -2,7 +2,61 @@
 
 ## [Unreleased]
 
-**16 / 16 minor entries** <!-- pending-tally -->
+**18 / 18 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/4504-dossier-name-once · 20261127-104946Z
+
+Ian, the life hub's information architect, now keeps every dossier name unique across the hub,
+compared case-insensitively. Before he creates or renames a dossier he searches for the exact name.
+On a clash he makes the new name more specific, or asks whether the items belong in a table instead
+of a tree of dossiers. The old allowance that two dossiers may share a name because their paths
+differ is gone. A per-person child dossier carries the person's name, so the gifts dossier under
+Anna is `Gifts Anna`.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+A life-hub user can read a dossier name in a search result, a link or a mention and know which
+dossier it is, without opening its path.
+
+**Score:** 2
+
+#### Pull Request
+
+Ian: a dossier name occurs only once in the hub
+
+Plugins: dkj-subagents-lifehub
+
+[PR #4514](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4514)
+
+---
+
+### DEPLOY: docs/4500-ian-person-rings · 20261127-102341Z
+
+Ian's manual now places a person dossier in the numbered ring of closeness the owner names (*Social ›
+Circles › Ring 1* with Family and Friends, then *Ring 2* and further), asks when the ring is unknown,
+keeps what is about the owner in an *Identity* category instead of a person dossier, and links people to
+an interests table (#4500).
+
+**Score:** 1
+
+#### What makes this deploy extra special
+
+A lifehub owner's new person dossiers land in the ring they chose instead of a flat list, and the
+interests table shows at a glance what they share with whom.
+
+**Score:** 2
+
+#### Pull Request
+
+Ian: place person dossiers in rings of closeness around the owner
+
+Plugins: dkj-subagents-lifehub
+
+[PR #4502](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4502)
+
+---
 
 ### DEPLOY: feat/4511-rutger-sourced-mechanisms · 20261127-095615Z
 
