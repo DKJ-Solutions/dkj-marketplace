@@ -54,15 +54,15 @@ the line until a release ships it, so a chart now would show an empty state nobo
 
 ### TEST
 
-- [x] the new suite: 26 passed
-- [x] a real run (`-All`) over this machine's 75 subagent runs: rebecca 42 measured web calls over 3 runs, nothing reported yet, exit 0
+- [x] the new suite: 26 passed, after the Victor/Sebastian/Edith review fixes (a like-for-like measured column, a six-digit cap on the counts, PowerShell 7 timestamps, a pre-filter on non-assistant lines)
+- [x] a real run (`-All`) over this machine's 75 subagent runs: Rebecca 42 measured web calls over 3 runs, nothing reported yet, exit 0
 
 ### DEPLOY: feat/4547-measure-references
 
-Specialists carrying the knowledge-lookup block now end a deliverable that used sources with one line,
+Specialists carrying the knowledge-lookup block now end a deliverable whose task read or searched for sources with one line,
 `References: <n> from the store, <n> added, <n> web searches.` The new `measure-references` skill reads
 every subagent transcript and reports, per specialist and per ISO week, those counts beside the web calls
-measured in each run's own transcript, and the reuse share (from store over from store plus web).
+measured in the same runs' own transcripts, and the reuse share (from store over from store plus web).
 
 **Score:** 2
 

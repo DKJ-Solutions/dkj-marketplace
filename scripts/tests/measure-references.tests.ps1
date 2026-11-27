@@ -69,13 +69,18 @@ try {
         (New-Line @{ type = 'assistant'; message = @{ content = @(@{ type = 'tool_use'; name = 'WebSearch'; input = @{ query = 'x' } }) } }),
         (New-Line @{ type = 'assistant'; message = @{ content = @(@{ type = 'tool_use'; name = 'WebFetch'; input = @{ url = 'https://example.org' } }) } }),
         'not json {',
-        (New-Line @{ type = 'assistant'; message = @{ content = @(@{ type = 'tool_use'; name = 'SubagentHandback'; input = @{ message = "Findings.`n`n**References: 3 from the store, 1 added, 2 web searches.**" } }) } })
+        (New-Line @{ type = 'assistant'; message = @{ content = @(@{ type = 'tool_use'; name = 'SubagentHandback'; input = @{ message = "Draft said References: 7 from the store, 7 added, 7 web searches.`n`n**References: 3 from the store, 1 added, 2 web searches.**" } }) } })
     )
     # Rebecca again, a week later, with no line: a run, never zero reuse.
     New-Subagent -Dir $sub -Id 'a2' -AgentType 'dkj-subagents-alpha:rebecca' -BuiltIn $false -Lines @(
         (New-Line @{ type = 'user'; timestamp = '2026-11-30T10:00:00Z'; message = @{ role = 'user'; content = 'go' } }),
         (New-Line @{ type = 'assistant'; message = @{ content = @(@{ type = 'tool_use'; name = 'WebSearch'; input = @{ query = 'y' } }) } }),
         (New-Line @{ type = 'assistant'; message = @{ content = @(@{ type = 'text'; text = 'Done, no line.' }) } })
+    )
+    # Rebecca, a third run whose line carries an oversized count: read as no line, never fatal.
+    New-Subagent -Dir $sub -Id 'a5' -AgentType 'dkj-subagents-alpha:rebecca' -BuiltIn $false -Lines @(
+        (New-Line @{ type = 'user'; timestamp = '2026-11-30T11:00:00Z'; message = @{ role = 'user'; content = 'go' } }),
+        (New-Line @{ type = 'assistant'; message = @{ content = @(@{ type = 'text'; text = 'References: 99999999999 from the store, 0 added, 0 web searches.' }) } })
     )
     # A built-in agent that reports a line: skipped.
     New-Subagent -Dir $sub -Id 'a3' -AgentType 'Explore' -BuiltIn $true -Lines @(
@@ -94,13 +99,13 @@ try {
     $out = & powershell -NoProfile -ExecutionPolicy Bypass -File $ScriptPath -TranscriptRoot $fixtureRoot -Json
     Assert-Equal 0 $LASTEXITCODE 'it exits 0'
     $j = ($out -join "`n") | ConvertFrom-Json
-    Assert-Equal 3 $j.Runs 'three runs are read: the built-in agent is skipped'
+    Assert-Equal 4 $j.Runs 'four runs are read: the built-in agent is skipped'
     $names = @($j.Specialists | ForEach-Object { $_.Specialist })
     Assert-Equal 'rebecca' ($names -join ',') 'only a specialist that reported is listed by default'
     $r = $j.Specialists[0]
-    Assert-Equal 2 $r.Runs 'both Rebecca runs count as runs'
-    Assert-Equal 1 $r.Reported 'only the run with a line counts as reported'
-    Assert-Equal 3 $r.FromStore 'from store is read from the handback, not the quoted prompt'
+    Assert-Equal 3 $r.Runs 'every Rebecca run counts as a run'
+    Assert-Equal 1 $r.Reported 'only the run with a valid line counts as reported: an oversized count is no line'
+    Assert-Equal 3 $r.FromStore 'from store is the LAST line of the handback, not the quoted prompt or an earlier line'
     Assert-Equal 1 $r.Added 'added is read'
     Assert-Equal 2 $r.WebReported 'reported web searches are read'
     Assert-Equal 3 $r.WebMeasured 'measured web calls span every run, line or not'
@@ -114,13 +119,13 @@ try {
 
     $outSince = & powershell -NoProfile -ExecutionPolicy Bypass -File $ScriptPath -TranscriptRoot $fixtureRoot -Json -Since 2026-11-25
     $jSince = ($outSince -join "`n") | ConvertFrom-Json
-    Assert-Equal 1 $jSince.Runs '-Since drops the runs before it'
+    Assert-Equal 2 $jSince.Runs '-Since drops the runs before it'
 
     Write-Host ''
     Write-Host 'The console report' -ForegroundColor Cyan
     $txt = (& powershell -NoProfile -ExecutionPolicy Bypass -File $ScriptPath -TranscriptRoot $fixtureRoot) -join "`n"
     Assert-Equal 0 $LASTEXITCODE 'it exits 0'
-    Assert-True ($txt -match 'rebecca\s+2\s+1\s+3\s+1\s+2\s+3\s+60%') 'the row prints runs, reported, the three counts, measured calls and reuse'
+    Assert-True ($txt -match 'rebecca\s+3\s+1\s+3\s+1\s+2\s+2\s+60%\s+3') 'the row prints runs, reported, the three counts, measured calls of the same runs, reuse and all-run calls'
 
     $none = (& powershell -NoProfile -ExecutionPolicy Bypass -File $ScriptPath -TranscriptRoot (Join-Path $fixtureRoot 'missing')) -join "`n"
     Assert-Equal 0 $LASTEXITCODE 'a missing root exits 0'
