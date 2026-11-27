@@ -285,6 +285,16 @@ lines are needed because a called workflow cannot read its own `@ref`: without t
 pinned runner around scripts at `main`. **Move both when you update the plugin**; a re-run of this command
 names a caller still on `@main`, and leaves the file as it is.
 
+**And a caller whose BODY is behind is reported at every session start, like a CI-floor runner's (#4537).**
+This command never rewrites a caller it finds, so a release that changed one (a trigger, a comment, a new
+input) reached no repo that already had it, and the pin advice above reads only the pin. The script-contract
+session check now holds `branch-entry.yml` and `always-on-budget.yml` to the template this plugin version
+composes, the release pin aside (the `@<ref>` of the `uses:` line and the `scripts-ref:` value, a tag or
+`main`), and the live branch included: a repo that declared one after placing the caller reads behind. It
+forwards a `[BEHIND]` line naming the file and the first line that differs. To take the change, delete the
+file, re-run with `-Apply`, and read `git diff` before you commit. Like `[UNADOPTED]` it counts toward
+nothing, and naming `adopt-workflow-folder` in `Get-DeclinedAdoptions` silences it.
+
 **Until #4237 the caller tracked `@main`, and the argument for that is kept below because the trade it
 weighs is still the trade.** A pinned gate keeps enforcing the shape it was pinned at -- and the entry's own
 path has moved twice, so a stale pin does not fail loudly, it fails the *wrong way*: refusing branches that

@@ -1258,6 +1258,21 @@ function ConvertTo-PinNeutralRunnerText {
     return ($t -replace '(?m)^([ \t]*ref:)[ \t]*(?:@@SCRIPTS_REF@@|[0-9a-f]{40}(?:[ \t]*#[^\n]*)?|v\d+\.\d+\.\d+|main)[ \t]*$', '$1 <pin>')
 }
 
+function Get-FirstDifferingLine {
+    <#
+        The 1-based number of the first line on which two LF-normalised texts differ (case-sensitive), or 0
+        when they are equal; where one is a prefix of the other, the line after the shorter. A number and
+        never text, because one side is a consumer's file. Shared with workflow-folder-callers-lib's drift
+        read (#4537).
+    #>
+    param([AllowEmptyString()][string]$Placed, [AllowEmptyString()][string]$Template)
+    if ($Placed -ceq $Template) { return 0 }
+    $a = $Placed -split "`n"; $b = $Template -split "`n"
+    $line = [Math]::Min($a.Count, $b.Count) + 1
+    for ($i = 0; $i -lt [Math]::Min($a.Count, $b.Count); $i++) { if ($a[$i] -cne $b[$i]) { $line = $i + 1; break } }
+    return $line
+}
+
 function Get-CiFloorRunnerDrift {
     <#
         One record per CI-floor runner that is PLACED in -RepoRoot: Rel, Stale ($true when it differs from
@@ -1288,12 +1303,7 @@ function Get-CiFloorRunnerDrift {
         if (-not (Test-Path -LiteralPath $abs -PathType Leaf)) { continue }
         $placed = ConvertTo-PinNeutralRunnerText -Text ([System.IO.File]::ReadAllText($abs))
         $template = ConvertTo-PinNeutralRunnerText -Text $t.Content
-        $line = 0
-        if ($placed -cne $template) {
-            $a = $placed -split "`n"; $b = $template -split "`n"
-            $line = [Math]::Min($a.Count, $b.Count) + 1
-            for ($i = 0; $i -lt [Math]::Min($a.Count, $b.Count); $i++) { if ($a[$i] -cne $b[$i]) { $line = $i + 1; break } }
-        }
+        $line = Get-FirstDifferingLine -Placed $placed -Template $template
         $records += [pscustomobject]@{ Rel = $t.Rel; Stale = ($line -gt 0); Line = $line }
     }
     return $records

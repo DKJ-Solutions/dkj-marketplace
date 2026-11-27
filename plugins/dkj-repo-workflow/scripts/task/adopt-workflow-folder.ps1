@@ -516,6 +516,7 @@ $noteRootRelPath = ($noteRootRelPath -replace '\\', '/').TrimEnd('/')
 # when this plugin's version cannot be read, which the run then says out loud.
 . (Join-Path $PSScriptRoot '..\lib\release-pin-lib.ps1')
 $gateRef = Get-ScaffoldingReleaseTag
+. (Join-Path $PSScriptRoot '..\lib\workflow-folder-callers-lib.ps1')
 
 # THE LIVE BRANCH IS A SECOND BASE FOR THE BRANCH-ENTRY CALLER (#4374). A Shopify consumer with a hotfix
 # lane ships branches as PRs to its live deploy branch (the name Get-ShopifyLiveDeployBranch answers in
@@ -531,72 +532,9 @@ $gateRef = Get-ScaffoldingReleaseTag
 # no leading '-'), plus the answers that would be wrong here: a VUL-IN placeholder, a refs/ spelling, '..',
 # and the trunk itself, which is already listed. Read from the file as it stands NOW, so a seam this very
 # run appends is not counted: answer it, then re-run. The trunk stays the literal 'main', as it has been.
-$liveBranch = ''
-$liveBranchNote = ''
-$liveAnswer = & {
-    Set-StrictMode -Off
-    $answer = ''
-    if (Test-Path -LiteralPath $args[0] -PathType Leaf) {
-        try {
-            . $args[0]
-            if (Test-FunctionDefined 'Get-ShopifyLiveDeployBranch') { $answer = ([string](Get-ShopifyLiveDeployBranch)).Trim() }
-        } catch { }
-    }
-    return $answer
-} $repoConfig
-if ($liveAnswer) {
-    if ($liveAnswer -notmatch '^(?!-)[A-Za-z0-9._/-]+$' -or $liveAnswer -match 'VUL-IN' -or $liveAnswer -match '^refs/' -or $liveAnswer.Contains('..') -or $liveAnswer -ceq 'main') {
-        $liveBranchNote = "Get-ShopifyLiveDeployBranch answers '$(Format-SafeProseToken -Value $liveAnswer)', which is not a usable live branch name (a plain name other than main, no VUL-IN placeholder, no refs/ prefix), so the branch-entry caller lists main only"
-    } else { $liveBranch = $liveAnswer }
-}
-
-$entryGateWorkflow = @(
-    '# Every PR into the trunk carries a WRITTEN changelog entry.',
-    '#',
-    '# The runner is not in this file: it is a reusable workflow in DKJ-Solutions/dkj-marketplace,',
-    '# which runs check-branch-entry.ps1 -- the same two functions open-pr calls locally. One definition',
-    '# of the gate, and a change to it reaches this repo without re-adopting. Its reasoning is written there.',
-    '#',
-    '# WHICH BRANCHES OWE NOTHING: answer Get-EntryGateExemptPrefixes in scripts/repo-config.ps1. It',
-    '# defaults to ''sync'' -- a mirror branch carries somebody else''s work, so it has nothing to declare.',
-    '#',
-    '# PINNED TO A RELEASE (#4237): a script moved on the source''s main would otherwise turn this gate red',
-    '# before this repo adopts the release carrying the move. When you update the dkj-repo-workflow plugin,',
-    '# move the tag in `uses:` AND in `scripts-ref:` together -- re-running adopt-workflow-folder says when.',
-    'name: Branch entry',
-    '',
-    '# pull-requests: read AND edited HOLD THE DEPLOY LOCK: the runner reads the PR body to refuse a DEPLOY',
-    '# section changed since the PR opened, and edited lets it look again after open-pr -RefreshBody.',
-    'permissions:',
-    '  contents: read',
-    '  pull-requests: read',
-    '',
-    'on:',
-    '  pull_request:',
-    '    types: [opened, synchronize, reopened, edited]',
-    '    branches: [main]',
-    '',
-    'jobs:',
-    '  branch-entry:',
-    ('    uses: DKJ-Solutions/dkj-marketplace/.github/workflows/reusable-branch-entry.yml@' + $gateRef),
-    '    with:',
-    ('      scripts-ref: ' + $gateRef)
-)
-
-# The live branch joins the caller's trigger, with the reason beside it (#4374). Inserted by position, so
-# a caller without a live branch stays byte-for-byte what it was.
-if ($liveBranch) {
-    $entryGateWorkflow = @($entryGateWorkflow | ForEach-Object { $_ -replace '^    branches: \[main\]$', "    branches: [main, $liveBranch]" })
-    $pinAt = [array]::IndexOf($entryGateWorkflow, ($entryGateWorkflow | Where-Object { $_ -like '# PINNED TO A RELEASE*' } | Select-Object -First 1))
-    $liveComment = @(
-        "# THE LIVE BRANCH IS LISTED TOO (#4374): this repo ships hotfix PRs straight to '$liveBranch'",
-        '# (Get-ShopifyLiveDeployBranch in scripts/repo-config.ps1) and they flow back to the trunk only later.',
-        '# Without it here the gate never ran on those PRs, and a malformed DEPLOY section reached the trunk',
-        '# and turned the fold red on every later merge. Change the two together.',
-        '#'
-    )
-    $entryGateWorkflow = @($entryGateWorkflow[0..($pinAt - 1)]) + $liveComment + @($entryGateWorkflow[$pinAt..($entryGateWorkflow.Count - 1)])
-}
+$liveResolved = Resolve-WorkflowFolderLiveBranch -RepoConfigPath $repoConfig
+$liveBranch = $liveResolved.Branch
+$liveBranchNote = $liveResolved.Note
 
 # THE SECOND PR GATE THIS COMMAND PLACES (issue #2037): a PR may not grow what every session pays before
 # a single assignment is given -- CLAUDE.md plus everything it '@'-imports.
@@ -619,34 +557,10 @@ if ($liveBranch) {
 # length, and since #2422 it is the same caller shape too: the runner is
 # .github/workflows/reusable-always-on-budget.yml in the source, and check-consumers.ps1's check 6 reads
 # the `uses:` line the way it reads a checkout step, so it still notices if that file moves.
-$alwaysOnGateWorkflow = @(
-    '# The always-on budget: a PR may not grow what every session pays before a single assignment is',
-    '# given -- CLAUDE.md plus everything it ''@''-imports.',
-    '#',
-    '# The runner is not in this file: it is a reusable workflow in DKJ-Solutions/dkj-marketplace,',
-    '# which runs check-always-on-budget.ps1 -- the same verdict open-pr reads locally and the session',
-    '# hook reports at start. Its reasoning is written there.',
-    '#',
-    '# WHAT THE CEILING IS: answer Get-AlwaysOnBudget in scripts/repo-config.ps1, in BYTES. Unanswered,',
-    '# it is 100,000. A repo already over it is held at a recorded baseline rather than refused.',
-    '#',
-    '# PINNED TO A RELEASE, for the reason branch-entry.yml states (#4237). Move the tag in `uses:` AND',
-    '# in `scripts-ref:` together.',
-    'name: Always-on budget',
-    '',
-    'permissions:',
-    '  contents: read',
-    '',
-    'on:',
-    '  pull_request:',
-    '    branches: [main]',
-    '',
-    'jobs:',
-    '  always-on-budget:',
-    ('    uses: DKJ-Solutions/dkj-marketplace/.github/workflows/reusable-always-on-budget.yml@' + $gateRef),
-    '    with:',
-    ('      scripts-ref: ' + $gateRef)
-)
+# BOTH CALLERS ARE COMPOSED IN workflow-folder-callers-lib.ps1 SINCE #4537 (the entry gate's live-branch
+# trigger and its comment, and the always-on budget gate above), so the session check can ask what the
+# CURRENT template of a placed caller is and hold it to that.
+$gateCallerTargets = @(Get-WorkflowFolderCallerTargets -GateRef $gateRef -LiveBranch $liveBranch)
 
 # CHANGELOG.md (issue #885, group A): this folder's own pending-changes list, isolated from any
 # CHANGELOG.md the consumer already keeps at their root -- the workflow never reads or writes that one
@@ -715,10 +629,7 @@ if ($prTemplateRef) {
 }
 
 $gateCallerRels = @('.github/workflows/branch-entry.yml', '.github/workflows/always-on-budget.yml')
-$targets = @(
-    @{ Rel = '.github/workflows/branch-entry.yml';     Content = (($entryGateWorkflow -join $nl) + $nl) },
-    @{ Rel = '.github/workflows/always-on-budget.yml'; Content = (($alwaysOnGateWorkflow -join $nl) + $nl) }
-) + $prTemplateTargets + @(
+$targets = @($gateCallerTargets) + $prTemplateTargets + @(
     @{ Rel = $changelogRel;                            Content = (($changelogIntro -join $nl) + $nl) }
     # NO releases/audience/.gitkeep ANY MORE (issue #1150). It was placed on the stated ground that "the
     # audience root must exist before the first cut writes into it", and that premise is false: the cut
