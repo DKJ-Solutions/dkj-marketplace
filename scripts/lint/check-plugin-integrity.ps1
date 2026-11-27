@@ -586,6 +586,9 @@ function Add-BarredSkillFinding {
 # matters resolves relative to the IMPORTING FILE rather than to the repo root. It sets no strict mode of
 # its own, like every lib in that directory, so it cannot loosen this script's Set-StrictMode.
 . (Join-Path $PSScriptRoot '..\lib\measure-context-lib.ps1')
+# measure-skill-lib supplies Get-SkillDescriptionText, Test-SkillModelInvocationDisabled and the 250-character
+# ceiling check 48 reads descriptions with, shared with measure-skill.ps1 (#4538).
+. (Join-Path $PSScriptRoot '..\lib\measure-skill-lib.ps1')
 
 # -SkipCheck, resolved once here so every wrapped block asks the same question. The list of skippable
 # names is written out rather than derived from the Write-Coverage calls: deriving it would accept any
@@ -6469,7 +6472,7 @@ Write-Coverage -Category 'portable-names' -Checked $pnChecked `
 # plugin stays at or under 10,000: no session enables every plugin, so this over-counts a real session
 # and is the conservative proxy for one. A skill carrying 'disable-model-invocation: true' is not in the
 # listing and counts toward neither: that flag is the route for a one-time or owner-typed skill.
-$sdMaxEach = 250
+$sdMaxEach = $script:SkillDescriptionMaxChars
 $sdMaxTotal = 10000
 $sdChecked = 0
 $sdTotal = 0
@@ -6477,28 +6480,10 @@ $sdFindings = 0
 foreach ($sdDir in (Get-PluginSubdirs -PluginRoots $publishedPlugins -Leaf 'skills')) {
     foreach ($sdFile in @(Get-ChildItem -Path $sdDir -Recurse -Filter 'SKILL.md' -File |
             Where-Object { $_.FullName -match '\\skills\\[^\\]+\\SKILL\.md$' } | Sort-Object FullName)) {
-        $sdText = [System.IO.File]::ReadAllText($sdFile.FullName, [System.Text.Encoding]::UTF8)
-        $sdFm = [regex]::Match($sdText, '(?s)\A\uFEFF?---\r?\n(.*?)\r?\n---\r?\n')
-        if (-not $sdFm.Success) { continue }
-        $sdBlock = $sdFm.Groups[1].Value
-        if ($sdBlock -match '(?m)^disable-model-invocation:\s*true\s*$') { continue }
+        if (Test-SkillModelInvocationDisabled -Path $sdFile.FullName) { continue }
+        $sdDesc = Get-SkillDescriptionText -Path $sdFile.FullName
+        if ($null -eq $sdDesc) { continue }
         $sdChecked++
-        $sdLines = $sdBlock -split '\r?\n'
-        $sdDesc = ''
-        for ($i = 0; $i -lt $sdLines.Count; $i++) {
-            if ($sdLines[$i] -notmatch '^description:\s*(.*)$') { continue }
-            $sdHead = $Matches[1].Trim()
-            if ($sdHead -match '^[>|][+-]?$') {
-                $sdParts = New-Object System.Collections.Generic.List[string]
-                for ($j = $i + 1; $j -lt $sdLines.Count -and ($sdLines[$j] -match '^\s' -or $sdLines[$j] -eq ''); $j++) {
-                    if ($sdLines[$j].Trim()) { $sdParts.Add($sdLines[$j].Trim()) }
-                }
-                $sdDesc = $sdParts -join ' '
-            } else {
-                $sdDesc = $sdHead.Trim('"', "'")
-            }
-            break
-        }
         $sdTotal += $sdDesc.Length
         if ($sdDesc.Length -gt $sdMaxEach) {
             $sdFindings++

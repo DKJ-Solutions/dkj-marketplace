@@ -513,3 +513,65 @@ function Split-SkillRowsByInvocation {
     }
     return [pscustomobject]@{ Loaded = @($loaded); Excluded = @($excluded); Unverified = @($unverified) }
 }
+
+# THE SKILL-LISTING BUDGET (#4538, #4528). Claude Code lists every model-invocable skill's description in one
+# block capped at 1% of the context window, with an 8,000-character fallback; a description that does not fit
+# arrives name-only and never triggers. These are character counts read from files, because the budget is
+# denominated in characters. The 250 is the per-description ceiling check 48 of check-plugin-integrity.ps1
+# holds the published plugins to, so the gate and the measurement read one number.
+$script:SkillDescriptionMaxChars = 250
+$script:SkillListingFallbackBudget = 8000
+
+function Get-SkillDescriptionText {
+    <#
+        The description of one SKILL.md, the way check 48 reads it: from the frontmatter block, either a
+        plain or quoted one-liner, or a '>' / '|' block scalar whose indented lines are trimmed and joined
+        with single spaces. Returns $null where the file is absent or has no frontmatter block, and ''
+        where the block carries no description, so a caller can tell 'could not look' from 'empty'.
+    #>
+    param([Parameter(Mandatory = $true)][string]$Path)
+
+    if (-not (Test-Path -LiteralPath $Path -PathType Leaf)) { return $null }
+    $text = [System.IO.File]::ReadAllText($Path, [System.Text.Encoding]::UTF8)
+    $fm = [regex]::Match($text, '(?s)\A\uFEFF?---\r?\n(.*?)\r?\n---\r?\n')
+    if (-not $fm.Success) { return $null }
+    $lines = $fm.Groups[1].Value -split '\r?\n'
+    for ($i = 0; $i -lt $lines.Count; $i++) {
+        if ($lines[$i] -notmatch '^description:\s*(.*)$') { continue }
+        $head = $Matches[1].Trim()
+        if ($head -match '^[>|][+-]?$') {
+            $parts = New-Object System.Collections.Generic.List[string]
+            for ($j = $i + 1; $j -lt $lines.Count -and ($lines[$j] -match '^\s' -or $lines[$j] -eq ''); $j++) {
+                if ($lines[$j].Trim()) { $parts.Add($lines[$j].Trim()) }
+            }
+            return ($parts -join ' ')
+        }
+        return $head.Trim('"', "'")
+    }
+    return ''
+}
+
+function Measure-SkillListing {
+    <#
+        One row per <SkillsDir>/<name>/SKILL.md: Skill, Chars (the description's length) and Listed (False
+        where the frontmatter carries disable-model-invocation: true, i.e. the skill is not in the listing).
+        A SKILL.md with no readable frontmatter is Listed with 0 characters -- kept rather than dropped.
+    #>
+    param([Parameter(Mandatory = $true)][string]$SkillsDir)
+
+    $rows = @()
+    if (-not (Test-Path -LiteralPath $SkillsDir -PathType Container)) { return @() }
+    foreach ($dir in @(Get-ChildItem -LiteralPath $SkillsDir -Directory | Sort-Object Name)) {
+        $page = Join-Path $dir.FullName 'SKILL.md'
+        if (-not (Test-Path -LiteralPath $page -PathType Leaf)) { continue }
+        $desc = Get-SkillDescriptionText -Path $page
+        $chars = 0
+        if ($null -ne $desc) { $chars = $desc.Length }
+        $rows += [pscustomobject]@{
+            Skill  = $dir.Name
+            Chars  = $chars
+            Listed = (-not (Test-SkillModelInvocationDisabled -Path $page))
+        }
+    }
+    return @($rows)
+}

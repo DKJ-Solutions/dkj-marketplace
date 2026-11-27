@@ -2,7 +2,106 @@
 
 ## [Unreleased]
 
-**8 / 8 minor entries** <!-- pending-tally -->
+**10 / 12 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/4538-skill-listing-budget · 20261127-204335Z
+
+Check 48's description parser moves into `measure-skill-lib.ps1`, so the gate and the new report read
+one parser and one 250-character ceiling.
+
+**Score:** 1
+
+#### What makes this deploy extra special
+
+`measure-skill` now reports how many characters the model-invocable skill descriptions of the plugins a
+checkout enables spend on Claude Code's skill listing. It measures that total against the 8,000-character
+fallback and names any description over 250 characters as likely to arrive name-only. A consumer can now
+see the budget that #4528 found overrun, in its own plugin set, before a skill silently stops triggering.
+
+**Score:** 2
+
+#### Pull Request
+
+measure-skill reports the summed skill-description listing cost against Claude Code's budget, in a consumer
+
+Plugins: dkj-repo-workflow
+
+[PR #4545](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4545)
+
+---
+
+### DEPLOY: fix/4526-entry-gate-live-deploy-copy · 20261127-202934Z
+
+`entry-gate-live-sessioncheck` now reads the live deploy branch's own copy of the branch-entry caller
+(`origin/<live>`), not only the working copy. GitHub runs a hotfix PR's `pull_request` workflow from the
+live branch's refs, so a trunk fix that had not reached `live` left hotfix PRs ungated while the check
+said OK ([#4526](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4526)). The adoption page now
+says when a caller change takes effect for hotfix PRs. A local gate at the hotfix opener is
+[#4532](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4532).
+
+**Score:** 3
+
+#### What makes this deploy extra special
+
+A Shopify consumer with a hotfix lane now sees a `[WARN]` at session start, with the remedy, whenever its
+live branch still carries a caller that leaves `live` out. Before this, that state sat behind an OK line
+and surfaced only as stranded changelog entries, three times in three days.
+
+**Score:** 3
+
+#### Pull Request
+
+entry-gate-live-sessioncheck reads the deploy branch's own copy of the branch-entry caller
+
+Plugins: dkj-repo-workflow
+
+[PR #4535](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4535)
+
+---
+
+### DEPLOY: fix/4542-reopen-guard-windows-path · 20261127-201550Z
+
+In a store repo running `dkj-repo-workflow-bwj`, a `gh issue reopen` that calls gh by its full Windows path
+(`& "C:\...\gh.exe" issue reopen 9`) is now judged by the reopen guard. It used to pass unseen, while the
+close guard already caught the same form.
+
+**Score:** 1
+
+#### What makes this deploy extra special
+
+N/A
+
+**Score:** N/A
+
+#### Pull Request
+
+guard-issue-reopen: a reopen through a Windows path to gh.exe is judged, as the close guard already judges it
+
+Plugins: dkj-repo-workflow-bwj
+
+[PR #4543](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4543)
+
+---
+
+### DEPLOY: fix/4549-admin-probe-timeout · 20261127-195649Z
+
+The consumer-dashboard suite's admin-card assert no longer flakes on a busy CI shard (#4549, superseding the record #3856). The product server asked the freshly started plugin admin for `/whoami` with a fixed 500 ms deadline, which a cold PowerShell admin on a four-lane shard can miss, so the home page rendered "Admin is not running" behind a healthy 200. `serve-consumer-dashboard.ps1` now takes that deadline as `-AdminProbeTimeoutMs` (default 500, unchanged for a browser visit), and the fixture raises it to 5000 ms.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+N/A -- a test fixture and a test-only server parameter; nothing a consumer runs behaves differently.
+
+**Score:** N/A
+
+#### Pull Request
+
+consumer-dashboard.tests: the product server's admin probe deadline is a parameter the fixture raises
+
+[PR #4551](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4551)
+
+---
 
 ### DEPLOY: fix/4537-workflow-folder-caller-drift · 20261127-175516Z
 
