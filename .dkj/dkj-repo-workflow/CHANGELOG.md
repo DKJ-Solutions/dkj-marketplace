@@ -2,7 +2,34 @@
 
 ## [Unreleased]
 
-**12 / 12 minor entries** <!-- pending-tally -->
+**13 / 13 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/4507-rutger-behavioral-analyst · 20261127-092747Z
+
+The life-hub team gains a sixth specialist, Rutger 🧠, the Behavioral Analyst (03-33): a combination of
+the forensic psychologist's interviewing, the clinical psychologist's functional analysis and the social
+psychologist's view of context. He asks the questions that matter, recognises patterns in what the hub
+holds, and says plainly which mechanism explains how its owner feels in a situation. He gives no advice and
+no diagnoses, and refers to the GP or 113 on a crisis signal. Hugo advises; Rutger explains.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+A life-hub user can now ask for a factual, unsoftened explanation of their own patterns, a craft the
+team did not have. It arrives with the next release and needs `sync-roster` in the hub for its lens.
+
+**Score:** 3
+
+#### Pull Request
+
+dkj-subagents-lifehub: add Rutger, the Behavioral Analyst (03-33)
+
+Plugins: dkj-subagents-lifehub
+
+[PR #4509](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4509)
+
+---
 
 ### DEPLOY: docs/4499-ian-file-tool-by-use · 20261125-192945Z
 
