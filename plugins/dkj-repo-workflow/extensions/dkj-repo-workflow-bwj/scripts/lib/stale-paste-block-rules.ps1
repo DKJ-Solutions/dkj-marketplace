@@ -179,18 +179,41 @@ function Get-IssueCloseInvocation {
         gh.exe, by its leaf name, followed by the bare tokens 'issue' and 'close'.
 
         AN ACCIDENT GUARD, with the same reach as Get-ShipPrInvocation: the tokeniser above, so a
-        mention is not a close, and 'gh api ... state=closed', a value from a variable or a wrapper is out
-        of reach. The workflow's own message is the backstop: a close without a block says the result
-        message follows.
+        mention is not a close, and 'gh api ... state=closed' or a wrapper is out of reach. The workflow's
+        own message is the backstop for a ship, but not for a close: a close without a block posts only
+        that the result message follows, which is the outcome this guard exists to prevent.
+
+        A TARGET FROM A VARIABLE IS COUNTED, NOT DROPPED (#4530). A loop is how a session closes a batch
+        ('for n in ...; do gh issue close $n; done', 'foreach ($n in 1,2) { gh issue close $n }'), and its
+        target cannot be read from the command. Such a positional argument -- one carrying '$' or a
+        backtick, which covers $var, "$n", $(...) and `...` -- is counted in Unresolved, so the hook asks a
+        person instead of reading the segment as no close at all. To find those closes, a bare '{' or '}'
+        splits a segment as a separator does, and a leading 'do', 'then' or 'else' is skipped like an
+        environment prefix. Unresolved is 0 where every target is literal, and the function returns $null
+        only when it found neither.
     #>
     param([AllowEmptyString()][string]$Command = '')
 
-    $closes = New-Object System.Collections.Generic.List[object]
+    $closes     = New-Object System.Collections.Generic.List[object]
+    $unresolved = 0
+    # A BLOCK IS ITS OWN COMMAND (#4530): each segment is split again at a bare '{' or '}', so the close
+    # inside 'foreach (...) { gh issue close $n }' heads a part of its own.
+    $parts = New-Object System.Collections.Generic.List[object]
     foreach ($segment in @(ConvertTo-ShellSegments -Command $Command)) {
+        $part = New-Object System.Collections.Generic.List[object]
+        foreach ($tk in @($segment)) {
+            if (-not $tk.Quoted -and ($tk.Text -eq '{' -or $tk.Text -eq '}')) {
+                if ($part.Count -gt 0) { $parts.Add(@($part.ToArray())); $part.Clear() }
+            } else { $part.Add($tk) }
+        }
+        if ($part.Count -gt 0) { $parts.Add(@($part.ToArray())) }
+    }
+    foreach ($segment in $parts) {
         $tok = @($segment)
         $at = 0
-        # A leading '&', '.' or 'VAR=value' environment prefix ('GH_TOKEN=x gh issue close 5') is skipped.
-        while ($at -lt $tok.Count -and -not $tok[$at].Quoted -and ($tok[$at].Text -eq '&' -or $tok[$at].Text -eq '.' -or $tok[$at].Text -match '\A[A-Za-z_][A-Za-z0-9_]*=')) { $at++ }
+        # A leading '&', '.', 'VAR=value' environment prefix ('GH_TOKEN=x gh issue close 5'), or a loop
+        # keyword ('do gh issue close $n') is skipped.
+        while ($at -lt $tok.Count -and -not $tok[$at].Quoted -and ($tok[$at].Text -eq '&' -or $tok[$at].Text -eq '.' -or $tok[$at].Text -match '\A[A-Za-z_][A-Za-z0-9_]*=' -or $tok[$at].Text -cmatch '\A(?:do|then|else)\z')) { $at++ }
         if ($at + 2 -ge $tok.Count) { continue }
         if (($tok[$at].Text -split '[\\/]')[-1] -notmatch '(?i)\Agh(?:\.exe)?\z') { continue }
         if ($tok[$at + 1].Quoted -or $tok[$at + 1].Text -ne 'issue' -or $tok[$at + 2].Quoted -or $tok[$at + 2].Text -ne 'close') { continue }
@@ -198,6 +221,7 @@ function Get-IssueCloseInvocation {
         $reason  = ''
         $repo    = ''
         $targets = @()
+        $vars    = 0
         for ($k = $at + 3; $k -lt $tok.Count; $k++) {
             $t = $tok[$k].Text
             # CASE-SENSITIVE THROUGHOUT: gh's -r is the reason and its -R the repo. A short flag may carry its
@@ -220,8 +244,10 @@ function Get-IssueCloseInvocation {
             if (-not $tok[$k].Quoted -and $t.StartsWith('-')) { continue }
             $target = ConvertTo-IssueCloseTarget -Text $t
             if ($target) { $targets += $target }
+            elseif ($t -match '[$`]') { $vars++ }
         }
         if ($reason -and $reason -ne 'completed') { continue }
+        $unresolved += $vars
         foreach ($target in $targets) {
             $r = if ($target.Repo) { $target.Repo } else { $repo }
             if ($r -and $r -notmatch '\A[A-Za-z0-9][A-Za-z0-9-]*/[A-Za-z0-9._-]+\z') { continue }
@@ -229,8 +255,8 @@ function Get-IssueCloseInvocation {
             if (-not $dup -and $closes.Count -lt 20) { $closes.Add([pscustomobject]@{ Number = $target.Number; Repo = $r }) }
         }
     }
-    if ($closes.Count -eq 0) { return $null }
-    return [pscustomobject]@{ Closes = @($closes.ToArray()) }
+    if ($closes.Count -eq 0 -and $unresolved -eq 0) { return $null }
+    return [pscustomobject]@{ Closes = @($closes.ToArray()); Unresolved = $unresolved }
 }
 function Get-IssueReopenInvocation {
     <#
