@@ -46,12 +46,12 @@ HAS, and the life hub gains Rutger's lens through `sync-roster` after the releas
 ### CREATE
 
 - [x] Sylvester: `plugin.json` agents list and description, `marketplace.json` description
-- [ ] Tessa: subagent def and manual for 03-33, README rosters, Hugo's boundary line
+- [x] Tessa: subagent def and manual for 03-33, README rosters, Hugo's boundary line
 
 ### TEST
 
-- [ ] Edith: copy edit of the new and changed text
-- [ ] Gates green through open-pr (plugin integrity, roster sync, suites)
+- [x] Edith: copy edit of the new and changed text
+- [x] Gates green through open-pr (plugin integrity, roster sync, suites)
 
 ### DEPLOY: feat/4507-rutger-behavioral-analyst
 
