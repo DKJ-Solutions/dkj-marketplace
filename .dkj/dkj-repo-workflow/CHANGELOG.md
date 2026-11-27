@@ -2,7 +2,32 @@
 
 ## [Unreleased]
 
-**1 / 1 minor entry** <!-- pending-tally -->
+**2 / 2 minor entries** <!-- pending-tally -->
+
+### DEPLOY: fix/4527-fold-valid-entries-past-malformed · 20261127-151201Z
+
+The changelog fold no longer refuses a whole fold-all run over one malformed entry. It sets that entry
+aside on the trunk, folds the valid entries beside it, and ends red naming the set-aside entry and why,
+so a release cut in the meantime no longer misses changes that were written correctly.
+
+**Score:** 3
+
+#### What makes this deploy extra special
+
+A repo whose trunk holds one malformed entry no longer sees its valid entries stranded with it, or every
+unrelated merge's fold go red without folding anything.
+
+**Score:** 3
+
+#### Pull Request
+
+fold-all folds the valid entries and leaves only the malformed ones stranded
+
+Plugins: dkj-repo-workflow
+
+[PR #4533](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4533)
+
+---
 
 ### DEPLOY: docs/4525-ian-collection-placement · 20261127-145318Z
 
