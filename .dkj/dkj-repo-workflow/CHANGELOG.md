@@ -2,7 +2,33 @@
 
 ## [Unreleased]
 
-**2 / 2 minor entries** <!-- pending-tally -->
+**3 / 3 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/4532-live-pr-entry-guard · 20261127-152302Z
+
+The plugin's own scripts and hooks gained a new PreToolUse guard, `guard-live-pr-entry`. It meets a
+hand-typed `gh pr create` whose base is the live deploy branch a repo declares, and refuses it while the
+head branch's changelog entry is not written, using the same check the CI gate runs.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+A hotfix PR to the live branch is now checked before it opens, even when the live branch's own CI copy
+lags the trunk's. A malformed DEPLOY section can no longer land there unjudged and strand the fold later.
+Repos that declare no live branch see no change.
+
+**Score:** 2
+
+#### Pull Request
+
+A hotfix PR to the live branch is checked for a written changelog entry before it opens
+
+Plugins: dkj-repo-workflow
+
+[PR #4536](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4536)
+
+---
 
 ### DEPLOY: fix/4527-fold-valid-entries-past-malformed · 20261127-151201Z
 
