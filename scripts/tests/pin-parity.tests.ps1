@@ -79,15 +79,16 @@ Write-Host ''
 # so asserting both would be asserting that lint twice; if the mirror ever diverges, that gate is the
 # one that must say so.
 Write-Host '-- 1. the generator pins by SHA rather than by tag --' -ForegroundColor Cyan
-$genPath = Join-Path $RepoRoot 'scripts\task\adopt-ci-floor.ps1'
-Assert-True (Test-Path -LiteralPath $genPath) 'adopt-ci-floor.ps1 is where this suite expects it'
+# The runners are composed in ci-floor-runners-lib.ps1 since #4529; adopt-ci-floor.ps1 calls it.
+$genPath = Join-Path $RepoRoot 'scripts\lib\ci-floor-runners-lib.ps1'
+Assert-True (Test-Path -LiteralPath $genPath) 'ci-floor-runners-lib.ps1 is where this suite expects it'
 $gen = Get-Content -LiteralPath $genPath -Raw
 
 $genSha = Get-CheckoutSha $gen
 Assert-True ($null -ne $genSha) 'the generator names actions/checkout by a 40-character SHA'
 
 # ONE refresh point, not four literals. Four copies of a SHA is four places to forget.
-$pinAssignments = ([regex]::Matches($gen, '(?m)^\$checkoutPin\s*=')).Count
+$pinAssignments = ([regex]::Matches($gen, 'actions/checkout@[0-9a-f]{40}')).Count
 Assert-Equal 1 $pinAssignments 'the pin is assigned exactly once, so it has a single refresh point'
 
 # --- 1b. PER RUNNER, because a blanket assert would be WRONG here ----------------------------------

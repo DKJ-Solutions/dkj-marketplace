@@ -120,6 +120,18 @@ Assert-True ($null -eq (Get-IssueCloseInvocation -Command 'gh issue close 5 -rno
 Assert-Equal 'o/r#5' (Format-Closes (Get-IssueCloseInvocation -Command 'gh issue close 5 -Ro/r')) 'and so is -Ro/r'
 Assert-Equal '#5' (Format-Closes (Get-IssueCloseInvocation -Command 'GH_TOKEN=x gh issue close 5')) 'an environment prefix does not hide the close'
 Assert-Equal 20 @((Get-IssueCloseInvocation -Command ('gh issue close ' + ((1..40) -join ' '))).Closes).Count 'the list is bounded at 20'
+# #4530, smartwatchbanden's route: a loop closes a batch through a variable, and that is a close, unresolved.
+$loop = Get-IssueCloseInvocation -Command 'for n in "1617 #1626" "1597 #1628"; do set -- $n; gh issue close $1 --reason completed --comment "done" >/dev/null && echo "closed $1"; done'
+Assert-True ($null -ne $loop) 'a bash loop closing $1 is a close, not nothing (#4530)'
+Assert-Equal 1 ([int]$loop.Unresolved) 'with one unresolved target'
+Assert-Equal 0 @($loop.Closes).Count 'and no literal one'
+Assert-Equal 1 ([int](Get-IssueCloseInvocation -Command 'foreach ($n in 1,2) { gh issue close $n }').Unresolved) 'a PowerShell foreach block is read as its own command'
+Assert-Equal 1 ([int](Get-IssueCloseInvocation -Command 'gh issue close "$n"').Unresolved) 'a quoted variable is unresolved too'
+Assert-Equal 1 ([int](Get-IssueCloseInvocation -Command 'for n in 1 2; do gh issue close $n; done').Unresolved) 'a leading do is skipped like a prefix'
+Assert-Equal 1 ([int](Get-IssueCloseInvocation -Command 'gh issue close $(cat n.txt)').Unresolved) 'and so is a subshell'
+Assert-True ($null -eq (Get-IssueCloseInvocation -Command 'gh issue close $n --reason "not planned"')) 'a variable closed as not planned is still not guarded'
+Assert-Equal 0 ([int](Get-IssueCloseInvocation -Command 'gh issue close 943').Unresolved) 'and a literal close carries none'
+Assert-Equal '#5' (Format-Closes (Get-IssueCloseInvocation -Command 'if ($x) { gh issue close 5 }')) 'a literal close inside a block is judged as one'
 
 # THE REOPEN PARSER (#3076), the same reading as the close parser.
 function Format-Reopens { param($c) if ($null -eq $c) { return '' } (@($c.Reopens) | ForEach-Object { "$($_.Repo)#$($_.Number)" }) -join ',' }
@@ -472,6 +484,14 @@ if ($built) {
     Assert-True ($r.Err -match 'BWJ-Development/smartwatchbanden#943') 'and named by that repo'
     Assert-True ($r.Err -match '-Issue 943 -Repo BWJ-Development/smartwatchbanden -Research' -and $r.Err -match 'gh issue close 943 -R BWJ-Development/smartwatchbanden --reason') 'and the fix points at that repo''s issue, not the checkout''s'
     Assert-True (-not ($r.Calls -contains 'repo')) 'without asking which repo the checkout is'
+
+    # #4530: a loop's close names no issue the hook can read, so it asks instead of passing silently.
+    Reset-Fake
+    $r = Invoke-Hook 'for n in 1617 1597; do gh issue close $n --reason completed; done'
+    Assert-Equal 0 $r.Code 'a close through a variable is not refused (#4530)'
+    Assert-Equal 'ask' ([string]$r.Json.permissionDecision) 'but asks a person, where it used to pass silently'
+    Assert-True ([string]$r.Json.permissionDecisionReason -match 'names its issue through a variable' -and [string]$r.Json.permissionDecisionReason -match 'literal number') 'with the reason and the fix'
+    Assert-Equal 0 @($r.Calls).Count 'and costs no gh call'
 
     # --- The reopen guard (#3076): ask before reopening an Asana-linked issue, pass every other ---
     Write-Host 'the reopen guard, against a fake gh' -ForegroundColor Cyan
