@@ -484,7 +484,7 @@ if ($foundWorkflowFolder) {
 } else {
     Write-Failure ("the workflow folder '$currentWorkflowFolder/' does not exist in this repo -- the " +
         "changelog, the release roots and the branch documents live there, and the shared scripts read " +
-        "only that location. Run the 'adopt-dkj-repo-workflow' skill to scaffold it (dry-run by default, " +
+        "only that location. Ask the operator to type /adopt-dkj-repo-workflow to scaffold it (dry-run by default, " +
         "additive, never overwrites).")
 }
 

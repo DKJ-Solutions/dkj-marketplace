@@ -1,13 +1,7 @@
 ---
 name: claim-issue
 description: >-
-  Claim a GitHub issue on the tracker before any work on it begins -- assign it to the account THIS
-  checkout commits as, and refuse when the issue is closed, missing, or already somebody else's. Use
-  it the moment an issue number is named as the work -- "fix issue 1234", "pick up #87", "take this
-  one", in whatever language the request arrives -- and again when resuming one, BEFORE reading the
-  code or opening a branch. It writes one assignee and nothing else -- no branch, no commit, no
-  comment -- so it is the step that runs first and not a replacement for new-branch: claim, then carry
-  straight on into the work in the same turn.
+  Claim a GitHub issue (assign it; refuse if closed or taken) before any work on it. Use the moment an issue is named as the work ("fix issue 1234", "pick up #87"), then carry straight on.
 argument-hint: "[issue-number]"
 ---
 

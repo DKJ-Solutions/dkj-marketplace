@@ -1,14 +1,7 @@
 ---
 name: update-plugins
 description: >-
-  Update every plugin this checkout enables, in one command instead of 1 + N -- refreshes the
-  marketplace clone once, then runs `claude plugin update <id>` for each enabled plugin at the scope
-  that plugin is installed at, then prints plugin-versions' receipt so the run's own result is
-  verifiable. Use it whenever
-  plugin-versions (or consumer-sessioncheck's -Brief line) reports something behind and you want to
-  close the gap without typing one command per plugin. With -AllCheckouts it does the same in EVERY
-  checkout on this machine that holds an install record -- use that for "update all repos", in
-  whatever language it is asked -- skipping any checkout that is not clean on its trunk.
+  Update every enabled plugin in one command, or in every checkout with -AllCheckouts. Use when plugin-versions reports something behind, or for "update all repos".
 ---
 
 # update-plugins -- one command instead of 1 + N

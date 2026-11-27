@@ -1,6 +1,7 @@
 ---
 name: check-shop-connector
-description: Before the first claude.ai Shopify connector call in a session (products, orders, metafields, Admin GraphQL, analytics), confirm the connector is bound to THIS repo's store and not to the store another session switched it to. It reads the shop's myshopify.com domain through a read-only Admin GraphQL query, compares it with the store the repo names, and on a mismatch stops with the one remedy a person has to run. It never calls switch-shop itself. It also carries the one query rule measured so far: never alias the same field with different arguments in one query.
+description: >-
+  Confirm the claude.ai Shopify connector is bound to THIS repo's store, not another session's. Use before the first Shopify connector call in a session.
 ---
 
 # check-shop-connector -- is the connector talking to this repo's store?

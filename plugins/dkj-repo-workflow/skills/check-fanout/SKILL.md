@@ -1,14 +1,7 @@
 ---
 name: check-fanout
 description: >-
-  Find out whether a dispatched fan-out discarded any of THIS session's uncommitted work -- take a
-  baseline of the working copy before dispatching subagents, compare after they return, and report
-  shrinkage only: a path that was changed and no longer is, a worktree edit that has been reverted, or
-  a stash entry that has gone. Use it whenever work is handed to subagents while the checkout holds
-  uncommitted edits, which is exactly what a parallel review chain is. It reads and reports, refuses
-  nothing, and cannot restore -- discarded uncommitted content is in no reflog, so knowing WHICH file
-  to write again is the whole available remedy. Growth is expected and stays silent, so a subagent
-  legitimately writing files never trips it.
+  Detect whether subagents discarded this session's uncommitted work: baseline before a fan-out, compare after. Use whenever subagents are dispatched over a dirty checkout.
 ---
 
 # check-fanout -- the detection half of the working-copy boundary

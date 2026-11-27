@@ -1,13 +1,7 @@
 ---
 name: go-live
 description: >-
-  Release day in one command for a store whose live theme deploys from a Git-connected branch, once the
-  owner has given the go-live word for that release: live-preflight, the promotion PR opened, its required
-  checks waited on, merged, the live theme verified by content hash, the app deployed or held, the release
-  cut and the tasks told -- stopping at the first refusal. Use it when the owner says a release may go live
-  ("approve", "take it live", "go live with v3.2.0"), in whatever language. The owner's word is the
-  live-push marker on the go-live line itself, which the live guard requires, together with -AppDeploy or
-  -SkipAppDeploy where the store ships an app.
+  Release day in one command for a Git-connected store: preflight, promotion PR, merge, live verify, cut, notify. Use when the owner says a release may go live ("take it live", "go live with v3.2.0").
 ---
 
 # go-live -- from the owner's word to a verified, cut release

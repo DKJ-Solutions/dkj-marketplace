@@ -1,6 +1,7 @@
 ---
 name: sync-summary
-description: Make a live-drift sync readable -- what colleagues changed directly in the Shopify admin, per theme area, plus what to look at: removed sections a template still points at, new sections nobody requested, theme editor settings changed, removed templates. Use it after a sync-main run, when reviewing a sync or back-flow PR, or when asking "what happened in the admin?". Takes the latest sync commit, a named commit, a range such as origin/main...origin/live, or -SinceTrunk where the store names its live deploy branch; -List shows recent sync commits. Read-only: git only, no network.
+description: >-
+  Make a live-drift sync readable: what changed in the Shopify admin per theme area, and what to check. Use after sync-main, when reviewing a sync PR, or for "what happened in the admin?".
 argument-hint: "[-Commit <hash> | -Range <base>...<head> | -SinceTrunk | -List]"
 ---
 

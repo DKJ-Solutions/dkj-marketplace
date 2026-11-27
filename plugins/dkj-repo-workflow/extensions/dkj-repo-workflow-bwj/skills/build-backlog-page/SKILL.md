@@ -1,11 +1,7 @@
 ---
 name: build-backlog-page
 description: >-
-  Build minor-backlog.html: the open issues carrying the reach label, shown with the colleague-facing
-  text their mirrored Asana tasks already carry -- never the GitHub issue's own developer-facing title
-  and body. Use it whenever the backlog page needs refreshing before a publish, or to see what a
-  colleague would currently read. It only writes the local file; publish-page.ps1 -Kind backlog is the
-  separate, later step that sends it out.
+  Build minor-backlog.html, the colleague-facing backlog page, from the open reach-label issues and their Asana text. Use to refresh the backlog page before a publish.
 ---
 
 # build-backlog-page -- the minor backlog, for a reader with no repository

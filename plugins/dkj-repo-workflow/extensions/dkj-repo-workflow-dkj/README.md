@@ -99,7 +99,7 @@ and the release keeps its one lockstep `vX.Y.Z` tag (#3895).
    clone reports success with the previous version. Then enable the plugin in the repo's
    `.claude/settings.json` (`"dkj-repo-workflow-dkj@dkj-marketplace": true`) and install it with
    `claude plugin install dkj-repo-workflow-dkj@dkj-marketplace --scope project`.
-2. Run the `adopt-dkj-repo-workflow` skill's Part 1 (`adopt-workflow-folder.ps1 -Apply`). It writes the
+2. Type `/adopt-dkj-repo-workflow` and take its Part 1 (`adopt-workflow-folder.ps1 -Apply`). It writes the
    extension import into the repo's `CLAUDE.md`, on the line directly below the `dkj-repo-workflow` import:
    `@~/.claude/plugins/marketplaces/dkj-marketplace/plugins/dkj-repo-workflow/extensions/dkj-repo-workflow-dkj/CLAUDE.md`
 

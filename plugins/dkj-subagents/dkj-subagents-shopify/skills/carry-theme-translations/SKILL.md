@@ -1,6 +1,7 @@
 ---
 name: carry-theme-translations
-description: Before a person publishes a DIFFERENT theme as live -- a cutover to a Git-connected theme, a restore from a backup, any theme switch -- carry the store's per-theme content translations over to the incoming theme and verify that none are missing. They are stored per theme, not in the theme files, so git does not bring them along and a publish without this step shows every non-primary language in the primary one. Run through the claude.ai Shopify connector, after check-shop-connector; the publish itself stays the person's own keystroke.
+description: >-
+  Carry a store's per-theme content translations to the incoming theme before a different theme is published live. Use before any theme switch, cutover or restore.
 ---
 
 # carry-theme-translations -- the translations a theme switch leaves behind

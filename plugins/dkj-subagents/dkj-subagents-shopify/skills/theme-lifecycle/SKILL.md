@@ -1,6 +1,7 @@
 ---
 name: theme-lifecycle
-description: Keep the Shopify theme estate from filling up, in the two places it grows -- back the live theme up as exactly one verified copy and rotate the previous backup out, and sweep away the spent preview themes this repo created. Run the backup around the live push -- before it as a rollback point, or after it as the baseline of what shipped, whichever your repo has decided -- and the sweep after that push. Both are destructive against a real store, so both are keyed on a reserved name prefix this repo WROTE rather than on anything they merely recognise: a theme somebody else created is never in the delete set, whatever its role. The backup polls until the copy is provably complete, because the CLI returns long before it is -- a backup nobody verified is worse than no backup. The sweep is dry-run by default and the live theme is refused by id and by role.
+description: >-
+  Keep the Shopify theme estate small: one verified backup of the live theme, and a sweep of this repo's spent preview themes. Use around the live push.
 ---
 
 # theme-lifecycle -- the backup that is verified, and the sweep that only takes its own

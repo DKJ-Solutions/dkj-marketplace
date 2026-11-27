@@ -238,7 +238,7 @@ if (@($documents).Count -gt 0 -and (Test-FunctionDefined 'Test-ExtensionImported
     foreach ($ext in $extensions) {
         if (Test-ExtensionImported -Extension $ext -Documents $documents) { continue }
         Write-Host "[WARNING] this repo enables $ext, but its CLAUDE.md does not import the extension --" -ForegroundColor Yellow
-        Write-Host '          so its chapters are not in context. Run the adopt-dkj-repo-workflow skill: its' -ForegroundColor Yellow
+        Write-Host '          so its chapters are not in context. Ask the operator to type /adopt-dkj-repo-workflow:' -ForegroundColor Yellow
         Write-Host '          adopt-workflow-folder.ps1 -Apply writes the line directly below the constitution import.' -ForegroundColor Yellow
         Write-Host "          Or add it by hand: $(Get-ExtensionImportLine -Extension $ext)" -ForegroundColor Yellow
     }

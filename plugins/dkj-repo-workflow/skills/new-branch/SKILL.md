@@ -1,12 +1,7 @@
 ---
 name: new-branch
 description: >-
-  Create (or idempotently resume) a git branch AND its development document --
-  .dkj/dkj-repo-workflow/<branch>.md, the branch's plan and the DEPLOY section that becomes its
-  changelog entry -- in one move, via the shared, centralized new-branch script from the plugin
-  (single source of truth, issue #81), so a consumer does not have to duplicate this script locally.
-  Use this whenever a new piece of work starts: a branch is never entry-less -- creating it brings that
-  document to life in the same step, instead of a separate later scaffolding step.
+  Create or resume a branch together with its development document (.dkj/dkj-repo-workflow/<branch>.md). Use whenever a new piece of work starts, before the first edit.
 argument-hint: "[<prefix>/<n>-<short-name>] [title]"
 ---
 

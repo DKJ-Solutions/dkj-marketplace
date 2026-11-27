@@ -1,13 +1,7 @@
 ---
 name: measure-skill
 description: >-
-  Measure what a skill COSTS and how fast the script behind it runs -- always-on tokens (paid by
-  every session whether the skill fires or not), on-invoke tokens (paid per firing), the delta
-  against a stored baseline, and the wall-clock of the script it drives. Use it before adding a
-  skill, when a plugin's session cost has grown, or to find which skills are carrying that cost. It
-  drives `claude plugin details` rather than estimating from file sizes, so the figure is the
-  authoritative one; it is read-only by default and is not a gate. It also covers the always-on
-  document path -- `CLAUDE.md` plus everything it `@`-imports -- measured per document and per section.
+  Measure what a skill costs (always-on and on-invoke tokens, script wall-clock) and the always-on CLAUDE.md path. Use before adding a skill or when session cost has grown.
 ---
 
 # measure-skill — what a skill costs, before somebody asks

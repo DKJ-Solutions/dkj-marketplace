@@ -1,12 +1,7 @@
 ---
 name: plugin-versions
 description: >-
-  Show, per enabled plugin, the version installed IN THIS CHECKOUT against the version the local
-  marketplace clone holds, and a verdict on whether a plugin update is due -- so you can tell, on this
-  machine, whether to run `claude plugin update` or `claude plugin marketplace update`. Read-only, no
-  arguments, runs in any checkout on any machine. Use it when you are unsure whether this checkout is
-  on the current plugin release, when a session behaves as if it loaded an older plugin, or before
-  deciding to refresh the marketplace.
+  Show per enabled plugin the installed version against the marketplace clone, and whether an update is due. Use when unsure this checkout runs the current plugin release.
 ---
 
 # plugin-versions -- installed here vs. the marketplace clone

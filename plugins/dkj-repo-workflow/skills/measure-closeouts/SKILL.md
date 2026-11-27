@@ -1,12 +1,7 @@
 ---
 name: measure-closeouts
 description: >-
-  Measure how the CLOSE-OUT actually behaves on this machine against its stated three-line ceiling,
-  across every recorded session -- so a change to the close-out rule can be evaluated instead of
-  guessed at. Use it before and after any repair to close-out wording or mechanism, when a receipt
-  keeps over-running and you want the rate rather than an impression, and to see the delta against a
-  stored baseline. It reads the session transcripts in place and emits only counts -- never transcript
-  content -- always exits 0, and is deliberately not a gate.
+  Measure close-out length against its three-line ceiling across recorded sessions. Use before and after changing close-out wording, or when receipts keep over-running.
 ---
 
 # measure-closeouts — the close-out ceiling, counted instead of argued about

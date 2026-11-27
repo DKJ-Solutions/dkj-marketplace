@@ -1,11 +1,7 @@
 ---
 name: start-task
 description: >-
-  Start a branch in a BWJ Shopify store repo -- the store layer over the shared new-branch: it refuses a
-  missing Shopify CLI, a sync/ or dependabot/ name, an unknown prefix, a double quote in the title, and a
-  base that is not the trunk (unless -Base or -Stacked says so), all before anything is created, then
-  hands the branch and its branch document to new-branch. Use it whenever a store task starts, instead of
-  the plain new-branch skill. It creates no preview theme; push-preview does that.
+  Start a branch and its branch document in a BWJ Shopify store repo, after the store-layer refusals. Use whenever a store task starts, instead of plain new-branch.
 ---
 
 # start-task -- the store's way to begin a branch

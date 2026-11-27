@@ -7,6 +7,7 @@ description: >-
   manager's audit said) left in its DEPLOY section for a person to answer. Use when a Dependabot PR
   sits red on the "Branch entry" check, or when asked to "fix the entry on the Dependabot PR", in
   whatever language. It relaxes no gate: the gate is deliberately not an exemption for `dependabot/*`.
+disable-model-invocation: true
 argument-hint: "[pull-request-number]"
 ---
 

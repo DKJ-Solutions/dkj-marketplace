@@ -1,6 +1,7 @@
 ---
 name: check-sitemap
-description: Report the layout of a Shopify store's sitemap per domain and market -- how many sub-sitemaps there are and why, which sitemap holds a URL, URLs that sit in more than one sitemap, the per-kind URL count difference between the locales of one domain, and with -Catalog the products, collections and pages the public JSON lists have that the sitemap does not (a noindex page is told apart from a real gap). Use it to find out whether a page is in the sitemap and in which one, or to check a sitemap for duplicates and gaps. Read-only: it only fetches public storefront URLs.
+description: >-
+  Report a Shopify store's sitemap layout per domain and market: which sitemap holds a URL, duplicates, gaps. Use to find whether a page is in the sitemap, or to check it for gaps.
 argument-hint: "[-Market <market>[,<market>]] [-Locale <locale>] [-Find <term>] [-Catalog] [-IndexOnly] [-CsvOut <file>] [-PlanOnly]"
 ---
 
