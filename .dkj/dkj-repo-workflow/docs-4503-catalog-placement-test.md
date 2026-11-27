@@ -71,4 +71,3 @@ releases and one-night events that have expired by the time anyone looks.
 
 Ian: recurring-vs-one-off test for a reference catalog database
 
-Plugins: dkj-subagents-lifehub
