@@ -981,7 +981,9 @@ if ($scoped -eq 'never') {
         Assert-True (Test-Path -LiteralPath $adopter -PathType Leaf) "inventory: '$($rec.Command)' names a script that exists"
         $src = [System.IO.File]::ReadAllText($adopter)
         # adopt-ci-floor's runners are composed in ci-floor-runners-lib.ps1 since #4529, so its literals are read there too.
+        # Likewise adopt-workflow-folder's two gate callers, in workflow-folder-callers-lib.ps1 since #4537.
         if ($rec.Command -eq 'adopt-ci-floor') { $src += [System.IO.File]::ReadAllText((Join-Path $RepoRoot 'scripts\lib\ci-floor-runners-lib.ps1')) }
+        if ($rec.Command -eq 'adopt-workflow-folder') { $src += [System.IO.File]::ReadAllText((Join-Path $RepoRoot 'scripts\lib\workflow-folder-callers-lib.ps1')) }
         foreach ($rel in $rec.Places) {
             # Either as a $targets Rel literal or as the dedicated variable an adopter uses for a single
             # file (adopt-statusline's $shimRel). Both are the path spelled verbatim in the script.
@@ -1016,6 +1018,7 @@ if ($scoped -eq 'never') {
     foreach ($rec in Get-AdoptionInventory) {
         $adopterSrc = [System.IO.File]::ReadAllText((Join-Path $RepoRoot "scripts\task\$($rec.Command).ps1"))
         if ($rec.Command -eq 'adopt-ci-floor') { $adopterSrc += [System.IO.File]::ReadAllText((Join-Path $RepoRoot 'scripts\lib\ci-floor-runners-lib.ps1')) }
+        if ($rec.Command -eq 'adopt-workflow-folder') { $adopterSrc += [System.IO.File]::ReadAllText((Join-Path $RepoRoot 'scripts\lib\workflow-folder-callers-lib.ps1')) }
         $rels = @([regex]::Matches($adopterSrc, "Rel\s*=\s*'([^']+)'") | ForEach-Object { $_.Groups[1].Value } | Sort-Object -Unique)
         $declared = @(@($rec.Places) + @(if ($rec.ContainsKey('NotPlaced')) { $rec.NotPlaced.Keys } else { @() }) | Sort-Object -Unique)
         Assert-Equal ($rels -join ',') ($declared -join ',') `

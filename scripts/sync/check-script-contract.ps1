@@ -143,6 +143,11 @@
     shared-scripts pin aside; the line names the file and the first differing line, never its text.
     Silenced, with the rest of the floor's lines, by naming adopt-ci-floor in Get-DeclinedAdoptions.
 
+    AND SINCE #4537 THE TWO GATE CALLERS adopt-workflow-folder PLACES (branch-entry.yml and
+    always-on-budget.yml) ARE HELD TO THEIR TEMPLATE THE SAME WAY, through Get-WorkflowFolderCallerDrift
+    (workflow-folder-callers-lib.ps1): the same non-counting [BEHIND] line, its release pin aside, silenced
+    by naming adopt-workflow-folder in Get-DeclinedAdoptions.
+
     AND SINCE INBOUND #2555 AN UNANSWERED 'decide' SEAM IS ROLLED UP AS [UNANSWERED], also non-counting.
     Its per-record [INFO] stays as it was; the roll-up names every optional 'decide' function this repo
     has not defined, in one line the session hook forwards -- because a 'decide' fallback is an answer
@@ -259,6 +264,10 @@ $script:Contract = Get-ScriptContract
 # against what adopt-ci-floor composes today. It loads ref-print-lib and write-target-lib from its own
 # directory where they are not in scope yet.
 . (Join-Path $PSScriptRoot '..\lib\ci-floor-runners-lib.ps1')
+
+# The two gate callers adopt-workflow-folder places (#4537), held against their template the same way. It
+# loads command-probe-lib and check-report-lib from its own directory where they are not in scope yet.
+. (Join-Path $PSScriptRoot '..\lib\workflow-folder-callers-lib.ps1')
 
 # An optional record reports [INFO] (with the fallback the caller uses) where a required one reports
 # [ERROR]. ContainsKey rather than dot-access on a possibly-absent key: this script runs under
@@ -664,6 +673,30 @@ if (-not $foundWorkflowFolder) {
                     "what the template changed and any edit of your own to carry back.") -ForegroundColor Yellow
             } else {
                 Write-Ok "ci-floor runner: $($d.Rel) matches the template this plugin version composes, its pin aside."
+            }
+        }
+    }
+
+    # A PLACED GATE CALLER BEHIND ITS TEMPLATE (#4537), the same treatment for the two callers
+    # adopt-workflow-folder places (branch-entry.yml and always-on-budget.yml). Same non-counting [BEHIND]
+    # shape and the same forwarding by marker, and silenced by naming ITS command in Get-DeclinedAdoptions.
+    # A caller's pin is the one thing it is expected to differ on, and adopt-workflow-folder's own [pin]
+    # advice reads that; the live branch is resolved from this repo's own scripts\repo-config.ps1, exactly
+    # as that command resolves it, so a caller that predates a declared live branch reads behind (#4374).
+    # NOTHING FOREIGN IS PRINTED: the path comes from the lib's own table and the line is a number.
+    if ($declinedAdoptions -notcontains 'adopt-workflow-folder') {
+        try { $callerDrift = @(Get-WorkflowFolderCallerDrift -RepoRoot $repoRoot) }
+        catch { $callerDrift = @(); Write-Skip 'workflow-folder callers: the placed callers could not be compared with their templates -- run adopt-workflow-folder.ps1 to read them.' }
+        foreach ($d in $callerDrift) {
+            if ($d.Stale) {
+                Write-Host ("  [BEHIND] $($d.Rel) differs from the caller adopt-workflow-folder.ps1 (Part 1 of the 'adopt-dkj-repo-workflow' " +
+                    "skill) composes in this plugin version, its release pin aside -- first at line $($d.Line). A release " +
+                    "changed this caller after it was placed, or this repo has since declared a live branch " +
+                    "(Get-ShopifyLiveDeployBranch), and adopt-workflow-folder never rewrites a file it finds. To take the " +
+                    "change: delete the file, re-run adopt-workflow-folder.ps1 -Apply, and read git diff before committing -- it shows " +
+                    "what the template changed and any edit of your own to carry back.") -ForegroundColor Yellow
+            } else {
+                Write-Ok "workflow-folder caller: $($d.Rel) matches the template this plugin version composes, its pin aside."
             }
         }
     }

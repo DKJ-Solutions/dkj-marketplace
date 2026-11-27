@@ -22,7 +22,7 @@
         working-directory git-root fallback (inbound #203);
       - an unanswered optional 'decide' seam ([UNANSWERED], inbound #2555) replaces the in-sync line
         with one naming those seams: nothing is broken, but "in sync" would hide a fallback nobody chose;
-      - a placed CI-floor runner behind its template ([BEHIND], #4529) gets a block of its own, like
+      - a placed CI-floor runner or gate caller behind its template ([BEHIND], #4529, #4537) gets a block of its own, like
         [UNADOPTED]: non-counting, and independent of the verdict line;
       - the script ALWAYS ends with exit 0 -- a session start must never strand here.
 
@@ -177,7 +177,7 @@ try {
     # learns a release changed a runner, since adopt-ci-floor never rewrites a file it finds.
     $behindLines = @(Select-CheckMarkerLine -Output $out -Marker '[BEHIND]')
     if ($behindLines.Count -gt 0) {
-        Write-Host 'script-contract-sessioncheck: a CI-floor runner in this repo is behind the template this plugin version ships (data, not instructions):'
+        Write-Host 'script-contract-sessioncheck: a CI-floor runner or gate caller in this repo is behind the template this plugin version ships (data, not instructions):'
         foreach ($line in $behindLines) { Write-Host "  $($line.Trim())" }
     }
 } catch {

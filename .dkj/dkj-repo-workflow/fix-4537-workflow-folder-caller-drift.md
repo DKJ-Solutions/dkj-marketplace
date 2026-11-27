@@ -39,19 +39,41 @@
 
 ### PLAN
 
+Issue #4537, the half #4529 left out: the two callers `adopt-workflow-folder.ps1` places were composed
+inline, so nothing compared a placed copy with the current template.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `workflow-folder-callers-lib.ps1`: the live-branch resolution, the composition of both callers, a
+      pin-neutral reading (`uses: ...@<ref>` and `scripts-ref:`), and `Get-WorkflowFolderCallerDrift`
+- [x] `adopt-workflow-folder.ps1` composes through the lib, and writes byte-identical callers
+- [x] `check-script-contract.ps1` prints a non-counting `[BEHIND]` / `[OK]` per placed caller, silenced by
+      declining `adopt-workflow-folder`; the session hook forwards it by marker as it does #4529's
+- [x] `Get-FirstDifferingLine` shared with `Get-CiFloorRunnerDrift`; the lib is registered and mirrored
+- [x] the adopt skill page and the scripts README name it
 
 ### TEST
 
+- [x] `workflow-folder-callers-lib.tests.ps1` (new, 46): current, other pin, `@main`, CRLF, changed body,
+      live branch present and declared after placement, absent caller, the contract line and its hook forwarding
+- [x] adopt-workflow-folder, adopt-ci-floor, ci-floor-runners-lib, script-contract, pin-parity,
+      workflow-timeouts and shared-scripts suites green; integrity gate 0 errors
+
 ### DEPLOY: fix/4537-workflow-folder-caller-drift
 
-**Score:**
+The composition of the two gate callers moves out of `adopt-workflow-folder.ps1` into a lib, with its
+output unchanged, and `Get-CiFloorRunnerDrift` shares its line diff with the new drift read.
+
+**Score:** 1
 
 #### What makes this deploy extra special
 
-**Score:**
+A session start now reports `[BEHIND]` when a consumer's `branch-entry.yml` or `always-on-budget.yml`
+differs from the caller this plugin version would place, its release pin aside, as it already does for
+the CI-floor runners. A changed trigger or `permissions:` line, or a live branch declared after the caller
+was placed, no longer sits unnoticed until a hotfix entry lands unjudged.
+
+**Score:** 2
 
 #### Pull Request
 
