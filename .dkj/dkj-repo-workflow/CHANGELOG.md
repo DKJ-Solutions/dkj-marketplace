@@ -2,7 +2,34 @@
 
 ## [Unreleased]
 
-**4 / 4 minor entries** <!-- pending-tally -->
+**5 / 5 minor entries** <!-- pending-tally -->
+
+### DEPLOY: fix/4529-ci-floor-runner-drift · 20261127-163926Z
+
+A consumer now hears at session start when a CI-floor runner it placed earlier is behind the template the
+installed plugin ships. The script-contract check holds `fold-on-merge.yml`, `verify-resolved.yml`,
+`merge-on-green.yml`, `repo-settings.yml` and `close-parked-recurrences.yml` to what `adopt-ci-floor`
+composes today, the shared-scripts pin aside, and prints a `[BEHIND]` line with the first differing line
+and how to take the change. A re-run of `adopt-ci-floor` reports the same.
+
+**Score:** 3
+
+#### What makes this deploy extra special
+
+A consumer whose `fold-on-merge.yml` predates the #4479 retry is told so at the next session start,
+instead of finding stranded changelog entries on its trunk after a merge.
+
+**Score:** 3
+
+#### Pull Request
+
+A placed CI-floor runner behind its template is reported at session start
+
+Plugins: dkj-repo-workflow
+
+[PR #4540](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4540)
+
+---
 
 ### DEPLOY: fix/4528-skill-description-budget · 20261127-162005Z
 
