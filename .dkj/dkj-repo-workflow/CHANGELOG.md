@@ -2,7 +2,31 @@
 
 ## [Unreleased]
 
-**8 / 9 minor entries** <!-- pending-tally -->
+**8 / 10 minor entries** <!-- pending-tally -->
+
+### DEPLOY: fix/4542-reopen-guard-windows-path · 20261127-201550Z
+
+In a store repo running `dkj-repo-workflow-bwj`, a `gh issue reopen` that calls gh by its full Windows path
+(`& "C:\...\gh.exe" issue reopen 9`) is now judged by the reopen guard. It used to pass unseen, while the
+close guard already caught the same form.
+
+**Score:** 1
+
+#### What makes this deploy extra special
+
+N/A
+
+**Score:** N/A
+
+#### Pull Request
+
+guard-issue-reopen: a reopen through a Windows path to gh.exe is judged, as the close guard already judges it
+
+Plugins: dkj-repo-workflow-bwj
+
+[PR #4543](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4543)
+
+---
 
 ### DEPLOY: fix/4549-admin-probe-timeout · 20261127-195649Z
 
