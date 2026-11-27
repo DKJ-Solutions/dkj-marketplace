@@ -997,20 +997,22 @@ Assert-True ($rB.Output -match 'off the scale') 'malformed table: and says which
 Assert-True ((Get-Changelog -Dir $dirB) -eq $clBefore) 'malformed table: CHANGELOG.md is untouched -- this script commits straight to main'
 Assert-True (Test-Path (Join-Path $dirB 'feat-bad.md')) 'malformed table: and the entry file still exists, so nothing has to be unpicked'
 
-Write-Host "THE PRE-PASS: one bad entry folds none of the good ones" -ForegroundColor Cyan
-#      Folding writes one entry at a time, so a problem found on the second file would leave the first already
-#      folded and its source file deleted -- a half-state to unpick by hand on main. So NOTHING may have
-#      happened, including to the entry that was fine.
+Write-Host "THE PRE-PASS: one bad entry does not strand the good ones (#4527)" -ForegroundColor Cyan
+#      The judgement still runs before any write, so no half-state is possible. But a malformed entry is set
+#      aside rather than stopping the run: the valid entry folds, the bad file stays untouched, exit is 1.
 $dirP = New-FoldFixture -Label 'prepass'
-$clP0 = Get-Changelog -Dir $dirP
 New-EntryFile -Dir $dirP -Name 'feat-good.md' -Title 'Perfectly fine' -Rows '| 1 | 3 | fine |'
 New-EntryFile -Dir $dirP -Name 'feat-worse.md' -Title 'Bad tier'      -Rows '| 5 | 3 | nonexistent tier |'
 $rP = Invoke-Fold -Dir $dirP
-Assert-True ($rP.ExitCode -eq 1) 'pre-pass: exits 1'
+$clP = Get-Changelog -Dir $dirP
+Assert-True ($rP.ExitCode -eq 1) 'pre-pass: exits 1, so the defect stays visible'
 Assert-True ($rP.Output -match 'tier 5') 'pre-pass: the reason names the value'
-Assert-True ((Get-Changelog -Dir $dirP) -eq $clP0) 'pre-pass: the changelog is byte-identical -- it ran before any write'
-Assert-True (Test-Path -LiteralPath (Join-Path $dirP 'feat-good.md')) 'pre-pass: the VALID entry file still exists, rather than being folded first'
-Assert-True (Test-Path -LiteralPath (Join-Path $dirP 'feat-worse.md')) 'pre-pass: as does the invalid one'
+Assert-True ($rP.Output -match 'feat-worse\.md') 'pre-pass: and names the malformed file'
+Assert-True ($rP.Output -match 'NOT folded') 'pre-pass: and says it was not folded'
+Assert-True ($clP -match 'Perfectly fine') 'pre-pass: the VALID entry IS folded'
+Assert-True (-not (Test-Path -LiteralPath (Join-Path $dirP 'feat-good.md'))) 'pre-pass: and its file is gone'
+Assert-True (Test-Path -LiteralPath (Join-Path $dirP 'feat-worse.md')) 'pre-pass: the invalid entry file is left on the trunk'
+Assert-True ($clP -notmatch 'Bad tier') 'pre-pass: and its content is NOT in the changelog'
 
 Write-Host "A declaration QUOTED inside a fence is not the declaration" -ForegroundColor Cyan
 #      An entry documenting this format writes the thing it is explaining -- this repo's own entries for the
