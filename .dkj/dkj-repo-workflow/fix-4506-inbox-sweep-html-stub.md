@@ -39,19 +39,34 @@
 
 ### PLAN
 
+#4506: `inbox-sweep` step 1 reads a thread with `PLAIN_TEXT` only, so an HTML-only mail whose
+plain-text part is a "view online" stub is sorted without its facts ever being seen.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `inbox-sweep/SKILL.md` step 1: when the `PLAIN_TEXT` body is a stub, read again with
+  `FULL_CONTENT` and take the facts from `htmlBody`; never follow the tracking link.
 
 ### TEST
 
+- [x] Read step 1 end to end: the fallback sits beside the `get_thread` rule it extends and
+  changes nothing else in the step.
+
 ### DEPLOY: fix/4506-inbox-sweep-html-stub
 
-**Score:**
+The life hub's `inbox-sweep` no longer files an HTML-only mail as having nothing in it. Some senders
+put only a "view online" stub in the plain-text part of a mail, with the real content in the HTML
+part. When the plain-text body is such a stub, the sweep now reads the thread again in full and takes
+the facts from the HTML. It never follows the "view online" link, because that is a tracking URL.
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+A life-hub user no longer loses a mail such as a price change from a sender that writes only HTML,
+which the sweep used to sort as nothing lasting.
+
+**Score:** 2
 
 #### Pull Request
 
