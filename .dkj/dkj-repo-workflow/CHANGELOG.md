@@ -2,7 +2,33 @@
 
 ## [Unreleased]
 
-**9 / 11 minor entries** <!-- pending-tally -->
+**10 / 12 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/4538-skill-listing-budget · 20261127-204335Z
+
+Check 48's description parser moves into `measure-skill-lib.ps1`, so the gate and the new report read
+one parser and one 250-character ceiling.
+
+**Score:** 1
+
+#### What makes this deploy extra special
+
+`measure-skill` now reports how many characters the model-invocable skill descriptions of the plugins a
+checkout enables spend on Claude Code's skill listing. It measures that total against the 8,000-character
+fallback and names any description over 250 characters as likely to arrive name-only. A consumer can now
+see the budget that #4528 found overrun, in its own plugin set, before a skill silently stops triggering.
+
+**Score:** 2
+
+#### Pull Request
+
+measure-skill reports the summed skill-description listing cost against Claude Code's budget, in a consumer
+
+Plugins: dkj-repo-workflow
+
+[PR #4545](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4545)
+
+---
 
 ### DEPLOY: fix/4526-entry-gate-live-deploy-copy · 20261127-202934Z
 
