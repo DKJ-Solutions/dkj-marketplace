@@ -2,7 +2,33 @@
 
 ## [Unreleased]
 
-**10 / 12 minor entries** <!-- pending-tally -->
+**11 / 13 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/4547-measure-references · 20261127-205329Z
+
+Specialists carrying the knowledge-lookup block now end a deliverable whose task read or searched for sources with one line,
+`References: <n> from the store, <n> added, <n> web searches.` The new `measure-references` skill reads
+every subagent transcript and reports, per specialist and per ISO week, those counts beside the web calls
+measured in the same runs' own transcripts, and the reuse share (from store over from store plus web).
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+Whether the self-maintained references actually save web searches is now a number you can run
+(`/measure-references`), week over week, instead of a guess.
+
+**Score:** 2
+
+#### Pull Request
+
+measure-references: what a specialist's references save, reported beside the measured web calls
+
+Plugins: dkj-repo-workflow, dkj-subagents-alpha, dkj-subagents-developers, dkj-subagents-lifehub
+
+[PR #4552](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4552)
+
+---
 
 ### DEPLOY: feat/4538-skill-listing-budget · 20261127-204335Z
 
