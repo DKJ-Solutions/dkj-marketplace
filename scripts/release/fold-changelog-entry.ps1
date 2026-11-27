@@ -621,6 +621,13 @@ $significanceActive = Test-EntrySignificanceActive
 # main. The failure this catches is cheap to see up front and impossible to undo afterwards, so it is
 # checked here rather than in the loop: an impact table that does not parse.
 #
+# A MALFORMED ENTRY IS SET ASIDE, NOT A REASON TO STOP THE RUN (#4527). It used to refuse the whole run,
+# so one stranded entry with e.g. a tier-0 'Score: N/A' kept every VALID entry on the trunk beside it
+# stranded too, and every later unrelated merge turned fold-on-merge red. The judgement stays HERE, before
+# any write, which is what still prevents a half-folded state: the malformed files are removed from the
+# list the loop walks, left untouched on the trunk, and named in a red block at the end of the run, which
+# exits 1 so the defect stays visible. Only when NOTHING is valid does the run refuse up front.
+#
 # THE SECOND PRE-PASS FAILURE IS GONE WITH THE SECTIONS. "This repo declares no changelog section for
 # tier N" was the other refusal here, and it existed because the tier had to be mapped to a heading that
 # might not be there. A flat list has no such mapping, so a tier the repo happens not to use is no longer
@@ -630,6 +637,7 @@ $significanceActive = Test-EntrySignificanceActive
 # state this pass cannot know (the PR, and a changelog the previous iteration has already rewritten).
 $tierByFile = @{}
 $tierProblems = @()
+$malformedFiles = @()
 foreach ($file in $entryFiles) {
     $filePath = Join-Path $repoRoot $file
     # Every entry file is judged here, before the first one is folded -- so the reads further down
@@ -644,8 +652,10 @@ foreach ($file in $entryFiles) {
     $tier = [pscustomobject]@{ Tier = $impact.Tier; Declared = $impact.Declared }
     $impactErrors = @(@($impact.Errors) | Where-Object { $_ })
     if ($impactErrors.Count -gt 0) {
-        # A tier that cannot be honoured stops the whole run, exactly as a malformed 'Tier:' line did: it
-        # decides where in the list the entry goes, and guessing that wrong is a move on main.
+        # A tier that cannot be honoured keeps THIS entry out of the fold (#4527): it decides where in the
+        # list the entry goes, and guessing that wrong is a move on main. The entries around it are judged
+        # on their own, and the file itself is left untouched.
+        $malformedFiles += $file
         foreach ($problem in $impactErrors) { $tierProblems += "  $file -- $problem" }
         continue
     }
@@ -677,9 +687,14 @@ foreach ($file in $entryFiles) {
     }
 }
 if ($tierProblems.Count -gt 0) {
-    Write-Host "Nothing was folded -- these entries could not be filed:" -ForegroundColor Red
-    $tierProblems | ForEach-Object { Write-Host $_ -ForegroundColor Red }
-    exit 1
+    $malformedSet = @($malformedFiles)
+    $entryFiles = @($entryFiles | Where-Object { $malformedSet -notcontains $_ })
+    if ($entryFiles.Count -eq 0) {
+        # Every entry is malformed: nothing to fold, so the refusal stays up front, before any write.
+        Write-Host "Nothing was folded -- these entries could not be filed:" -ForegroundColor Red
+        $tierProblems | ForEach-Object { Write-Host $_ -ForegroundColor Red }
+        exit 1
+    }
 }
 
 # --- Pre-pass: THE TRUNK THE GATE IS ABOUT TO READ IS THE CURRENT ONE (inbound #1405) --------------
@@ -1299,7 +1314,7 @@ if ($Commit) {
         Write-Host "Nothing was folded, so there is nothing to commit." -ForegroundColor Yellow
         # Non-zero when the reason nothing was folded is a REFUSAL: ship-pr reads this code, and a
         # duplicate that ends the run on 0 is the silent success this gate exists to stop.
-        if ($refused.Count -gt 0) { exit 1 }
+        if ($refused.Count -gt 0 -or $tierProblems.Count -gt 0) { exit 1 }
         exit 0
     }
     $subjects = @($folded | ForEach-Object {
@@ -1585,6 +1600,12 @@ if ($Commit) {
 # A REFUSED ENTRY ENDS THE RUN NON-ZERO, and it is reported HERE rather than at the moment of refusal
 # because in fold-all mode a duplicate is one file's problem: the entries around it still have to land.
 # ship-pr reads this code, which is what carries the gate into the cycle instead of leaving it on screen.
+if ($tierProblems.Count -gt 0) {
+    # Set aside by the pre-pass (#4527): the valid entries above are already folded, these stay on the trunk.
+    $what = if ($malformedFiles.Count -eq 1) { 'entry' } else { 'entries' }
+    Write-Host "$($malformedFiles.Count) $what could not be filed and were NOT folded -- they stay on the trunk:" -ForegroundColor Red
+    $tierProblems | ForEach-Object { Write-Host $_ -ForegroundColor Red }
+}
 if ($refused.Count -gt 0) {
     $what = if ($refused.Count -eq 1) { 'entry was' } else { 'entries were' }
     Write-Host "$($refused.Count) $what refused as a duplicate and NOT folded: $($refused -join ', ')" -ForegroundColor Red
@@ -1596,6 +1617,7 @@ if ($refused.Count -gt 0) {
     }
     exit 1
 }
+if ($tierProblems.Count -gt 0) { exit 1 }
 
 # THE SUCCESS ARM'S LAST LINE. A standalone fold is a chain ending in its own right.
 #

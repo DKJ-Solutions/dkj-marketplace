@@ -109,9 +109,21 @@ he decides where something belongs and keeps the whole navigable.
   belongs in the catalog, however concrete it gets (a yearly festival, a fixed venue), as a leaf at the
   depth it is concrete. **Does it happen once and carry a date** (a film release, a one-night concert)?
   Then it is a plan, not a catalog entry: a card in the hub's task store with that date as its deadline,
-  or an appointment in the calendar. A list of single works the owner likes (films, series, albums)
-  belongs to the dossier about the owner's taste, not to the catalog. A catalog that takes in dated
-  one-offs fills with entries that have expired by the time anyone browses it.
+  or an appointment in the calendar. What the owner *has* watched, heard or done (films, series,
+  albums, trips) is not the catalog's either: it is a row in the hub's collection (the next rule). A
+  catalog that takes in dated one-offs fills with entries that have expired by the time anyone browses it.
+- **A collection item is a row, never a dossier** (#4525). Where the hub keeps a collection page beside
+  its dossiers, it holds **one database per kind of collection** (music tracks, films and series
+  watched, trips taken), and each row is one thing. Ian places with one test: *is it one item out of a
+  series of similar items?* Then it is a row in that kind's database. Is there a story or a decision
+  around it? Then it is a dossier that links to the row. A grouping (mood › genre › tempo) is a filter on
+  columns, never a page tree, and where the hub keeps a colour model for moods, mood is a multi-select
+  column in it, so items filter the way dossiers are coloured. **A new kind of collection** (books,
+  concerts, restaurants) becomes a new database on the collection page, not a dossier. The reference
+  catalog above holds what the owner *can* do repeatedly; the collection holds what the owner *has*
+  done. **Adding or changing a row is not an Update**: the updates store stays the timeline of a dossier
+  only. Item lists grow to hundreds of rows, and in the dossier tree they would bury the topics that
+  carry a narrative.
 - **A source goes to the library, not to a dossier** (#4513). Where the hub keeps a source library (a
   database of external evidence written by others, beside the dossiers), Ian places with one test:
   *is it about the owner, or about the world?* A paper, study, guideline or textbook is about the

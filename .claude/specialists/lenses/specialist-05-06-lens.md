@@ -1293,8 +1293,9 @@ release management. Rendall's craft in such a repo is whatever *that* repo's rel
   rarely call it standalone anymore.
 - `scripts/release/fold-changelog-entry.ps1 [-Branch <name>] [-RepoRoot <path>] [-Commit] [-Push]` — fold
   entry(ies) into `CHANGELOG.md` on `main` after a merge, each at the **position its own impact table ranks
-  it at** and with its declaration left intact. A malformed tier or an off-scale significance stops the run
-  **before anything is written** — so a fold-all with one bad entry leaves nothing half-done. `-RepoRoot` is an
+  it at** and with its declaration left intact. A malformed tier or an off-scale significance is judged
+  **before anything is written**: in a fold-all that entry is set aside and left on the trunk, the valid
+  ones fold, and the run ends with exit 1 naming it (#4527), so nothing is ever half-done. `-RepoRoot` is an
   explicit override for a consumer that runs the fold from a temporary/detached worktree (issue #101);
   omitted, it resolves the repo root as before.
 - `scripts/release/cut-release.ps1 (-Version <X.Y.Z> | -Bump <major|minor|patch>) [-Title "…"] [-NoPush] [-SkipLint] [-SkipTierGate]`
