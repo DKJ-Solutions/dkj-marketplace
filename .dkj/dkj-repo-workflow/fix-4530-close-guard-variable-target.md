@@ -41,17 +41,36 @@
 
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `Get-IssueCloseInvocation` (`stale-paste-block-rules.ps1`) counts a positional target carrying `$` or
+  a backtick (`$n`, `"$n"`, `$(...)`) as `Unresolved` instead of dropping it, and finds the close inside a
+  loop: a bare `{` or `}` splits a segment, and a leading `do`, `then` or `else` is skipped like a prefix.
+  It returns `$null` only when it found neither a literal nor an unresolved close.
+- [x] `guard-stale-paste-block.ps1` sends an unresolved close down the existing `Add-NotChecked -Close`
+  route, so the session gets `permissionDecision: ask` with the reason and the fix (one issue per
+  command, a literal number). The header names the case.
 
 ### TEST
 
+- [x] `guard-stale-paste-block.tests.ps1`: parser asserts for the measured bash loop, a PowerShell
+  `foreach` block, `"$n"`, a leading `do`, a subshell, a not-planned variable close (still unguarded),
+  and a literal close inside a block; a hook-level case asserting `ask`, the reason and no gh call.
+  170/170 pass.
+
 ### DEPLOY: fix/4530-close-guard-variable-target
 
-**Score:**
+A `gh issue close` whose issue comes from a variable, the way a loop closes a batch, no longer slips past
+the go-live block guard in silence. The hook read such a command as no close at all, so in
+smartwatchbanden three Asana-linked issues closed with only the "result message follows" line. It now
+asks a person first, with the reason and the fix: close one issue per command with a literal number.
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+In a store repo running `dkj-repo-workflow-bwj`, closing issues in a loop now raises a permission prompt
+instead of posting a closed message with no go-live block on each Asana task.
+
+**Score:** 2
 
 #### Pull Request
 
