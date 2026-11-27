@@ -1,6 +1,7 @@
 ---
 name: log-mental-block
-description: The stuck button -- walks the owner of a life hub through a stuck moment (no drive, low mood, cannot think of anything to do) in short fixed steps, and turns every moment into a chapter in one running journal in Notion, with a check-in, possible triggers, measurements before and after, a follow-up and matching sources. Use it for /log-mental-block, "it's happening again", "I'm stuck", "I have no drive for anything", "I don't know what to do", and for "nameting" (follow-up) or /log-mental-block nameting, in whatever language it is asked.
+description: >-
+  The stuck button: walk the owner through a stuck moment in short steps and log it in a Notion journal. Use for /log-mental-block, "I'm stuck", "I have no drive", or "nameting".
 ---
 
 # /log-mental-block: the stuck button and the journal

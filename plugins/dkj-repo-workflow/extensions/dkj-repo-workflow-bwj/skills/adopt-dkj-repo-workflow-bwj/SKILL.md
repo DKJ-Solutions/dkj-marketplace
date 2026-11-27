@@ -17,6 +17,7 @@ description: >-
   on the board.
   Run this right after enabling the plugin, or when report-issue reports the Asana config seam
   missing.
+disable-model-invocation: true
 ---
 
 # adopt-dkj-repo-workflow-bwj -- place both chapters' config seam

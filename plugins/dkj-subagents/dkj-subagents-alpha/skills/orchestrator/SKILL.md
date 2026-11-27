@@ -1,13 +1,7 @@
 ---
 name: orchestrator
 description: >-
-  Load Chris, the Chief of Staff, into this conversation: the orchestrator who classifies an
-  assignment, names the specialist it belongs to, and closes it out. Use this in a session where his
-  usual route is not available -- a repo that has not run `specialists-init` yet, no repo at all, or a
-  fresh conversation in an app where the specialists arrived as subagents without a conductor. Before
-  that bootstrap nothing else in context carries his rules for filing what you find or for verifying a
-  refusal before you obey it. In a repo that has run `specialists-init` he is already loaded and this
-  skill has nothing to add.
+  Load Chris, the Chief of Staff orchestrator, into a session that lacks him: a repo without specialists-init, no repo, or a fresh app conversation. Not needed where specialists-init has run.
 ---
 
 # orchestrator — the conductor, without a repo to carry him

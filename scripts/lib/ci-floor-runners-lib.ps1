@@ -1,0 +1,1310 @@
+<#
+.SYNOPSIS
+    The CI-floor runners adopt-ci-floor.ps1 places, composed in one place so a placed copy can be held
+    against them (issue #4529).
+
+.DESCRIPTION
+    adopt-ci-floor.ps1 composes five runners into a consumer -- fold-on-merge, verify-resolved,
+    repo-settings, merge-on-green and close-parked-recurrences -- and never rewrites one it finds. Until
+    #4529 the composition lived inline in that script, so nothing else could ask what the CURRENT
+    template of a runner is, and an existing copy was only ever read for a handful of known gaps, one
+    probe per gap (#2333, #2449, #3491, #3857, #4198, #4449). Measured in a consumer on November 27,
+    2026: a fold-on-merge.yml pinned at v7.0.0 still stood down on a moved trunk, the #4479 repair
+    existed only in the template, and no session check said so -- five entries stranded on the trunk.
+
+    So the composition is here, and Get-CiFloorRunnerDrift compares each placed runner with it, pin
+    neutral: the shared-scripts `ref:` line is the one line a placed copy is EXPECTED to differ on, and
+    is read by adopt-ci-floor's own pin verdict instead. check-script-contract.ps1 reports the result
+    at every session start, so a consumer learns that a release changed a runner without having to
+    re-run the command that would have told them.
+
+    THE RUNNER ARRAYS STAY AT COLUMN 0 INSIDE THEIR FUNCTION, deliberately: pin-parity.tests.ps1 and
+    workflow-timeouts.tests.ps1 read them as text, from `$<name> = @(` to the closing `)` at column 0.
+
+    Needs ref-print-lib.ps1 (Get-DisplayRef, for Test-QuotedScalarSafe) and write-target-lib.ps1
+    (Get-WriteTargetReparsePoint, for the drift read), both loaded from this file's own directory when
+    the caller has not loaded them already.
+
+    Pure ASCII, per this repo's script-layer convention.
+#>
+
+if (-not (Get-Command -Name Get-DisplayRef -CommandType Function -ErrorAction SilentlyContinue)) { . (Join-Path $PSScriptRoot 'ref-print-lib.ps1') }
+if (-not (Get-Command -Name Get-WriteTargetReparsePoint -CommandType Function -ErrorAction SilentlyContinue)) { . (Join-Path $PSScriptRoot 'write-target-lib.ps1') }
+
+# ACTIONS/CHECKOUT IS PINNED BY SHA IN THE TWO WRITE-CAPABLE RUNNERS BELOW (issue #1904).
+# This repo's own .github/workflows/fold-on-merge.yml and verify-resolved.yml have carried this pin
+# since they were written, and the comment on the first of them states the reason: a mutable tag on
+# that line could otherwise retag its way into exfiltrating a 366-day standing write token instead of
+# an hour-lived one. The generator was handing every ADOPTING CONSUMER the same two jobs behind a
+# floating tag -- the repo that wrote the warning protected, the repos that took its advice not.
+#
+# BOTH checkout steps in each of those jobs are pinned, not only the one holding the credential. The
+# first checks out with persist-credentials on, so the token sits in the workspace git config for every
+# later step of the same job; verify-resolved's job likewise holds issues: write for its whole length.
+# An action is pinned because of the JOB it runs in, not because of the line it sits on.
+#
+# repo-settings.yml, the read-only runner scaffolded below, does not pin the ACTION -- it holds
+# contents: read and no secret, and this repo's own copy of it is unpinned for that same reason. It
+# does pin the shared SCRIPTS since #4237, for a different reason: below.
+#
+# HOW THIS PIN GETS REFRESHED, which is the half a generated pin does not get for free. It is ONE
+# variable rather than four literals, and pin-parity.tests.ps1 asserts it still equals the SHA in this
+# repo's own fold-on-merge.yml. So the pin has a single refresh point and a gate that fails the moment
+# a hand-maintained workflow here is bumped and the scaffolder is not -- a consumer's floor cannot
+# quietly fall behind the floor this repo runs on itself.
+#
+# THE PIN NOW LIVES IN Get-CiFloorConstants BELOW (#4529), still as ONE literal, and pin-parity.tests.ps1
+# reads it from this file.
+function Get-CiFloorConstants {
+    <# The fixed facts every CI-floor runner is composed from: where the shared scripts come from, where
+       they are checked out, and the actions/checkout pin the write runners carry. #>
+    $sharedPath = '.workflow-scripts'
+    return @{
+        SharedRepo  = 'DKJ-Solutions/dkj-marketplace'
+        SharedPath  = $sharedPath
+        PluginDir   = "$sharedPath/plugins/dkj-repo-workflow/scripts"
+        CheckoutPin = 'actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1'
+    }
+}
+
+# --- Which workflow carries which required check ----------------------------------------------------
+function Get-WorkflowFacts {
+    <#
+        One record per .github/workflows/*.yml: its path, the job keys and job names it declares, and
+        whether its `on:` block carries a merge_group trigger.
+
+        THE TRIGGER IS MATCHED AS A KEY OF THE `on:` BLOCK, not as the word anywhere in the file. Every
+        paragraph of reasoning about a queue names `merge_group` too, so a substring test would report a
+        workflow as ready on the strength of a comment about it -- which is the exact silent state this
+        whole command exists to prevent. Same property merge-queue-prereq.tests.ps1 asserts on the
+        source's own ci.yml, and deliberately the same regex shape.
+
+        A CHECK CONTEXT IS A JOB, NOT A FILE, which is why the job keys are collected at all. GitHub
+        names an Actions check after the job's `name:` where it has one and after its key otherwise
+        (measured on this workflow's source: the required context `lint-en-tests` is the key of a job
+        in ci.yml that declares no name). Both are collected, and a context matching neither is
+        reported as unmatched rather than guessed at -- an unmatched context is a real answer here,
+        because a required check may come from something other than Actions.
+
+        THAT SENTENCE IS TRUE ONLY BECAUSE THE TEXT IS NORMALISED TO LF ON READ (inbound #2237). On a
+        CRLF checkout the name half of "both" collected nothing, so "unmatched" stopped meaning what it
+        says here and started meaning "this reader cannot see names at all". The reasoning, and why the
+        damage reached past the note into the auto-filled ruleset, is at the read itself below.
+    #>
+    param([Parameter(Mandatory)][string]$WorkflowDir)
+
+    $facts = @()
+    if (-not (Test-Path -LiteralPath $WorkflowDir -PathType Container)) { return @() }
+    foreach ($f in @(Get-ChildItem -LiteralPath $WorkflowDir -File -ErrorAction SilentlyContinue | Where-Object { $_.Extension -in @('.yml', '.yaml') })) {
+        # NORMALISED TO LF ON READ, ONCE, BEFORE ANY REGEX BELOW SEES IT (inbound #2237).
+        # Not a tidy-up. The job-`name:` capture below is anchored on '$', and .NET's multiline '$'
+        # matches only immediately before a '\n' -- so against a CRLF file '[^\r\n]*' stops before the
+        # '\r' and the anchor fails, collecting NO names at all. Its neighbour, the job-KEY capture,
+        # survives the same file only by accident, because its '\s*$' absorbs the '\r' first.
+        #
+        # ONE OF A PAIR CRLF-TOLERANT AND THE OTHER NOT IS WORSE THAN A WRONG NOTE. $prJobIds then holds
+        # ONE id where LF holds two (the key and the name), and ONE is exactly the count the paste-ready
+        # ruleset call further down auto-fills on -- so a Windows consumer with a single named job in a
+        # single pull_request workflow is handed a ruleset requiring the job KEY, while GitHub reports
+        # that check under its NAME. A required check that never reports leaves every pull request
+        # pending forever. On LF the same tree declines to auto-fill and prints the candidate list, which
+        # is the safe path: the bug does not merely mute a note, it moves the script onto the branch it
+        # would otherwise have refused. Measured from a consumer on `core.autocrlf=true`; this repo never
+        # hit it because .gitattributes pins `eol=lf` AND its own ci.yml job declares no `name:`, so the
+        # broken half of the pair had nothing to capture either way.
+        #
+        # NORMALISING BEATS ANCHORING BOTH ON '\r?$': it closes the whole class rather than the two
+        # instances visible today, so a regex added to this function later cannot reintroduce it. The
+        # `on:`/`jobs:` matchers keep their explicit '\r?\n' -- harmless on LF, and the honest record
+        # that this text has more than one possible shape on disk. Same normalise-on-read
+        # subagent-shared-lib.ps1 already does. It does NOT weaken the single-line guarantee the
+        # auto-fill block downstream names this capture for: '[^\r\n]*' admits no newline of either
+        # kind, before the normalisation or after it.
+        $text = ([System.IO.File]::ReadAllText($f.FullName)) -replace "`r`n", "`n"
+
+        $onBlock = [regex]::Match($text, '(?ms)^on:\r?\n(?<body>(?:[ \t]+\S[^\r\n]*\r?\n)+)')
+        $hasMergeGroup = $onBlock.Success -and ($onBlock.Groups['body'].Value -match '(?m)^\s{2}merge_group:')
+        $onPullRequest = $onBlock.Success -and ($onBlock.Groups['body'].Value -match '(?m)^\s{2}pull_request:')
+
+        # The jobs block runs to the end of the file: `jobs:` is conventionally last, and a top-level key
+        # after it would end the match at that key's own column-0 line.
+        $jobsBlock = [regex]::Match($text, '(?ms)^jobs:\r?\n(?<body>(?:(?:[ \t]+[^\r\n]*|\s*)\r?\n)+)')
+        $ids = @()
+        if ($jobsBlock.Success) {
+            foreach ($m in [regex]::Matches($jobsBlock.Groups['body'].Value, '(?m)^\s{2}(?<key>[A-Za-z0-9_.\-]+):\s*$')) {
+                $ids += $m.Groups['key'].Value
+            }
+            foreach ($m in [regex]::Matches($jobsBlock.Groups['body'].Value, '(?m)^\s{4}name:\s*(?<name>\S[^\r\n]*)$')) {
+                $ids += ($m.Groups['name'].Value.Trim().Trim('''"'))
+            }
+        }
+
+        # THE WORKFLOW'S OWN TOP-LEVEL name:, which is what a workflow_run trigger matches on (#2329) --
+        # not the file name and not a job. Column 0 only, so a job's `name:` at four spaces is never it.
+        # '' where the file declares none: GitHub then names the workflow after its path, and a runner
+        # that guessed that spelling would be matching on something this reader did not see.
+        $wfNameMatch = [regex]::Match($text, '(?m)^name:\s*(?<name>\S[^\r\n]*)$')
+        $wfName = if ($wfNameMatch.Success) { ($wfNameMatch.Groups['name'].Value -replace '\s+#.*$', '').Trim().Trim('''"') } else { '' }
+        # A BLOCK SCALAR (`name: >` or `name: |`) keeps the real name on the lines below, which this
+        # one-line reader does not follow -- so it is treated as no name rather than as the indicator.
+        if ($wfName -match '^[>|][+-]?\d*$') { $wfName = '' }
+
+        # THE PLUGIN'S OWN PR GATES ARE NOT THIS REPO'S CI (inbound #2677). adopt-workflow-folder (Part 1)
+        # places branch-entry.yml and always-on-budget.yml, both on pull_request, both a bare job-level
+        # `uses:` call into this plugin's source repo. Counted as "something triggers on pull_request",
+        # they suppressed the CI skeleton the moment Part 1 had run, and then stood alone as the
+        # candidate checks -- while both are pull-request-only and so cannot carry the required role.
+        # Measured in a consumer: Part 1 then Part 3, the documented order, left no requirable check.
+        # A file with a step of its own anywhere is the consumer's, whatever else it calls, so a mixed
+        # file is never excluded. Both repo names are read, as at the pinned-ref reader below: a caller
+        # scaffolded before the rename still names the old one, and still runs.
+        $pluginGate = $jobsBlock.Success `
+            -and ($jobsBlock.Groups['body'].Value -match '(?m)^\s{4}uses:\s*[^/\s]+/(?:dkj-marketplace|dkj-claude-plugins|claude-code-specialists)/\.github/workflows/') `
+            -and ($jobsBlock.Groups['body'].Value -notmatch '(?m)^\s+(?:steps|runs-on):')
+
+        $facts += [pscustomobject]@{
+            Name          = $f.Name
+            Rel           = ".github/workflows/$($f.Name)"
+            WorkflowName  = $wfName
+            JobIds        = @($ids | Sort-Object -Unique)
+            HasMergeGroup = $hasMergeGroup
+            OnPullRequest = $onPullRequest
+            PluginGate    = $pluginGate
+        }
+    }
+    return @($facts)
+}
+
+# THE JOB'S NAME COMES FROM THE SEAM THAT ALREADY OWNS THIS QUESTION, Get-CiTestCheckName -- the same
+# 'decide' record open-pr's own local-gate-skip logic reads (issue #1715). A consumer who has already
+# declared it gets a skeleton whose check IS the one open-pr is already looking for, rather than a
+# second name to reconcile by hand. Undeclared or empty falls back to the bare job key 'ci'.
+#
+# HOISTED TO SCRIPT SCOPE, SHARED WITH SECTION 1's RULESET ADVICE (Victor and Sebastian's review on
+# #1843). A YAML double-quoted scalar and a JSON string literal forbid exactly the same two characters
+# ('"' and '\', either of which would break out of the literal) and are vulnerable to exactly the same
+# console-repainting class of control/format character -- so one predicate serves both sites rather
+# than two copies under two names that a reader has to trust are kept in sync by hand. Section 1's own
+# call site (Get-DirectPushBlockingRules' auto-fill, below) is the one this function was pulled out of;
+# it needed no change beyond the name, because the two were already checking the same thing.
+function Test-QuotedScalarSafe {
+    <#
+        Value -- text about to be interpolated, unescaped, into a hand-laid double-quoted scalar: a
+        YAML job `name:` field (this skeleton's own use) or a JSON string literal inside a PowerShell
+        here-string (section 1's ruleset-advice use, issue #1972). Returns $true when it may be used
+        as-is. Two things are checked, because only two things can go wrong at either site:
+          - '"' or '\' would break out of the literal (both forms escape both characters, and nothing
+            here re-implements either escaper);
+          - a \p{Cc}/\p{Cf}/\p{Zl}/\p{Zp}/\p{Mn}/\p{Me} character would repaint the console when the
+            template carrying this value is Write-Host'd -- the same hazard Get-DisplayRef exists for,
+            checked here via that same function rather than by retyping its pattern.
+        REFUSE, DO NOT ESCAPE: a hand-rolled escaper for either literal shape is the fourth-copy risk
+        ref-print-lib.ps1 exists to avoid, and getting one wrong is a payload that corrupts the
+        generated YAML or JSON while the surrounding prose still says "paste it as-is" or "already
+        filled in".
+    #>
+    param([AllowEmptyString()][AllowNull()][string]$Value)
+    if ([string]::IsNullOrEmpty($Value)) { return $false }
+    if ($Value.IndexOfAny([char[]]@('"', '\')) -ge 0) { return $false }
+    return ((Get-DisplayRef -Ref $Value) -ceq $Value)
+}
+
+# A FOURTH RUNNER, AND THE ONE WHOSE OTHER HALF ALREADY TRAVELS (issue #2329). ship-pr.ps1 is a shared
+# script, so its CI-refusal arm reaches every consumer with the plugin: it labels the pull request
+# merge-when-green and prints that a sweep will finish the merge. Without this file nothing reads that
+# label, so in a consumer the sentence is false and the merge stays owed to a session. Derived from the
+# source repo's own .github/workflows/merge-on-green.yml (#2319), in the shape the fold and resolves
+# runners above already take.
+#
+# WHICH WORKFLOWS WAKE IT IS READ OFF THIS TREE, NOT ASSUMED. The source's copy names [CI] because that
+# is its own ci.yml's name; a consumer's CI is called whatever they called it. workflow_run matches a
+# workflow's top-level name:, so every pull_request workflow declaring one is listed -- plus 'CI' when
+# the skeleton above is about to be placed with exactly that name. Each is refused unless
+# Test-QuotedScalarSafe vouches for it, because it lands inside a double-quoted YAML scalar. Where none
+# survives, the workflow_run trigger is left out rather than guessed, and the schedule carries the sweep
+# on its own -- at most three hours later here (#2487; the source repo's own copy stays half-hourly,
+# where that latency costs nothing), which is the backstop's whole job anyway.
+function Get-CiFloorWakeNames {
+    <# The workflow names merge-on-green.yml wakes on: every pull_request workflow in the tree declaring a
+       top-level name:, plus 'CI' when the CI skeleton is about to be placed, each one vouched for by
+       Test-QuotedScalarSafe. #>
+    param([object[]]$Workflows = @(), [switch]$CiSkeletonOffered)
+    $names = @(@($Workflows) | Where-Object { $_ -and $_.OnPullRequest -and $_.WorkflowName } | ForEach-Object { $_.WorkflowName })
+    if ($CiSkeletonOffered) { $names += 'CI' }
+    return @($names | Where-Object { Test-QuotedScalarSafe -Value $_ } | Sort-Object -Unique)
+}
+
+function Get-CiFloorRunnerTargets {
+    <#
+        The five runners adopt-ci-floor.ps1 places, one record each: Rel, Content (LF, one trailing
+        newline), What and QueueRelated. -WriteRunnerRef is the ref the shared scripts are checked out
+        at; Get-CiFloorRunnerDrift passes a placeholder, because that line is compared pin neutral.
+    #>
+    param(
+        [Parameter(Mandatory)][string]$Trunk,
+        [Parameter(Mandatory)][string]$WriteRunnerRef,
+        [AllowEmptyCollection()][string[]]$WakeNames = @()
+    )
+    $nl = "`n"
+    $trunk = $Trunk
+    $writeRunnerRef = $WriteRunnerRef
+    $c = Get-CiFloorConstants
+    $sharedRepo = $c.SharedRepo
+    $sharedPath = $c.SharedPath
+    $pluginDir = $c.PluginDir
+    $checkoutPin = $c.CheckoutPin
+
+    # The comment every write runner carries above its shared checkout, so the pin is argued where it sits.
+    # The comment every write runner carries above its shared checkout, so the pin is argued where it sits.
+    $writeRunnerPinComment = @(
+        '      # THE SHARED SCRIPTS ARE PINNED TO A RELEASE, NOT ref: main (issue #2333). This job holds a write',
+        '      # credential, and code fetched at the tip of another repository would run beside it with no',
+        '      # release in between. Move the pin when you update the dkj-repo-workflow plugin: re-running',
+        '      # adopt-ci-floor.ps1 reports a runner pinned behind the version it came from.'
+    )
+
+    $mogWakeLines = @()
+    if (@($WakeNames).Count -gt 0) {
+        $mogWakeLines = @(
+            '  workflow_run:',
+            ('    workflows: [' + ((@($WakeNames | ForEach-Object { '"' + $_ + '"' })) -join ', ') + ']'),
+            '    types: [completed]'
+        )
+    }
+
+# --- The runners, consumer-shaped ---------------------------------------------------------------
+# DERIVED FROM THE SOURCE'S OWN, NOT COPIED. Two things differ, both of them structural rather than
+# stylistic: the scripts are reached through a checkout of the plugin's tree instead of the repo's own
+# (there is one definition of the fold in this system and this must not become a second), and
+# CLAUDE_PROJECT_DIR is set so those mirrored scripts judge the CONSUMER's tree rather than the checked
+# out one. The reasoning paragraphs are the source's, kept, because a runner whose "why" was stripped is
+# the first thing a later sweep deletes as dead configuration.
+$foldRunner = @(
+    '# Folds a queue-merged PR''s changelog entry, since the session that ships it never sees the merge.',
+    '#',
+    '# WHAT THIS CLOSES. fold-changelog-entry.ps1 runs from exactly one place -- ship-pr.ps1, as the',
+    '# shipping session''s own next step after its own merge call returns. A merge queue merges the PR',
+    '# itself, minutes later, in a process that session never observes, so that step never runs: the',
+    ('# branch''s development document sits on the trunk unfolded, the changelog never receives the entry,'),
+    '# and a release cut in that window misses the change. This workflow is the fold running from the one',
+    '# place that always sees a queue merge: a push to the trunk. It also catches a PR merged from the',
+    '# GitHub UI, which skips the fold for the same reason.',
+    '#',
+    '# IT ADDS NO RULE OF ITS OWN, AND NO SECOND DETECTOR. It runs the plugin''s check-unfolded-entry.ps1',
+    '# unchanged, and only when THAT finds a leftover does it call the plugin''s fold-changelog-entry.ps1.',
+    '# Both are reached through a checkout of the plugin''s own tree rather than copied here, so there is',
+    '# one definition of "a written entry stranded on the trunk" in the system instead of two.',
+    '#',
+    '# THE PUSH NEEDS A CREDENTIAL YOU HAVE TO CREATE -- FOLD_PUSH_TOKEN, AND THIS FILE DOES NOT WORK',
+    '# WITHOUT IT. A merge_queue rule blocks every direct push to the trunk unless the pushing actor is a',
+    '# listed bypass actor, and the default GITHUB_TOKEN pushes as the GitHub Actions app, which cannot be',
+    '# added to that list (an Integration bypass actor has to be an app installed on the org, and that one',
+    '# is not administered by yours). So this job checks out with a fine-grained personal access token',
+    '# belonging to somebody who already bypasses the ruleset -- scoped to this repository only, and to',
+    '# Contents: Read and write only. It is a STANDING credential, valid from anywhere until it expires,',
+    '# and actions/checkout writes it into the workspace git config, so every step of this job holds it.',
+    '# That is why nothing else is ever added to this job. Rotate it before it expires or this job starts',
+    '# failing its push with no code-level cause.',
+    '#',
+    '# READ THE FOLD STEP''S OWN LAST LINES BEFORE CONCLUDING ANYTHING FROM A RED RUN. THREE different',
+    '# things turn this job red, and only the log tells them apart (inbound #1539):',
+    '#   1. the CHECKOUT failing -- an absent or under-scoped FOLD_PUSH_TOKEN fails actions/checkout, and',
+    '#      every later step then shows `skipped`. Rule this one out FIRST: it is the only cause that',
+    '#      leaves the fold step with no last lines to read at all. A fine-grained PAT lists repositories',
+    '#      one by one, so a repo created rather than transferred (an org move with no GitHub transfer',
+    '#      does exactly that) silently falls outside an existing token''s selection.',
+    '#   2. the fold REFUSING -- it ran and declined; its own last lines say why. The redundant-fold',
+    '#      verdict (exit 3, #1796) is not in this list: the fold step translates it into a stood-down',
+    '#      green. The trunk-gap guard (exit 2, #1586) is retried on the moved trunk (#4479) and goes red',
+    '#      only if the trunk keeps moving through all 3 re-reads with leftovers still on it.',
+    '#   3. the fold SUCCEEDING and its push being rejected BY THE RULESET -- a clean fold above a GH013.',
+    '#      Read the rejection: a push refused as a NON-FAST-FORWARD looks like this and is not it -- that',
+    '#      is the race below, and where the fold can prove the entry is already upstream it never reaches',
+    '#      this list (exit 3). GH013 names a rule and a ruleset; a non-fast-forward names a ref and tells',
+    '#      you to fetch first. One the fold canNOT prove redundant is still exit 1 and still this cause.',
+    '#',
+    '# THE FIRST CHECKOUT TAKES THE TRUNK TIP, NOT THE EVENT SHA (inbound #1543). On a push event',
+    '# actions/checkout defaults to github.sha; ship-pr then folds locally and pushes on top within',
+    '# seconds, so by the time this slower runner reads the tree the trunk has already moved and the',
+    '# checkout is one commit behind origin -- which the fold''s trunk-gap guard (#1405) then refuses on,',
+    '# turning every ship-pr merge into a false red. Checking out the trunk tip makes this job answer the',
+    '# question it exists for -- "does the trunk carry a leftover NOW" -- so a fold ship-pr already did is',
+    '# simply not found.',
+    '#',
+    '# IT DOES NOT PUT THAT GUARD OUT OF REACH, WHICH THIS TEMPLATE CLAIMED UNTIL #1586. The ref is read',
+    '# once, at the checkout; the guard measures the same trunk again seconds later, from inside the fold.',
+    '# So a SECOND merge landing in that gap still trips it: the leftover is genuinely on the trunk and',
+    '# correctly found, and by the time the fold runs somebody else has already folded it.',
+    '#',
+    '# THIS JOB USED TO STAND DOWN ON THAT REFUSAL (exit code 2, #1586), arguing that the push that moved',
+    '# the trunk has its own run of this workflow. That is FALSE when the push was a lone `fold:` commit',
+    '# (#4479): the job''s if: skips exactly that push, so no run ever folds the leftovers. Measured in a',
+    '# consumer: 12 unfolded entries found, stood down green, the fold-only successor skipped, 11 stranded.',
+    '# So on exit 2 the fold step retries on the moved trunk, at most 3 times (fetch, merge --ff-only,',
+    '# re-run the check, fold again), stands down green only when the re-read check finds no leftover, and',
+    '# exits 1 if code 2 is still the answer after the loop. Exit 2 wrote nothing, so the ff is safe. This',
+    '# is not the declined pre-emptive fetch + --ff-only before the fold: it runs AFTER the guard fired.',
+    '#',
+    '# THE RACE HAS A NARROW HALF TOO, AND IT NEEDS ITS OWN CODE (inbound #1796). Everything above is the',
+    '# case where the other fold landed BEFORE this job''s pre-pass read the trunk. It can also land in the',
+    '# window between that read and this job''s own push -- and then the pre-pass passes, entries are',
+    '# folded, a commit is made, and the push is refused as a non-fast-forward. No check at the top of a',
+    '# run can close a window that opens after it, so this is not a better-pre-pass problem.',
+    '#',
+    '# THE GROUND FOR STANDING DOWN THERE IS DIFFERENT, AND STRONGER. #1586''s is "nothing was written and',
+    '# a successor run is queued"; neither holds here -- a commit WAS made, and no successor is owed,',
+    '# because the trunk is ALREADY correct. What earns exit 3 is a measurement: every entry this run',
+    '# folded is upstream already, present with an identical body. The redundant commit is real and it is',
+    '# in an EPHEMERAL workspace, so it dies with the run -- which is why this job may stand down where a',
+    '# session folding onto a real trunk may not. Every OTHER non-zero code still fails the job.',
+    '#',
+    '# NO CONCURRENCY CANCELLATION, AND A CONSTANT GROUP (inbound #1544). This job WRITES and pushes to',
+    '# the trunk: cancel-in-progress: false so no push is dropped, AND a group name that is constant per',
+    '# trunk (github.ref, not github.sha) so two trunk pushes close together QUEUE instead of racing for',
+    '# the trunk -- a per-SHA group is its own group every time and serialises nothing.',
+    '#',
+    '# A FOLD-ONLY PUSH GETS A GROUP OF ITS OWN (#2813). cancel-in-progress: false guards only the RUNNING',
+    '# job; a third arrival cancels the PENDING one whatever that field says. Between two real pushes the',
+    '# survivor is the newer and fold-all reads the tip, so nothing is lost -- but a fold-only push is',
+    '# skipped by the job''s if: below, and as the survivor it dropped a merge''s fold outright (measured in',
+    '# the source repo, October 5, 2026). Keyed per commit, it is skipped either way and displaces nothing.',
+    '# The condition is the job''s if: verbatim; keep the two equal.',
+    '#',
+    '# LINUX, UNDER PWSH 7 (issue #2488): this runs on ubuntu-latest under ''shell: pwsh'', because a Linux',
+    '# minute is billed below a Windows one on a private repo. The shared scripts start child processes by',
+    '# the literal name ''powershell'', which ubuntu-latest does not have, so one shim step points it at pwsh.',
+    '# merge-on-green.yml followed in #2616, so every runner this floor places is on Linux.',
+    'name: Fold on merge',
+    '',
+    '# contents: read, deliberately -- the actual push authenticates as FOLD_PUSH_TOKEN, wired into the',
+    '# checkout step below, and never touches this block. pull-requests: read is not optional: the fold''s',
+    '# own PR lookup needs it, and declaring any permissions block at all sets every unlisted scope to none.',
+    'permissions:',
+    '  contents: read',
+    '  pull-requests: read',
+    '',
+    'on:',
+    '  push:',
+    ('    branches: [' + $trunk + ']'),
+    '',
+    'concurrency:',
+    '  group: ${{ (startsWith(github.event.head_commit.message, ''fold:'') && github.event.commits[0].id == github.event.head_commit.id) && format(''fold-on-merge-fold-only-{0}'', github.sha) || format(''fold-on-merge-{0}'', github.ref) }}',
+    '  cancel-in-progress: false',
+    '',
+    'jobs:',
+    '  fold-on-merge:',
+    '    runs-on: ubuntu-latest',
+    '    # SKIP A FOLD-ONLY PUSH AT THE JOB LEVEL, NOT WITH A STEP-LEVEL if: -- A JOB SKIPPED BY if: IS',
+    '    # NOT BILLED AT ALL, WHERE A SKIPPED STEP STILL PAYS FOR THE RUNNER STARTING (issue #2487,',
+    '    # metered Actions minutes in a private consumer). About half of all trunk pushes here are',
+    '    # `fold:` commits -- this job''s OWN OUTPUT, carrying nothing left to fold. The source repo''s',
+    '    # own ci.yml already couples to this exact format for the same reason, so this is a second',
+    '    # reader of an existing rule rather than a new coupling.',
+    '    #',
+    '    # EXACTLY ONE COMMIT, NOT MERELY A `fold:` SUBJECT ON THE HEAD. A `git push` can carry several',
+    '    # commits at once, and github.event.head_commit is only the LAST of them -- a batch push whose',
+    '    # head happens to be a fold commit can still carry real, unfolded work earlier in the same push,',
+    '    # which this job must not skip. github.event.commits[0].id == github.event.head_commit.id is',
+    '    # true only when the push carries exactly that one commit; commits[0] always exists once a push',
+    '    # carries any commit at all, and an empty array reads it as null, which never equals a real SHA',
+    '    # -- so a push this expression cannot classify RUNS, fail-open like every other guard here.',
+    '    #',
+    '    # SAFE HERE BECAUSE A FOLD COMMIT IS THIS JOB''S OWN OUTPUT: skipping fold-all mode on it costs',
+    '    # nothing. Whatever it would have folded is still unfolded on the trunk, and the next trunk',
+    '    # push -- whatever it is -- runs this job again and folds it then.',
+    '    if: ${{ !(startsWith(github.event.head_commit.message, ''fold:'') && github.event.commits[0].id == github.event.head_commit.id) }}',
+    '    # 10 minutes against a job that measures well under one (issue #2296). Without it a wedge here',
+    '    # runs to GitHub''s six-hour default while holding a PAT that bypasses the trunk ruleset -- and',
+    '    # nobody is watching this runner, because its whole reason for existing is that the shipping',
+    '    # session has already gone.',
+    '    timeout-minutes: 10',
+    '    steps:',
+    '      # ref: the trunk tip, not the pushed SHA -- see the header comment (inbound #1543). This job',
+    '      # asks whether the trunk carries a leftover NOW, and a fold ship-pr already pushed on top of',
+    '      # the merge commit must not read as still-unfolded here.',
+    ('      - uses: ' + $checkoutPin),
+    '        with:',
+    ('          ref: ' + $trunk),
+    '          token: ${{ secrets.FOLD_PUSH_TOKEN }}',
+    ''
+    ) + $writeRunnerPinComment + @(
+    '      - name: Fetch the shared workflow scripts',
+    ('        uses: ' + $checkoutPin),
+    '        with:',
+    ('          repository: ' + $sharedRepo),
+    ('          ref: ' + $writeRunnerRef),
+    ('          path: ' + $sharedPath),
+    '',
+    '      # THE SHIM (issue #2488): the shared scripts launch children by the literal name ''powershell'' in',
+    '      # many places, and ubuntu-latest has only ''pwsh''. One symlink resolves all of them, where a',
+    '      # per-site rename would touch far more than this runner. It runs before the first pwsh step.',
+    '      - name: Make ''powershell'' resolve to pwsh',
+    '        shell: bash',
+    '        run: sudo ln -sf "$(command -v pwsh)" /usr/local/bin/powershell',
+    '',
+    '      # continue-on-error is deliberate: the check exits non-zero on a genuine FIND, which is the',
+    '      # case this job exists to act on, not a step failure. The fold step below tells that apart',
+    '      # from a real crash in the detector rather than folding blind on an outcome it cannot explain.',
+    '      - name: Is there an unfolded changelog entry on the trunk?',
+    '        id: check',
+    '        shell: pwsh',
+    '        continue-on-error: true',
+    '        env:',
+    '          CLAUDE_PROJECT_DIR: ${{ github.workspace }}',
+    '        run: |',
+    ('          powershell -NoProfile -ExecutionPolicy Bypass -File ' + $pluginDir + '/lint/check-unfolded-entry.ps1 -Branch ' + $trunk + ' *>&1 | Tee-Object -FilePath check-output.txt'),
+    '          exit $LASTEXITCODE',
+    '',
+    '      - name: Fold it (every leftover this push may carry)',
+    '        if: ${{ steps.check.outcome == ''failure'' }}',
+    '        shell: pwsh',
+    '        env:',
+    '          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}',
+    '          GH_REPO: ${{ github.repository }}',
+    '          CLAUDE_PROJECT_DIR: ${{ github.workspace }}',
+    '        run: |',
+    '          # The check''s own known-good signature is what tells "a leftover was found" apart from',
+    '          # "the script crashed for some other reason" -- both exit non-zero, and only one of them',
+    '          # is safe to act on.',
+    '          $checkOutput = Get-Content check-output.txt -Raw',
+    '          if ($checkOutput -notmatch ''\[ERROR\] the trunk carries'') {',
+    '            Write-Error "check-unfolded-entry.ps1 exited non-zero for a reason other than a reported leftover -- refusing to fold blind. Its output:`n$checkOutput"',
+    '            exit 1',
+    '          }',
+    '',
+    '          # Commit-metadata identity only -- who authored the commit. It is independent of the',
+    '          # push''s credential (FOLD_PUSH_TOKEN, wired in by the checkout step above): a ruleset',
+    '          # bypass is checked against the pushing token''s identity, not the commit author.',
+    '          git config user.name "github-actions[bot]"',
+    '          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"',
+    ('          powershell -NoProfile -ExecutionPolicy Bypass -File ' + $pluginDir + '/release/fold-changelog-entry.ps1 -Commit -Push *>&1 | Tee-Object -FilePath fold-output.txt'),
+    '          $foldExitCode = $LASTEXITCODE',
+    '',
+    '          # EXIT 2 IS "THE TRUNK MOVED UNDER ME", AND THIS JOB RETRIES ON THE MOVED TRUNK (#1586,',
+    '          # #4479). It is the fold''s trunk-freshness pre-pass, which runs before a single entry is',
+    '          # folded -- so this run wrote nothing and a fast-forward is safe. It used to stand down,',
+    '          # claiming the push that moved the trunk has its own run; false when that push was a lone',
+    '          # `fold:` commit, which the job''s if: skips (#4479: 12 unfolded entries, stood down green,',
+    '          # 11 stranded). So: fetch, ff-only, re-read, fold what is left, at most 3 times. Keyed on',
+    '          # the code and only on the code: every other non-zero code still fails below.',
+    '          $attempt = 0',
+    '          while ($foldExitCode -eq 2 -and $attempt -lt 3) {',
+    '            $attempt++',
+    '            Write-Host "The trunk moved between this job''s checkout and the fold (nothing was written); re-reading it, attempt $attempt of 3 (#4479)."',
+    ('            git fetch origin ' + $trunk),
+    ('            git merge --ff-only origin/' + $trunk),
+    '            if ($LASTEXITCODE -ne 0) {',
+    '              Write-Error "Could not fast-forward this checkout to the trunk after it moved -- refusing to fold on a stale trunk."',
+    '              exit 1',
+    '            }',
+    ('            powershell -NoProfile -ExecutionPolicy Bypass -File ' + $pluginDir + '/lint/check-unfolded-entry.ps1 -Branch ' + $trunk + ' *>&1 | Tee-Object -FilePath check-output.txt'),
+    '            $recheckCode = $LASTEXITCODE',
+    '            if ($recheckCode -eq 0) {',
+    '              Write-Host "Stood down: the moved trunk carries no leftover -- the push that moved it folded it."',
+    '              exit 0',
+    '            }',
+    '            $checkOutput = Get-Content check-output.txt -Raw',
+    '            if ($checkOutput -notmatch ''\[ERROR\] the trunk carries'') {',
+    '              Write-Error "check-unfolded-entry.ps1 exited non-zero for a reason other than a reported leftover -- refusing to fold blind. Its output:`n$checkOutput"',
+    '              exit 1',
+    '            }',
+    ('            powershell -NoProfile -ExecutionPolicy Bypass -File ' + $pluginDir + '/release/fold-changelog-entry.ps1 -Commit -Push *>&1 | Tee-Object -FilePath fold-output.txt'),
+    '            $foldExitCode = $LASTEXITCODE',
+    '          }',
+    '          if ($foldExitCode -eq 2) {',
+    '            Write-Error "The trunk kept moving through 3 re-reads and leftovers are still on it -- not reporting success with entries unfolded (#4479)."',
+    '            exit 1',
+    '          }',
+    '',
+    '          # EXIT 3 IS "SOMEBODY ELSE FOLDED THIS WHILE I WAS FOLDING IT" (#1796) -- the narrow half',
+    '          # of the same race: the other fold landed in the window between the pre-pass and this',
+    '          # push, so entries WERE folded and committed and the push came back a non-fast-forward.',
+    '          # The fold earns this code by measuring that every entry it carried is already upstream',
+    '          # with an identical body, so the trunk holds what this job exists to put there; a push',
+    '          # refused for any other reason -- a ruleset GH013, a credential -- is still exit 1.',
+    '          # The redundant commit is local to this runner''s workspace and dies with it, which is why',
+    '          # this job may stand down where a session on a real trunk may not.',
+    '          if ($foldExitCode -eq 3) {',
+    '            Write-Host "Stood down: the fold''s push lost the race, and every entry it carried is already on the trunk with an identical body."',
+    '            Write-Host "  The redundant commit is local to this runner''s workspace and dies with it. See this file''s header (#1796)."',
+    '            exit 0',
+    '          }',
+    '',
+    '          # The two scripts read the same trunk a moment apart and must agree: the check found a',
+    '          # leftover, so the fold reporting nothing to fold is a real disagreement between them.',
+    '          $foldOutput = Get-Content fold-output.txt -Raw',
+    '          if ($foldOutput -match ''No entry files found to fold'') {',
+    '            Write-Error "check-unfolded-entry.ps1 reported a leftover but fold-changelog-entry.ps1 found nothing to fold -- the two disagree, which should not happen. Its output:`n$foldOutput"',
+    '            exit 1',
+    '          }',
+    '          exit $foldExitCode'
+)
+
+$resolvesRunner = @(
+    '# Verifies the issues a merged PR declared it closes -- from the merge, since the shipping session',
+    '# no longer sees one.',
+    '#',
+    '# WHAT THIS CLOSES. verify-resolved-issues.ps1 is ship-pr.ps1''s step 6: it reads a merged PR''s body',
+    '# back out and checks that every issue declared there with a closing keyword is actually CLOSED,',
+    '# closing the ones that are not. It ran from exactly one place -- the shipping session, right after',
+    '# its own merge call returned. A merge queue takes that call away: ship-pr enqueues and exits, and',
+    '# the merge lands minutes later in a process that session never observes.',
+    '#',
+    '# THE CLOSING ITSELF IS NOT AT RISK. GitHub honours a body''s keywords on a queue merge exactly as on',
+    '# any other. What is lost is the VERIFICATION that it happened, and the REPAIR when a keyword missed',
+    '# -- which is the case the script was built for: a body carrying a plain mention instead of a keyword',
+    '# closes nothing, and nobody finds out.',
+    '#',
+    '# ITS OWN WORKFLOW, NOT A STEP IN fold-on-merge.yml, AND THAT IS THE SECURITY ARGUMENT. That job',
+    '# checks out with a standing personal access token that actions/checkout writes into the workspace,',
+    '# so every step of it holds that credential. Adding issues: write there would put a standing',
+    '# credential and issue-write in one job. Here they never meet: this job checks out with the default',
+    '# job-scoped GITHUB_TOKEN, which expires in about an hour and is unusable outside this run.',
+    '#',
+    '# THE SECOND REASON FOR ITS OWN FILE IS COVERAGE. The fold runner acts only when a leftover entry is',
+    '# on the trunk, because an entry is what a fold needs. This check has to run for EVERY merge --',
+    '# including one carrying no changelog entry at all -- so it resolves its PRs from the push itself.',
+    '#',
+    '# NO CONCURRENCY CANCELLATION, AND A CONSTANT GROUP (inbound #1544): this job ACTS, so letting a',
+    '# later push supersede an in-flight run would drop the verification of whatever the earlier push',
+    '# carried -- cancel-in-progress: false. The group is keyed on github.ref, not github.sha, so it is',
+    '# constant per trunk; two overlapping runs are harmless here (the second finds every issue already',
+    '# closed) but a constant group keeps them ordered anyway.',
+    '#',
+    '# A FOLD-ONLY PUSH GETS A GROUP OF ITS OWN (#2813), for the fold runner''s reason: a third arrival',
+    '# cancels the pending run regardless of cancel-in-progress, and a skipped fold-only run surviving',
+    '# it dropped a merge''s resolves check for good, since this job reads only the pushed range. The',
+    '# condition is the job''s if: verbatim; keep the two equal.',
+    '#',
+    '# LINUX, UNDER PWSH 7 (issue #2488): ubuntu-latest and ''shell: pwsh'', with one shim step pointing the',
+    '# literal child name ''powershell'' at pwsh -- see the fold runner''s header.',
+    'name: Verify resolved issues',
+    '',
+    'permissions:',
+    '  contents: read',
+    '  pull-requests: read',
+    '  # THE ONE WIDENING, and the whole of it: without this scope the repair is a 403 and this job is a',
+    '  # reporter. Granted on the job-scoped GITHUB_TOKEN only.',
+    '  issues: write',
+    '',
+    'on:',
+    '  push:',
+    ('    branches: [' + $trunk + ']'),
+    '',
+    'concurrency:',
+    '  group: ${{ (startsWith(github.event.head_commit.message, ''fold:'') && github.event.commits[0].id == github.event.head_commit.id) && format(''verify-resolved-fold-only-{0}'', github.sha) || format(''verify-resolved-{0}'', github.ref) }}',
+    '  cancel-in-progress: false',
+    '',
+    'jobs:',
+    '  verify-resolved:',
+    '    runs-on: ubuntu-latest',
+    '    # SKIP A FOLD-ONLY PUSH AT THE JOB LEVEL -- A JOB SKIPPED BY if: IS NOT BILLED AT ALL (issue',
+    '    # #2487). This file''s own header already names the cost this closes: a PAT push (from the fold',
+    '    # runner''s own commit) triggers this workflow same as any other, so every shipped branch already',
+    '    # starts this job twice. See fold-on-merge.yml''s matching comment for why exactly one commit,',
+    '    # not merely a `fold:` subject on the head, and why this is a second reader of an existing rule',
+    '    # rather than a new coupling.',
+    '    #',
+    '    # SAFE HERE BECAUSE A DIRECTLY-PUSHED FOLD COMMIT RESOLVES NO PULL REQUEST. This job reads the',
+    '    # pushed RANGE and resolves each commit''s own PR to verify its closing keywords; a fold commit',
+    '    # is authored straight onto the trunk by this repo''s own tooling and carries no PR of its own --',
+    '    # this job''s own run on the MERGE that triggered that fold already verified whatever that PR',
+    '    # closed. A lone fold-commit push has nothing here to resolve.',
+    '    #',
+    '    # NOT SYMMETRIC WITH fold-on-merge.yml, AND WORTH SAYING SO. That job''s skip self-heals: fold-all',
+    '    # mode re-reads the trunk TIP on the next push, so anything a skipped run would have folded is',
+    '    # still there to find. This job reads only the pushed before..sha RANGE, so a skipped push''s',
+    '    # resolves check is gone for good, not merely deferred. BOUNDED rather than open-ended: ship-pr',
+    '    # always writes its merge commit as `merge: <branch> (#N)`, and this repo''s own fold commits are',
+    '    # always pushed alone -- so the only way to hit this is a directly-pushed, single-commit push',
+    '    # from OUTSIDE ship-pr whose subject happens to start with `fold:` (a hand-titled squash merge,',
+    '    # say), which would then permanently lose whatever pull request it closed.',
+    '    if: ${{ !(startsWith(github.event.head_commit.message, ''fold:'') && github.event.commits[0].id == github.event.head_commit.id) }}',
+    '    # 10 minutes, same reasoning as the fold runner (issue #2296) -- and this one holds issues:',
+    '    # write, so the six-hour default would be six hours of an unattended job carrying a write scope.',
+    '    timeout-minutes: 10',
+    '    steps:',
+    '      # persist-credentials: false -- this job reads and calls the API, and never pushes. Nothing',
+    '      # here needs a git credential left in the workspace.',
+    ('      - uses: ' + $checkoutPin),
+    '        with:',
+    '          persist-credentials: false',
+    ''
+    ) + $writeRunnerPinComment + @(
+    '      - name: Fetch the shared workflow scripts',
+    ('        uses: ' + $checkoutPin),
+    '        with:',
+    ('          repository: ' + $sharedRepo),
+    ('          ref: ' + $writeRunnerRef),
+    ('          path: ' + $sharedPath),
+    '',
+    '      # THE SHIM (issue #2488): the shared scripts launch children by the literal name ''powershell'',',
+    '      # and ubuntu-latest has only ''pwsh''; one symlink resolves them all. See the fold runner.',
+    '      - name: Make ''powershell'' resolve to pwsh',
+    '        shell: bash',
+    '        run: sudo ln -sf "$(command -v pwsh)" /usr/local/bin/powershell',
+    '',
+    '      # THE EVENT''S VALUES ARRIVE THROUGH env:, NOT THROUGH ${{ }} INSIDE run:. Interpolating an',
+    '      # expression into a shell body substitutes it as TEXT before the shell parses the line, which',
+    '      # is the standard Actions script-injection shape. These are SHAs and a repository name GitHub',
+    '      # computes itself, so there is nothing to inject today -- the point is that this file should',
+    '      # not have to be re-argued if a later edit reaches for a branch name or a PR title.',
+    '      - name: Verify the issues this push''s pull requests declared they close',
+    '        shell: pwsh',
+    '        env:',
+    '          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}',
+    '          GH_REPO: ${{ github.repository }}',
+    '          PUSH_BEFORE: ${{ github.event.before }}',
+    '          PUSH_SHA: ${{ github.sha }}',
+    '          CLAUDE_PROJECT_DIR: ${{ github.workspace }}',
+    '        run: |',
+    ('          powershell -NoProfile -ExecutionPolicy Bypass -File ' + $pluginDir + '/release/verify-pushed-merges.ps1 `'),
+    ('            -Before $env:PUSH_BEFORE -Sha $env:PUSH_SHA -Trunk ' + $trunk + ' -Repo $env:GH_REPO'),
+    '          exit $LASTEXITCODE'
+)
+
+# A THIRD RUNNER, NOT ABOUT AN UNOBSERVED MERGE AT ALL (issue #1843): does a GitHub-side repo setting
+# still match what scripts/repo-config.ps1 declares? It rides along in this same command because this
+# is already the one place a consumer builds their CI floor, and it needs no queue and no merge to be
+# worth having -- it runs on a schedule, not on a push.
+$repoSettingsRunner = @(
+    '# Checks whether GitHub-side repo settings still match what this tree declares -- scheduled, not',
+    '# merge-triggered, because its subject is a repo setting drifting on its own rather than a PR (issue',
+    '# #1843, derived from the source repo''s own .github/workflows/repo-settings.yml, issue #1726).',
+    '#',
+    '# WHAT THIS CLOSES. A ruleset and a repo''s merge switches are GitHub-side state: nothing in this',
+    '# tree changes when they change -- no commit, no gate, no session. Yet scripts/repo-config.ps1''s',
+    '# Get-ExpectedRepoSettings is load-bearing for whatever this repo''s own constitution rests on it --',
+    '# a direct-on-trunk exception, a fold, a staleness guard -- so the record and the live state could',
+    '# disagree indefinitely with nothing saying so. The source repo measured three such drifts in eight',
+    '# days before building this: bypass_actors emptied by an org transfer, a merge_queue rule added and',
+    '# removed with no trace, and allow_auto_merge left on against its own tree''s record.',
+    '#',
+    '# A SCHEDULE, NOT A SessionStart HOOK: a hook only reaches whoever happens to open a session, and if',
+    '# nobody does, nothing is written down. A scheduled run leaves a DATED record -- every future answer',
+    '# is bounded to how long ago this last ran, whether or not anyone was looking.',
+    '#',
+    '# NOT A REQUIRED CHECK, deliberately. Its subject IS the ruleset, so requiring it would be',
+    '# self-referential, and it would stop merges on a switch only the repo owner can flip. A red run plus',
+    '# GitHub''s failure e-mail is the signal -- the same non-membership this floor''s other two runners and',
+    '# the plugin''s branch-entry gate all keep, each for their own reason.',
+    '#',
+    '# workflow_dispatch IS NOT DECORATION -- it is how the answer is obtained the day a setting changes on',
+    '# purpose, without waiting for the next cron.',
+    '#',
+    '# THE CHECK NEVER WRITES TO GITHUB. Repo settings are the owner''s surface; this script reads and',
+    '# reports, exactly as adopt-ci-floor.ps1''s own required-check ruleset instruction composes a call',
+    '# and stops rather than applying it (#1972). The queue instruction stays a UI pointer instead: that',
+    '# switch carries policy nobody here has chosen.',
+    '#',
+    '# ONE FIELD (bypass_actors) IS ADMIN-ONLY AND READS AS UNREADABLE, NOT AS GREEN -- the check''s own',
+    '# third verdict. -RequireRead is the floor under that: without it, a token that cannot reach the two',
+    '# non-admin endpoints would report every field as not-read and still exit 0 -- a detector reporting',
+    '# success while checking nothing.',
+    '#',
+    '# LEAST PRIVILEGE, AND READ-ONLY: contents: read is the whole permission. The checkout ACTION is',
+    '# unpinned -- this job never holds a credential worth pinning against. persist-credentials: false',
+    '# because this job never pushes.',
+    '#',
+    '# THE SHARED SCRIPTS ARE PINNED TO A RELEASE, NOT main (#4237). A script path that moves on the',
+    '# source''s main reaches a runner on main before this repo has adopted the release that carries the',
+    '# move -- measured when the #4209 rename turned every such runner red at once. Move the pin when you',
+    '# update the dkj-repo-workflow plugin: re-running adopt-ci-floor.ps1 reports a runner pinned behind',
+    '# the version it came from.',
+    '#',
+    '# THE SECOND CHECKOUT reaches the check through the plugin''s own tree rather than a copy kept here,',
+    '# so this repo shares one definition of "what GitHub-side drift looks like" with the workflow''s',
+    '# source instead of holding a second copy free to drift from it -- same reasoning, same shape, as the',
+    '# other two runners this command places.',
+    '#',
+    '# THE TRUNK IS BAKED IN AT SCAFFOLD TIME, from the same Get-TrunkBranchName seam this whole command',
+    '# already reads for the other two runners'' triggers. The check ALSO resolves that seam itself at run',
+    '# time (given CLAUDE_PROJECT_DIR), so passing it here is not a requirement -- an explicit -Trunk',
+    '# always wins over the seam, and the two cannot disagree because they read the same function.',
+    '#',
+    '# CLAUDE_PROJECT_DIR IS NOT OPTIONAL, on the other two runners'' own reasoning: a mirrored script',
+    '# resolves the tree it judges from that variable first, and without it a workspace holding two',
+    '# checkouts (this one, and the plugin''s under the path above) leaves which root it reads to chance',
+    '# rather than to the consumer''s repo by construction.',
+    '#',
+    '# LINUX, UNDER PWSH 7 (issue #2488): ubuntu-latest and ''shell: pwsh'', with one shim step pointing the',
+    '# literal child name ''powershell'' at pwsh -- see the fold runner''s header.',
+    'name: Repo settings',
+    '',
+    'permissions:',
+    '  contents: read',
+    '',
+    'on:',
+    '  schedule:',
+    '    - cron: ''30 6 * * *''',
+    '  workflow_dispatch:',
+    '',
+    'concurrency:',
+    '  group: repo-settings',
+    '  cancel-in-progress: true',
+    '',
+    'jobs:',
+    '  repo-settings:',
+    '    runs-on: ubuntu-latest',
+    '    # 10 minutes (issue #2296). This one runs on a SCHEDULE, so a wedge has nobody waiting on it at',
+    '    # all -- it simply spends the six-hour default and is found, if ever, in the Actions list.',
+    '    timeout-minutes: 10',
+    '    steps:',
+    '      - uses: actions/checkout@v7',
+    '        with:',
+    '          persist-credentials: false',
+    '',
+    '      - name: Fetch the shared workflow scripts',
+    '        uses: actions/checkout@v7',
+    '        with:',
+    ('          repository: ' + $sharedRepo),
+    ('          ref: ' + $writeRunnerRef),
+    ('          path: ' + $sharedPath),
+    '',
+    '      # THE SHIM (issue #2488): the shared script launches children by the literal name ''powershell'',',
+    '      # and ubuntu-latest has only ''pwsh''; one symlink resolves them all. See the fold runner.',
+    '      - name: Make ''powershell'' resolve to pwsh',
+    '        shell: bash',
+    '        run: sudo ln -sf "$(command -v pwsh)" /usr/local/bin/powershell',
+    '',
+    '      - name: GitHub-side settings still match what the tree declares',
+    '        shell: pwsh',
+    '        env:',
+    '          GH_TOKEN: ${{ github.token }}',
+    '          CLAUDE_PROJECT_DIR: ${{ github.workspace }}',
+    '        run: |',
+    ('          powershell -NoProfile -ExecutionPolicy Bypass -File ' + $pluginDir + '/lint/check-repo-settings.ps1 -RequireRead -Trunk ' + $trunk),
+    '          exit $LASTEXITCODE'
+)
+
+$mergeOnGreenRunner = @(
+    '# Finishes a ship whose session is gone: merges a pull request ship-pr armed with merge-when-green',
+    '# once its required check turns green (issue #2329, derived from the source repo''s own',
+    '# .github/workflows/merge-on-green.yml, issue #2319).',
+    '#',
+    '# WHAT THIS CLOSES. ship-pr.ps1 refuses to merge on a red or pending required check. When that check',
+    '# later turns green -- a re-run, a flaky leg retried -- nothing merged the pull request: the merge was',
+    '# owed to a session that had already exited. ship-pr now ARMS such a pull request with the',
+    '# merge-when-green label at that refusal, and this job is the sweep that reads the label.',
+    '#',
+    '# IT ADDS NO GATE OF ITS OWN. The plugin''s pick-merge-on-green.ps1 only asks the tracker which armed',
+    '# pull request is owed a merge; the ship is the plugin''s own ship-pr.ps1, so the staleness guard, the',
+    '# step-list gate and the DEPLOY lock are the same implementation a live session runs, and it folds and',
+    '# verifies the resolves exactly as that session would. Both are reached through a checkout of the',
+    '# plugin''s tree rather than copied here.',
+    '#',
+    '# THREE SIBLING CHECKOUTS, NONE NESTED IN ANOTHER, NONE SWITCHED IN PLACE (issue #2449). The pinned',
+    '# plugin tree (.workflow-scripts) is where the CODE comes from. trusted-main, this repo''s trunk, is',
+    '# where its two repo-owned seams (scripts/repo-config.ps1, scripts/lib/branch-info.ps1) are read from',
+    '# and where the fold is committed. pr-branch, the picked pull request''s head, is the tree the ship',
+    '# acts on. An earlier shape of this file checked the trunk out ONCE with FOLD_PUSH_TOKEN persisted,',
+    '# nested the plugin tree inside it and then ran git checkout of the branch in that same workspace --',
+    '# so the branch''s own seams ran beside the token, and a branch committing a file under the plugin',
+    '# path overwrote the trusted copy (#2553). A runner of that shape is reported when adopt-ci-floor is',
+    '# re-run; re-scaffold it by deleting this file and running adopt-ci-floor again.',
+    '#',
+    '# NO CHECKOUT PERSISTS A CREDENTIAL. The Ship it step builds ONE ephemeral git credential from',
+    '# FOLD_PUSH_TOKEN, in its own process environment only, and it reaches both trees because both need',
+    '# to push: pr-branch for open-pr''s branch push, trusted-main for the fold. It is never written to',
+    '# either tree''s .git/config, and it dies with the step. Nothing the step does with it runs code out of',
+    '# pr-branch''s working tree -- the deepen commands only move refs and history -- so the branch reaches',
+    '# the credential as DATA (its branch document, its PR body), never as code (the same trade the source',
+    '# repo''s own runner took on #2437).',
+    '#',
+    '# THREE TRIGGERS FOR ONE SWEEP, AND THE SWEEP IGNORES WHICH OF THEM WOKE IT. workflow_run gives',
+    '# immediacy; the schedule is what makes it durable (whether a partial re-run re-emits workflow_run is',
+    '# not a contract worth resting this on); workflow_dispatch is the hand valve. workflow_run RUNS THE',
+    '# VERSION OF THIS FILE ON THE DEFAULT BRANCH, so a change here is inert until it is merged.',
+    '#',
+    '# workflow_run RUNS WITH SECRETS EVEN FOR A PULL REQUEST FROM A FORK, which is why this job reads',
+    '# NOTHING out of the event. Everything it acts on comes from the tracker: an open pull request',
+    '# carrying a label only ship-pr writes, whose head is a branch of THIS repository -- the picker',
+    '# refuses a cross-repository one outright. Neither guard is load-bearing alone.',
+    '#',
+    '# THE SHIP NEEDS FOLD_PUSH_TOKEN, AND THAT TOKEN NEEDS ONE MORE SCOPE THAN THE FOLD RUNNER''S:',
+    '# Pull requests: Read and write, beside Contents: Read and write. A merge made with the job-scoped',
+    '# GITHUB_TOKEN starts no workflow runs, so it would land the pull request and silence this repo''s',
+    '# CI on the trunk, fold-on-merge.yml and verify-resolved.yml all at once -- the unobserved-merge state',
+    '# those runners exist to close. Without the scope the merge fails with a 403, loudly; it can never',
+    '# merge without folding.',
+    '#',
+    '# AND IT NEEDS FOUR READ SCOPES THE JOB TOKEN''S permissions: BLOCK CANNOT LEND IT (#4447): Checks,',
+    '# Commit statuses, Actions and Issues, each Read-only. ship-pr reads the required check through the',
+    '# status-check rollup and the closing issues through gh issue, both AS THIS TOKEN. A PAT without them',
+    '# reads zero checks on every poll -- the green check "never registers" and the sweep refuses after',
+    '# 1800s -- and cannot see the issues it closes. A public repository needs none of the four.',
+    '#',
+    '# ONE SWEEP AT A TIME, REPO-WIDE, AND NOT CANCELLED: this job merges and folds, and two concurrent',
+    '# sweeps would race to ship the SAME pull request. A sweep re-reads the tracker when it starts, so a',
+    '# dropped duplicate pending run costs nothing.',
+    '#',
+    '# LINUX, UNDER PWSH 7 (issue #2616): ubuntu-latest and ''shell: pwsh'', with one shim step pointing the',
+    '# literal child name ''powershell'' at pwsh -- see the fold runner''s header. It was the last runner to',
+    '# move because it drives ship-pr''s whole merge path and a workflow_run runner cannot be proved on its',
+    '# own pull request; the source repo''s CI runs that merge path''s suites under pwsh on Linux instead.',
+    'name: Merge on green',
+    '',
+    '# The job token only reads; the write half arrives as FOLD_PUSH_TOKEN on the one step that needs it.',
+    '# checks: AND statuses: ARE NOT OPTIONAL IN A PRIVATE REPO (#3491): the picker reads the required',
+    '# checks with `gh pr checks --required`, and a block that leaves them out sets them to none, so the',
+    '# list is never readable and nothing is ever picked -- while every run still concludes success.',
+    '# actions: is part of the same read (#3619): gh resolves the workflow run behind each check run.',
+    'permissions:',
+    '  contents: read',
+    '  pull-requests: read',
+    '  checks: read',
+    '  statuses: read',
+    '  actions: read',
+    '# The redispatch job at the bottom adds actions: write in its own block, for gh workflow run alone (#4198).',
+    '',
+    'on:'
+) + $mogWakeLines + @(
+    '  schedule:',
+    '    # Every 3 hours: a backstop for what workflow_run misses, not the ordinary path -- sparser than',
+    '    # the source repo''s own half-hourly sweep (issue #2487). workflow_run wakes this the moment CI',
+    '    # finishes, which is the ordinary path here too; the schedule only has to catch what that',
+    '    # trigger misses. The source repo is public, so a job costs it nothing on a',
+    '    # standard runner and 30 minutes buys latency for free; a private repo is billed per scheduled',
+    '    # job START, rounded up to a whole minute, whether or not anything is owed a merge. Half-hourly',
+    '    # there is 48 jobs/day, roughly 1,440 billed minutes/month; every 3 hours is 8/day, roughly',
+    '    # 240/month.',
+    '    - cron: ''0 */3 * * *''',
+    '  # The hand valve, and since #4198 also the runner''s own wake: the redispatch job below dispatches',
+    '  # this workflow again after a held merge, with the retry counter as this input.',
+    '  workflow_dispatch:',
+    '    inputs:',
+    '      retry:',
+    '        description: ''Retry counter after a held merge (#4198); leave at 0 when dispatching by hand.''',
+    '        required: false',
+    '        default: ''0''',
+    '',
+    'concurrency:',
+    '  group: merge-on-green',
+    '  cancel-in-progress: false',
+    '',
+    'jobs:',
+    '  merge-on-green:',
+    '    runs-on: ubuntu-latest',
+    '    # Read by the redispatch job below (#4198); written before the ship step exits non-zero.',
+    '    outputs:',
+    '      held: ${{ steps.ship.outputs.held }}',
+    '      redispatch: ${{ steps.plan.outputs.redispatch }}',
+    '      next: ${{ steps.plan.outputs.next }}',
+    '      delay: ${{ steps.plan.outputs.delay }}',
+    '      workflow: ${{ steps.plan.outputs.workflow }}',
+    '      ref: ${{ steps.plan.outputs.ref }}',
+    '      reason: ${{ steps.plan.outputs.reason }}',
+    '    # 45 minutes, longer than the other runners because this one waits on CI on purpose: ship-pr may',
+    '    # bring a stale branch forward and re-certify it, and each lap is a full CI cycle. Re-size it to',
+    '    # this repo''s own CI duration; the cap is a wedge detector, against GitHub''s six-hour default.',
+    '    timeout-minutes: 45',
+    '    steps:',
+    '      # THE TRUSTED TRUNK, AND THE TREE THE FOLD IS COMMITTED IN: this repo''s own trunk, with no token:',
+    '      # input and nothing persisted (see this file''s header). The picker reads this repo''s identity from',
+    '      # it, and ship-pr reads its two repo-owned seams from it (-TrustedRoot), so a pull request editing',
+    '      # either seam never has its own copy executed here. The job token''s contents: read is enough to',
+    '      # clone it, private repository or not. Shallow; the fold''s own fetch extends it as far as it needs.',
+    '      - name: Checkout the trusted trunk',
+    ('        uses: ' + $checkoutPin),
+    '        with:',
+    ('          ref: ' + $trunk),
+    '          path: trusted-main',
+    '          persist-credentials: false',
+    ''
+    ) + $writeRunnerPinComment + @(
+    '      - name: Fetch the shared workflow scripts',
+    ('        uses: ' + $checkoutPin),
+    '        with:',
+    ('          repository: ' + $sharedRepo),
+    ('          ref: ' + $writeRunnerRef),
+    ('          path: ' + $sharedPath),
+    '          persist-credentials: false',
+    '',
+    '      # THE SHIM (issue #2488): ship-pr launches its children by the literal name ''powershell'', and',
+    '      # ubuntu-latest has only ''pwsh''. It runs before the first pwsh step and before FOLD_PUSH_TOKEN.',
+    '      - name: Make ''powershell'' resolve to pwsh',
+    '        shell: bash',
+    '        run: sudo ln -sf "$(command -v pwsh)" /usr/local/bin/powershell',
+    '',
+    '      # The picker reads with the job-scoped token, not the PAT: it only lists pull requests and',
+    '      # their checks, and the standing credential stays out of every step that does not need it.',
+    '      # CLAUDE_PROJECT_DIR NAMES trusted-main AND NOTHING ELSE WILL DO: the workspace root holds no',
+    '      # checkout at all, and the plugin tree carries the SOURCE repo''s scripts/repo-config.ps1, so',
+    '      # pointed there the sweep would answer with another repository''s configuration.',
+    '      #',
+    '      # -WaitForSettleSeconds 660 (#3807, #3809): when nothing is eligible ONLY because the 10-minute',
+    '      # settle window refused it, the picker waits out the remainder and judges the tracker once more.',
+    '      # The pull request that goes green LAST has no later CI run to wake this sweep, and the',
+    '      # 3-hourly schedule arrives hours late. On a private repo the wait is billed: at most about 11',
+    '      # minutes, and only on a sweep the settle window alone refused -- a cost accepted for that latency.',
+    '      - name: Is any armed pull request owed a merge?',
+    '        id: pick',
+    '        shell: pwsh',
+    '        env:',
+    '          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}',
+    '          GH_REPO: ${{ github.repository }}',
+    '          CLAUDE_PROJECT_DIR: ${{ github.workspace }}/trusted-main',
+    '        run: |',
+    ('          powershell -NoProfile -ExecutionPolicy Bypass -File ' + $pluginDir + '/ci/pick-merge-on-green.ps1 -WaitForSettleSeconds 660'),
+    '          exit $LASTEXITCODE',
+    '',
+    '      # THE PICKED HEAD, IN ITS OWN TREE, with no token and nothing persisted. ref: is the picker''s',
+    '      # output, passed to the action as an input rather than spliced into a shell line, and the picker',
+    '      # has already refused any branch name outside a plain charset.',
+    '      - name: Checkout the picked pull request''s branch',
+    '        if: ${{ steps.pick.outputs.picked == ''true'' }}',
+    ('        uses: ' + $checkoutPin),
+    '        with:',
+    '          ref: ${{ steps.pick.outputs.branch }}',
+    '          path: pr-branch',
+    '          persist-credentials: false',
+    '',
+    '      # THE BRANCH ARRIVES THROUGH env:, NOT THROUGH ${{ }} INSIDE run:. A head ref is chosen by',
+    '      # whoever opened the pull request; the picker has already refused any name outside a plain',
+    '      # charset, and this is the second half of that same guard.',
+    '      #',
+    '      # CLAUDE_PROJECT_DIR IS pr-branch, SO THE MERGE, THE STEP-LIST GATE AND THE DEPLOY LOCK ACT ON THE',
+    '      # BRANCH''S OWN COMMIT exactly as a live session would; -TrustedRoot is what keeps its seams and',
+    '      # its fold on trusted-main.',
+    '      - name: Ship it',
+    '        id: ship',
+    '        if: ${{ steps.pick.outputs.picked == ''true'' }}',
+    '        shell: pwsh',
+    '        env:',
+    '          GH_TOKEN: ${{ secrets.FOLD_PUSH_TOKEN }}',
+    '          GH_REPO: ${{ github.repository }}',
+    '          CLAUDE_PROJECT_DIR: ${{ github.workspace }}/pr-branch',
+    '          SHIP_BRANCH: ${{ steps.pick.outputs.branch }}',
+    '          SHIP_PR: ${{ steps.pick.outputs.pr }}',
+    '          SHIP_SHA: ${{ steps.pick.outputs.sha }}',
+    '        run: |',
+    '          # Commit metadata only, in BOTH trees: trusted-main commits the fold, and open-pr commits a',
+    '          # dirty branch document in pr-branch. The two checkouts share no .git/config, and a hosted',
+    '          # runner has no global identity.',
+    '          foreach ($tree in @(''trusted-main'', ''pr-branch'')) {',
+    '            git -C $tree config user.name "github-actions[bot]"',
+    '            git -C $tree config user.email "41898282+github-actions[bot]@users.noreply.github.com"',
+    '          }',
+    '',
+    '          # THE EPHEMERAL PUSH CREDENTIAL. git''s GIT_CONFIG_COUNT/KEY_n/VALUE_n overlay reaches every git',
+    '          # process this step starts, ship-pr''s own children included, without writing a .git/config in',
+    '          # either tree. This file''s header says why one credential serves both.',
+    '          $basicAuth = [Convert]::ToBase64String([System.Text.Encoding]::ASCII.GetBytes("x-access-token:$env:GH_TOKEN"))',
+    '          $env:GIT_CONFIG_COUNT = ''1''',
+    '          $env:GIT_CONFIG_KEY_0 = ''http.https://github.com/.extraheader''',
+    '          $env:GIT_CONFIG_VALUE_0 = "AUTHORIZATION: basic $basicAuth"',
+    '',
+    '          # Widen the refspec before deepening: a checkout with ref: narrows remote.origin.fetch to',
+    '          # the branch, so an --unshallow alone would not know the trunk ship-pr''s staleness walk reads.',
+    '          # The full history is what that walk needs to be sound.',
+    '          git -C pr-branch remote set-branches origin ''*''',
+    '          git -C pr-branch fetch --unshallow --quiet origin',
+    '          if ($LASTEXITCODE -ne 0) {',
+    '            Write-Error "could not deepen the branch checkout -- ship-pr''s staleness walk would be unsound, so nothing was merged."',
+    '            exit 1',
+    '          }',
+    '',
+    '          # The commit this run acts on has to be the one the picker judged (#2338): the checkout above',
+    '          # resolved the branch NAME a moment after the pick. A push in between stops the job; the next',
+    '          # sweep judges the new head.',
+    '          $head = (git -C pr-branch rev-parse HEAD).Trim()',
+    '          if ($head -ne $env:SHIP_SHA) {',
+    '            Write-Error "PR #$($env:SHIP_PR)''s head moved after the pick ($($env:SHIP_SHA) -> $head) -- nothing was run or merged."',
+    '            exit 1',
+    '          }',
+    '',
+    '          # -TrustedRoot trusted-main: the seams and the fold come from the trunk (issue #2449). It forces',
+    '          # -SkipLint -SkipTests on its own, and they are passed anyway: the sweep picked this pull request',
+    '          # BECAUSE its required check is green on this exact head, and that certificate is what the',
+    '          # merge is allowed on. Re-running the local gates here would prove nothing it does not carry.',
+    '          Write-Host "merge-on-green: running ship-pr.ps1 (trusted-tree mode) on ''$env:SHIP_BRANCH'' for PR #$env:SHIP_PR"',
+    '          # ran=true only once ship-pr itself runs (#4449): a refusal above is not its verdict on this head.',
+    '          ''ran=true'' | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8',
+    ('          powershell -NoProfile -ExecutionPolicy Bypass -File ' + $pluginDir + '/release/ship-pr.ps1 -TrustedRoot (Join-Path $env:GITHUB_WORKSPACE ''trusted-main'') -SkipLint -SkipTests'),
+    '          $shipExit = $LASTEXITCODE',
+    '          "exit=$shipExit" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8',
+    '          # 75 is ship-pr''s held-merge refusal (Get-MergeHeldExitCode, #4198): GitHub did not confirm the',
+    '          # merge after a 5xx or a held lock. The step still fails; held=true asks the job below to retry.',
+    '          if ($shipExit -eq 75) { ''held=true'' | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8 }',
+    '          exit $shipExit',
+    '',
+    '      # A refusal that is not a held merge is recorded against the head (#4449): the picker takes the',
+    '      # LOWEST-numbered eligible pull request, so one ship-pr keeps refusing would starve every armed pull',
+    '      # request above it. A label plus a marker comment; Get-MergeOnGreenRefusedHead skips that head until',
+    '      # a push, a person removing the label, or a session''s ship-pr re-arming it. Best-effort.',
+    '      - name: Refused -- record the head so the queue moves on',
+    '        if: ${{ always() && steps.ship.outputs.ran == ''true'' && steps.ship.outputs.held != ''true'' && steps.ship.outputs.exit != '''' && steps.ship.outputs.exit != ''0'' }}',
+    '        shell: pwsh',
+    '        env:',
+    '          GH_TOKEN: ${{ secrets.FOLD_PUSH_TOKEN }}',
+    '          GH_REPO: ${{ github.repository }}',
+    '          SHIP_PR: ${{ steps.pick.outputs.pr }}',
+    '          SHIP_SHA: ${{ steps.pick.outputs.sha }}',
+    '          SHIP_EXIT: ${{ steps.ship.outputs.exit }}',
+    '        run: |',
+    ('          . ./' + $pluginDir + '/lib/merge-on-green-lib.ps1'),
+    '          $runUrl = "$env:GITHUB_SERVER_URL/$env:GITHUB_REPOSITORY/actions/runs/$env:GITHUB_RUN_ID"',
+    '          $body = Get-MergeOnGreenRefusalComment -Sha $env:SHIP_SHA -ExitCode $env:SHIP_EXIT -RunUrl $runUrl',
+    '          if (-not $body -or $env:SHIP_PR -notmatch ''\A\d+\z'') { Write-Warning ''merge-on-green: the refusal could not be described safely, so it was not recorded (#4449).''; exit 0 }',
+    '          $view = gh pr view $env:SHIP_PR --json state,labels,headRefOid | ConvertFrom-Json',
+    '          $armed = Test-MergeOnGreenArmed -Record $view',
+    '          if (-not $view -or $view.state -ne ''OPEN'' -or -not $armed -or $view.headRefOid -ne $env:SHIP_SHA) {',
+    '            Write-Host "merge-on-green: PR #$($env:SHIP_PR) is no longer open, armed and on the refused head -- nothing to record (#4449)."',
+    '            exit 0',
+    '          }',
+    '          $refused = Get-MergeOnGreenRefusedLabel',
+    '          gh pr edit $env:SHIP_PR --add-label $refused',
+    '          if ($LASTEXITCODE -ne 0) {',
+    '            gh label create $refused --color ''B60205'' --description ''merge-on-green refused this head; skipped until a push or until this label is removed''',
+    '            gh pr edit $env:SHIP_PR --add-label $refused',
+    '          }',
+    '          if ($LASTEXITCODE -ne 0) { Write-Warning "merge-on-green: could not label PR #$($env:SHIP_PR) ''$refused'', so the next sweep picks it again (#4449)."; exit 0 }',
+    '          gh pr comment $env:SHIP_PR --body $body',
+    '          if ($LASTEXITCODE -ne 0) { Write-Warning "merge-on-green: could not post the refusal marker on PR #$($env:SHIP_PR), so the next sweep picks it again (#4449)."; exit 0 }',
+    '          Write-Host "merge-on-green: recorded the refusal of PR #$($env:SHIP_PR) at $($env:SHIP_SHA) -- later sweeps take the next armed pull request (#4449)."',
+    '',
+    '      # The next sweep is planned here, out of the pinned plugin tree this job already holds, so the',
+    '      # redispatch job below needs no checkout (#4198). No token, no gh; the counter arrives through env:',
+    '      # and the verdict refuses anything that is not a small whole number.',
+    '      - name: Held merge -- plan the next sweep',
+    '        id: plan',
+    '        if: ${{ always() && steps.ship.outputs.held == ''true'' }}',
+    '        shell: pwsh',
+    '        env:',
+    '          SWEEP_RETRY: ${{ inputs.retry }}',
+    '        run: |',
+    ('          . ./' + $pluginDir + '/lib/merge-on-green-lib.ps1'),
+    '          $v = Get-MergeOnGreenRedispatchVerdict -Retry $env:SWEEP_RETRY -WorkflowRef $env:GITHUB_WORKFLOW_REF',
+    '          $lines = @(',
+    '            "redispatch=$($v.Redispatch.ToString().ToLowerInvariant())",',
+    '            "next=$($v.Next)", "delay=$($v.DelaySeconds)",',
+    '            "workflow=$($v.Workflow)", "ref=$($v.Ref)", "reason=$($v.Reason)"',
+    '          )',
+    '          $lines | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8',
+    '',
+    '  # THE SWEEP WAKES ITSELF AFTER A HELD MERGE (issue #4198). After a 5xx on the merge ship-pr hands the',
+    '  # pull request back armed, but this run''s CI wake is spent and the schedule is hours away. So this',
+    '  # job waits 5, 10, then 15 minutes and dispatches this workflow again with a retry counter, at most',
+    '  # three times per held merge; past that it fails loudly and the pull request waits for the next CI',
+    '  # wake, as before. On a private repo the wait is billed -- at most about 30 minutes, and only after a',
+    '  # server error on a merge. Its own permissions block gives actions: write to this job alone, and it',
+    '  # checks nothing out: it acts only on the plan step''s outputs, through env:. A dispatch made with',
+    '  # GITHUB_TOKEN does start a run, and it queues behind this one in the concurrency group.',
+    '  redispatch:',
+    '    needs: merge-on-green',
+    '    if: ${{ always() && needs.merge-on-green.outputs.held == ''true'' }}',
+    '    runs-on: ubuntu-latest',
+    '    timeout-minutes: 20',
+    '    permissions:',
+    '      actions: write',
+    '    steps:',
+    '      - name: Wait, then wake the sweep again',
+    '        shell: pwsh',
+    '        env:',
+    '          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}',
+    '          GH_REPO: ${{ github.repository }}',
+    '          PLAN_REDISPATCH: ${{ needs.merge-on-green.outputs.redispatch }}',
+    '          PLAN_NEXT: ${{ needs.merge-on-green.outputs.next }}',
+    '          PLAN_DELAY: ${{ needs.merge-on-green.outputs.delay }}',
+    '          PLAN_WORKFLOW: ${{ needs.merge-on-green.outputs.workflow }}',
+    '          PLAN_REF: ${{ needs.merge-on-green.outputs.ref }}',
+    '          PLAN_REASON: ${{ needs.merge-on-green.outputs.reason }}',
+    '        run: |',
+    '          if ($env:PLAN_REDISPATCH -ne ''true'') {',
+    '            Write-Error "merge-on-green: not waking another sweep -- $env:PLAN_REASON."',
+    '            exit 1',
+    '          }',
+    '          Write-Host "merge-on-green: held merge, $env:PLAN_REASON -- waiting $($env:PLAN_DELAY)s, then dispatching $env:PLAN_WORKFLOW on $env:PLAN_REF."',
+    '          Start-Sleep -Seconds ([int]$env:PLAN_DELAY)',
+    '          gh workflow run $env:PLAN_WORKFLOW --ref $env:PLAN_REF -f "retry=$($env:PLAN_NEXT)"',
+    '          exit $LASTEXITCODE'
+)
+
+# A FIFTH RUNNER, ABOUT THE TRACKER RATHER THAN A MERGE (issue #3422): an issue parked on a recurrence
+# label is closed as not planned at once, with its [RECORD] prefix, as CONTRIBUTING-portable.md says it
+# is. That rule was prose only and held when a session remembered it. Unlike every runner above, this
+# one reads no tree and calls no shared script, so it is the SAME FILE as the source repo's own
+# .github/workflows/close-parked-recurrences.yml, byte for byte, and adopt-ci-floor.tests.ps1 holds the
+# two equal: nothing here depends on the trunk, the plugin path or a pin.
+$closeParkedRunner = @(
+    '# Closes an issue as not planned the moment it is parked on a recurrence label (issue #3422). The',
+    '# same file is placed in every consumer by adopt-ci-floor.ps1, byte for byte: it reads no tree and',
+    '# calls no shared script, so there is nothing in it for a consumer to differ on.',
+    '#',
+    '# WHAT THIS CLOSES. CONTRIBUTING-portable.md says an issue carrying awaiting-recurrences-first is',
+    '# closed as not_planned in the same movement that parks it, and that a record (awaiting-recurrences)',
+    '# may be closed the same way, label and [RECORD] prefix kept. That rule lived in prose only, on a page a',
+    '# session filing a finding never loads, so it held only when somebody remembered it: #3410 was filed',
+    '# parked on October 24, 2026 and stayed open until it was closed by hand the next day.',
+    '#',
+    '# WHAT IT DOES: the [RECORD] title prefix when it is missing, then a close as not planned with one',
+    '# comment saying why. The label stays on, because the label is what keeps the issue findable once',
+    '# closed.',
+    '#',
+    '# TRIGGERED ON opened AND labeled, NEVER ON reopened. A recurrence reopens the issue and takes the label',
+    '# off, in whichever order the person doing it happens to pick. Listening to reopened would close it',
+    '# again in the window between the two acts. A labeled event is acted on only when the label just added',
+    '# is a recurrence label, so adding a prio-N to a reopened issue that still carries one does not close it',
+    '# either. An issue created with labels fires both opened and labeled, so two runs can start for one',
+    '# issue. Each reads the issue live, so a run that starts after the close finds it closed; two that race',
+    '# cost at most a second comment.',
+    '#',
+    '# NO CONCURRENCY GROUP, deliberately. A group keeps one pending run and cancels it when a newer one',
+    '# arrives, and the group is evaluated before the job''s if:. So `gh issue edit --add-label',
+    '# prio-2,awaiting-recurrences,minor` would let the minor run, which if: then skips, cancel the pending',
+    '# run that was going to close the issue. Code review on #3422 found this.',
+    '#',
+    '# A TITLE THE PREFIX WOULD PUSH PAST GITHUB''S 256-CHARACTER CAP keeps its title, and the issue is closed',
+    '# anyway: the close is the rule, and the prefix is only how it shows in a list.',
+    '#',
+    '# THE JOB-LEVEL if: IS THE COST CONTROL. Every label added to every issue is a labeled event, and a job',
+    '# skipped by if: is not billed at all (#2487), so on a metered repo this costs one job per issue that is',
+    '# actually parked, nothing for the rest.',
+    '#',
+    '# THE LABEL LIST MATCHES EVERY FORMER NAME, as both pickup routes do: a tracker keeps an old name until',
+    '# somebody renames it there. The names are pr-issues-lib.ps1''s Get-DossierLabelNames plus',
+    '# awaiting-recurrences-first and its former names (Get-FormerTriageLabelNames), and',
+    '# adopt-ci-floor.tests.ps1 holds both lists in this file equal to them. So a repo using `record` or',
+    '# `dossier` as an ordinary label of its own has those issues closed too: rename that label first.',
+    '#',
+    '# NO CHECKOUT, AND NO SECRET. The job calls gh against the issue and nothing else, so there is no',
+    '# action to pin and no workspace for a token to be left in. issues: write on the job-scoped token is',
+    '# the whole permission. The title reaches the shell only as gh''s own output, read into a variable,',
+    '# never through an expression interpolated into the script body.',
+    'name: Close parked recurrences',
+    '',
+    'permissions:',
+    '  issues: write',
+    '',
+    'on:',
+    '  issues:',
+    '    types: [opened, labeled]',
+    '',
+    'jobs:',
+    '  close-parked:',
+    '    runs-on: ubuntu-latest',
+    '    if: >-',
+    '      github.event.issue.state == ''open'' && (',
+    '      (github.event.action == ''labeled'' &&',
+    '      contains(fromJSON(''["awaiting-recurrences", "awaiting-more-recurrences", "record", "dossier", "awaiting-recurrences-first", "awaiting-first-recurrence", "awaiting-recurrence"]''), github.event.label.name)) ||',
+    '      (github.event.action == ''opened'' && (',
+    '      contains(github.event.issue.labels.*.name, ''awaiting-recurrences'') ||',
+    '      contains(github.event.issue.labels.*.name, ''awaiting-more-recurrences'') ||',
+    '      contains(github.event.issue.labels.*.name, ''record'') ||',
+    '      contains(github.event.issue.labels.*.name, ''dossier'') ||',
+    '      contains(github.event.issue.labels.*.name, ''awaiting-recurrences-first'') ||',
+    '      contains(github.event.issue.labels.*.name, ''awaiting-first-recurrence'') ||',
+    '      contains(github.event.issue.labels.*.name, ''awaiting-recurrence''))))',
+    '    # 5 minutes: three gh calls. The cap is a wedge detector against GitHub''s six-hour default (#2296).',
+    '    timeout-minutes: 5',
+    '    steps:',
+    '      - name: Close the parked issue as not planned, with its [RECORD] prefix',
+    '        shell: pwsh',
+    '        env:',
+    '          GH_TOKEN: ${{ github.token }}',
+    '          GH_REPO: ${{ github.repository }}',
+    '          ISSUE_NUMBER: ${{ github.event.issue.number }}',
+    '        run: |',
+    '          $n = $env:ISSUE_NUMBER',
+    '          # READ LIVE, NOT FROM THE EVENT: a second run for the same issue must find it closed.',
+    '          $issue = gh issue view $n --json state,title | ConvertFrom-Json',
+    '          if ($LASTEXITCODE -ne 0) { exit 1 }',
+    '          if ($issue.state -ne ''OPEN'') {',
+    '            Write-Host "#$n is already closed -- nothing to do."',
+    '            exit 0',
+    '          }',
+    '          if ($issue.title -notmatch ''^\[RECORD\]'') {',
+    '            $prefixed = ''[RECORD] '' + $issue.title',
+    '            if ($prefixed.Length -gt 256) {',
+    '              Write-Host "#$n''s title is too long for the [RECORD] prefix -- closing it without one."',
+    '            } else {',
+    '              gh issue edit $n --title $prefixed',
+    '              if ($LASTEXITCODE -ne 0) { exit 1 }',
+    '            }',
+    '          }',
+    '          $comment = ''Closed as not planned automatically: a recurrence label parks this issue until its next instance, and the label keeps it findable while closed. A new instance is a comment on this issue: a record (awaiting-recurrences) stays closed, and an issue waiting on its first recurrence is opened again and loses the label.''',
+    '          gh issue close $n --reason ''not planned'' --comment $comment',
+    '          exit $LASTEXITCODE'
+)
+
+# QueueRelated MARKS THE TWO TARGETS AN ACTIVE QUEUE MAKES URGENT (fold, resolves-verification) AGAINST
+# THE ONE THAT ISN'T (repo-settings). Without this flag, a missing repo-settings.yml would be reported
+# as a live defect purely because a queue happens to be active elsewhere in the same repo -- a setting
+# drifting has nothing to do with whether this repo runs a merge queue.
+$targets = @(
+    @{ Rel = '.github/workflows/fold-on-merge.yml';   Content = (($foldRunner -join $nl) + $nl);     What = 'the fold, which the queue takes away from the shipping session'; QueueRelated = $true },
+    @{ Rel = '.github/workflows/verify-resolved.yml'; Content = (($resolvesRunner -join $nl) + $nl); What = 'the resolves verification, which the queue takes away too'; QueueRelated = $true },
+    @{ Rel = '.github/workflows/repo-settings.yml';   Content = (($repoSettingsRunner -join $nl) + $nl); What = 'does a GitHub-side repo setting still match what the tree declares'; QueueRelated = $false },
+    # NOT QUEUE-RELATED: under a queue ship-pr enqueues rather than refusing on CI, so nothing is armed.
+    @{ Rel = '.github/workflows/merge-on-green.yml';  Content = (($mergeOnGreenRunner -join $nl) + $nl); What = 'the sweep that merges a pull request ship-pr armed with merge-when-green once its check turns green'; QueueRelated = $false },
+    @{ Rel = '.github/workflows/close-parked-recurrences.yml'; Content = (($closeParkedRunner -join $nl) + $nl); What = 'closes an issue parked on a recurrence label as not planned, with its [RECORD] prefix'; QueueRelated = $false }
+)
+return $targets
+}
+
+# --- The drift read (#4529) ----------------------------------------------------------------------------
+function ConvertTo-PinNeutralRunnerText {
+    <#
+        A runner's text with the shared-scripts pin taken out, LF-normalised, one trailing newline. The
+        `ref:` line a placed copy carries is '<sha> # vX.Y.Z', a bare tag, or main where the release could
+        not be read, and the template is composed with '@@SCRIPTS_REF@@'; all four read as '<pin>'. That
+        is the only line a placed copy is expected to differ on, and adopt-ci-floor's own pin verdict
+        already reads it (#2333). Same shape as the bwj Asana check's Get-PinNeutralText (#4351). A
+        `ref:` naming the trunk is neutralised on both sides alike when the trunk is main, and compared as
+        it stands otherwise, so it never reads as drift.
+    #>
+    param([AllowEmptyString()][string]$Text)
+    $t = ($Text -replace "`r`n", "`n").TrimEnd("`n") + "`n"
+    return ($t -replace '(?m)^([ \t]*ref:)[ \t]*(?:@@SCRIPTS_REF@@|[0-9a-f]{40}(?:[ \t]*#[^\n]*)?|v\d+\.\d+\.\d+|main)[ \t]*$', '$1 <pin>')
+}
+
+function Get-FirstDifferingLine {
+    <#
+        The 1-based number of the first line on which two LF-normalised texts differ (case-sensitive), or 0
+        when they are equal; where one is a prefix of the other, the line after the shorter. A number and
+        never text, because one side is a consumer's file. Shared with workflow-folder-callers-lib's drift
+        read (#4537).
+    #>
+    param([AllowEmptyString()][string]$Placed, [AllowEmptyString()][string]$Template)
+    if ($Placed -ceq $Template) { return 0 }
+    $a = $Placed -split "`n"; $b = $Template -split "`n"
+    $line = [Math]::Min($a.Count, $b.Count) + 1
+    for ($i = 0; $i -lt [Math]::Min($a.Count, $b.Count); $i++) { if ($a[$i] -cne $b[$i]) { $line = $i + 1; break } }
+    return $line
+}
+
+function Get-CiFloorRunnerDrift {
+    <#
+        One record per CI-floor runner that is PLACED in -RepoRoot: Rel, Stale ($true when it differs from
+        the template this plugin version composes, its pin aside) and Line (the first line that differs,
+        0 when it is current). A runner that is absent is not reported -- check-script-contract's
+        [UNADOPTED] line owns that -- and neither is one reached through a symlink or junction, which
+        adopt-ci-floor refuses to touch.
+
+        The template is composed for THIS tree: its trunk (-Trunk, the Get-TrunkBranchName answer) and the
+        merge-on-green wake list read off its own pull_request workflows, exactly as adopt-ci-floor reads
+        them. Nothing in the placed file is returned, only a line number, because its text is the
+        consumer's and the caller prints into session context.
+    #>
+    param(
+        [Parameter(Mandatory)][string]$RepoRoot,
+        [string]$Trunk = 'main'
+    )
+    if (-not $Trunk) { $Trunk = 'main' }
+    $workflowDir = Join-Path $RepoRoot '.github\workflows'
+    $workflows = @(Get-WorkflowFacts -WorkflowDir $workflowDir)
+    $repoPr = @($workflows | Where-Object { $_.OnPullRequest -and -not $_.PluginGate })
+    $skeletonOffered = ($repoPr.Count -eq 0) -and -not (Test-Path -LiteralPath (Join-Path $workflowDir 'ci.yml'))
+    $wake = @(Get-CiFloorWakeNames -Workflows $workflows -CiSkeletonOffered:$skeletonOffered)
+    $records = @()
+    foreach ($t in @(Get-CiFloorRunnerTargets -Trunk $Trunk -WriteRunnerRef '@@SCRIPTS_REF@@' -WakeNames $wake)) {
+        $abs = Join-Path $RepoRoot ($t.Rel -replace '/', '\')
+        if (Get-WriteTargetReparsePoint -Path $abs -Root $RepoRoot) { continue }
+        if (-not (Test-Path -LiteralPath $abs -PathType Leaf)) { continue }
+        $placed = ConvertTo-PinNeutralRunnerText -Text ([System.IO.File]::ReadAllText($abs))
+        $template = ConvertTo-PinNeutralRunnerText -Text $t.Content
+        $line = Get-FirstDifferingLine -Placed $placed -Template $template
+        $records += [pscustomobject]@{ Rel = $t.Rel; Stale = ($line -gt 0); Line = $line }
+    }
+    return $records
+}

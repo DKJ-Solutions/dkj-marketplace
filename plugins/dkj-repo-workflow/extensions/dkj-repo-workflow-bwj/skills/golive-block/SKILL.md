@@ -1,12 +1,7 @@
 ---
 name: golive-block
 description: >-
-  Write the paste-ready block for a GitHub issue, including its go-live half: where the result can be
-  seen, when it is planned to go live (the next release day), and the live storefront URL per market.
-  Use it at the PR step of the chain that ships the work, never at the preview, while the issue is still OPEN, then close the issue as completed:
-  the asana-closed-message workflow then carries the block into the Asana task as its closed message, so nobody pastes it.
-  It prints by default and posts only with -Post; it never touches Asana itself, and it never
-  writes a placeholder link.
+  Write the paste-ready go-live block (where to look, planned go-live date, live URL per market) for a GitHub issue at the PR step, before it is closed as completed.
 ---
 
 # golive-block -- the block a colleague reads, with the release day in it

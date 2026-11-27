@@ -1,10 +1,7 @@
 ---
 name: move-data-to-onedrive
 description: >-
-  Move app data a repo keeps in git into a OneDrive folder, with a fallback for machines without
-  OneDrive and a per-machine migration plan. Use when asked to "move the data out of git", "put the
-  data in OneDrive", or when every data edit ships as a branch + PR, or the data is public in a
-  public repo, in whatever language. A procedure, no script; Cody, the app developer, carries it.
+  Move app data a repo keeps in git into OneDrive, with a fallback and a per-machine migration plan. Use for "move the data out of git", or when every data edit ships as a PR.
 ---
 
 # move-data-to-onedrive -- app data out of git, into OneDrive

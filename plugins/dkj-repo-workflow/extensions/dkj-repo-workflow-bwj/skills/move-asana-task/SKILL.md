@@ -1,13 +1,7 @@
 ---
 name: move-asana-task
 description: >-
-  Move the Asana task of a GitHub issue (or a task by its GID) to a section of this repo's own Asana
-  board, named by its stage code -- "move the Asana card of #123 to section 2", in
-  whatever language. The section is found by its code (the text before the
-  leading dot of its name) at run time, by the same rule the CI runners use, so a manual move and an
-  automated one cannot pick different sections. It moves only a task already on this repo's board,
-  never onto another board, and has a dry run. Use it instead of a raw Asana API call, which the
-  auto-mode classifier refuses.
+  Move an issue's Asana task to a section of this repo's board by stage code ("move the Asana card of #123 to section 2"). Use instead of a raw Asana API call.
 ---
 
 # move-asana-task -- the narrow route to move a card

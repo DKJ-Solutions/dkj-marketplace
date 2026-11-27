@@ -1,6 +1,7 @@
 ---
 name: agenda
-description: Walk the coming weeks with the owner of a life hub, as their personal assistant -- reads the birthdays and fixed dates from the Agenda database in Notion, looks 8 weeks ahead, and proposes one concrete action per date (a present, a card, a booking, something to arrange). Use it for /agenda, "what's coming up", "who has a birthday soon" or "what do I need to arrange", in whatever language it is asked.
+description: >-
+  Walk the coming 8 weeks of a life hub's Notion Agenda and propose one action per date. Use for /agenda, "what's coming up" or "who has a birthday soon".
 ---
 
 # /agenda: the coming weeks, with one action per date

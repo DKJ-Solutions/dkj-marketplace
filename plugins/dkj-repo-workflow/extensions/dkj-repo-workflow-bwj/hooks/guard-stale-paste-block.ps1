@@ -37,7 +37,8 @@
     AN ACCIDENT GUARD, NOT AN ADVERSARIAL ONE. It reads a command the way a session writes it (the
     quote-aware parser is in stale-paste-block-rules.ps1, with what it leaves out: pwsh -Command "...",
     values from $env or a variable, wrappers, obfuscation). A ship that slips past is caught at the
-    close by the workflow's own check, which is the backstop.
+    close by the workflow's own check, which is the backstop. A close has no such backstop, so a close
+    whose target is a variable -- a loop over a batch -- is not let through silently: it asks (#4530).
 
     WHICH ISSUES. The numbers the command passes to -Resolves, plus the closing issues of the PR already
     open for the current branch (gh pr view --json closingIssuesReferences, same repo only) -- a re-ship
@@ -205,6 +206,10 @@ if ($close) {
             'stale'   { $old += $ref }
             'unknown' { $unread += $ref }
         }
+    }
+    # A TARGET FROM A VARIABLE (#4530): the loop that closes a batch names no issue this hook can read.
+    if ($close.Unresolved -gt 0) {
+        Add-NotChecked -Close 'guard-stale-paste-block: the close names its issue through a variable, so the go-live block was NOT checked. Close one issue per command with a literal number.'
     }
     if ($unread.Count -gt 0) {
         Add-NotChecked -Close "guard-stale-paste-block: could not judge the go-live block of $($unread -join ', ') -- the close was NOT checked. Confirm by hand that each Asana-linked issue carries a block for this round."

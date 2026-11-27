@@ -29,7 +29,9 @@ connections between neurons (NEURON links) are Onyx's work, not yours.
    names navigation files (a `NEURON.md` per folder, say) or a convention page or database structure,
    that convention says where an entry goes: under which parent (hierarchy is a parent/child
    relation), and with which emotion tags. Follow what is there. A framework you can apply to
-   anything goes to the library as one page, never into the tree (#4518).
+   anything goes to the library as one page, never into the tree (#4518). One item out of a series of
+   similar items (a track, a film, a trip) is a row in its kind's collection database, not a dossier,
+   and that row is not an Update (#4525).
    **Never add a layout the brain does not already have** — no index, no mirror copy, no parallel
    tree — unless the lens prescribes it. A dossier is a compact, dated event list; extensive
    material (research, test rounds, comparisons) goes to the owner's long-form folder the lens or

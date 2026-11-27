@@ -136,6 +136,18 @@
     repo with no workflow folder (the [ERROR] there already names that state), and a repo that has
     deliberately skipped a part silences it by naming that command in Get-DeclinedAdoptions.
 
+    AND SINCE #4529 A PLACED CI-FLOOR RUNNER IS HELD TO ITS TEMPLATE, reported as [BEHIND], also
+    non-counting. adopt-ci-floor never rewrites a runner it finds, so a release that changes one -- the
+    #4479 fold retry was the measured case -- reached no consumer that already had it. Each placed runner
+    is compared with what Get-CiFloorRunnerDrift (ci-floor-runners-lib.ps1) composes for this tree, its
+    shared-scripts pin aside; the line names the file and the first differing line, never its text.
+    Silenced, with the rest of the floor's lines, by naming adopt-ci-floor in Get-DeclinedAdoptions.
+
+    AND SINCE #4537 THE TWO GATE CALLERS adopt-workflow-folder PLACES (branch-entry.yml and
+    always-on-budget.yml) ARE HELD TO THEIR TEMPLATE THE SAME WAY, through Get-WorkflowFolderCallerDrift
+    (workflow-folder-callers-lib.ps1): the same non-counting [BEHIND] line, its release pin aside, silenced
+    by naming adopt-workflow-folder in Get-DeclinedAdoptions.
+
     AND SINCE INBOUND #2555 AN UNANSWERED 'decide' SEAM IS ROLLED UP AS [UNANSWERED], also non-counting.
     Its per-record [INFO] stays as it was; the roll-up names every optional 'decide' function this repo
     has not defined, in one line the session hook forwards -- because a 'decide' fallback is an answer
@@ -247,6 +259,15 @@ $script:Contract = Get-ScriptContract
 # file already in scope -- function redefinition and nothing else -- rather than the zero this comment
 # claimed until the code review read it.
 . (Join-Path $PSScriptRoot '..\lib\seam-lib.ps1')
+
+# The CI-floor runner templates (#4529), for the drift read in the adoption section: a placed runner held
+# against what adopt-ci-floor composes today. It loads ref-print-lib and write-target-lib from its own
+# directory where they are not in scope yet.
+. (Join-Path $PSScriptRoot '..\lib\ci-floor-runners-lib.ps1')
+
+# The two gate callers adopt-workflow-folder places (#4537), held against their template the same way. It
+# loads command-probe-lib and check-report-lib from its own directory where they are not in scope yet.
+. (Join-Path $PSScriptRoot '..\lib\workflow-folder-callers-lib.ps1')
 
 # An optional record reports [INFO] (with the fallback the caller uses) where a required one reports
 # [ERROR]. ContainsKey rather than dot-access on a possibly-absent key: this script runs under
@@ -484,7 +505,7 @@ if ($foundWorkflowFolder) {
 } else {
     Write-Failure ("the workflow folder '$currentWorkflowFolder/' does not exist in this repo -- the " +
         "changelog, the release roots and the branch documents live there, and the shared scripts read " +
-        "only that location. Run the 'adopt-dkj-repo-workflow' skill to scaffold it (dry-run by default, " +
+        "only that location. Ask the operator to type /adopt-dkj-repo-workflow to scaffold it (dry-run by default, " +
         "additive, never overwrites).")
 }
 
@@ -613,6 +634,69 @@ if (-not $foundWorkflowFolder) {
                 Write-Host ("  [UNADOPTED] $who places $files and this tree $lacks`: $($f.Missing -join ', '). It covers " +
                     "$($f.What). Why it matters: $($f.Why). If that is deliberate, name '$($f.Command)' in " +
                     "Get-DeclinedAdoptions in scripts\repo-config.ps1 and this line goes away.") -ForegroundColor Yellow
+            }
+        }
+    }
+
+    # A PLACED CI-FLOOR RUNNER BEHIND ITS TEMPLATE (#4529). adopt-ci-floor never rewrites a runner it finds,
+    # so a release that changes one -- the #4479 fold retry was the measured case -- reaches a consumer only
+    # if somebody re-runs that command and reads one of its per-gap probes. Measured in a consumer on
+    # November 27, 2026: a fold-on-merge.yml from v7.0.0 stood down on a moved trunk and stranded five
+    # entries, while this session start said nothing. So every placed runner is held to the template this
+    # plugin version composes, its shared-scripts pin aside (that line is adopt-ci-floor's own pin verdict).
+    #
+    # [BEHIND] IS NON-COUNTING, the [UNADOPTED] shape, and for its reason: a runner behind its template is a
+    # to-do the consumer takes when they choose, not a breach of the function contract this exit code
+    # speaks for -- and every release that touches a runner would otherwise turn this check red in every
+    # consumer at once. The session hook forwards it on a branch of its own.
+    #
+    # NOTHING FOREIGN IS PRINTED: the path comes from this plugin's own table and the line is a number. The
+    # trunk is read through Get-SeamValue in a child scope like the opt-out above, and a seam that throws
+    # leaves the template on 'main', where the worst outcome is a runner reported behind that is not.
+    if ($declinedAdoptions -notcontains 'adopt-ci-floor') {
+        $driftTrunk = 'main'
+        if (Test-Path -LiteralPath $repoConfigPath -PathType Leaf) {
+            $driftTrunk = & {
+                Set-StrictMode -Off
+                try { . $args[0] | Out-Null; return [string](@(Get-SeamValue -Name 'Get-TrunkBranchName' -Default 'main')[-1]) } catch { return 'main' }
+            } $repoConfigPath
+        }
+        try { $drift = @(Get-CiFloorRunnerDrift -RepoRoot $repoRoot -Trunk $driftTrunk) }
+        catch { $drift = @(); Write-Skip 'ci-floor runners: the placed runners could not be compared with their templates -- run adopt-ci-floor.ps1 to read them.' }
+        foreach ($d in $drift) {
+            if ($d.Stale) {
+                Write-Host ("  [BEHIND] $($d.Rel) differs from the runner adopt-ci-floor.ps1 (Part 3 of the 'adopt-dkj-repo-workflow' " +
+                    "skill) composes in this plugin version, its shared-scripts pin aside -- first at line $($d.Line). A release " +
+                    "changed this runner after it was placed, or (merge-on-green.yml) this repo's pull_request workflows changed " +
+                    "since, and adopt-ci-floor never rewrites a file it finds. To take the " +
+                    "change: delete the file, re-run adopt-ci-floor.ps1 -Apply, and read git diff before committing -- it shows " +
+                    "what the template changed and any edit of your own to carry back.") -ForegroundColor Yellow
+            } else {
+                Write-Ok "ci-floor runner: $($d.Rel) matches the template this plugin version composes, its pin aside."
+            }
+        }
+    }
+
+    # A PLACED GATE CALLER BEHIND ITS TEMPLATE (#4537), the same treatment for the two callers
+    # adopt-workflow-folder places (branch-entry.yml and always-on-budget.yml). Same non-counting [BEHIND]
+    # shape and the same forwarding by marker, and silenced by naming ITS command in Get-DeclinedAdoptions.
+    # A caller's pin is the one thing it is expected to differ on, and adopt-workflow-folder's own [pin]
+    # advice reads that; the live branch is resolved from this repo's own scripts\repo-config.ps1, exactly
+    # as that command resolves it, so a caller that predates a declared live branch reads behind (#4374).
+    # NOTHING FOREIGN IS PRINTED: the path comes from the lib's own table and the line is a number.
+    if ($declinedAdoptions -notcontains 'adopt-workflow-folder') {
+        try { $callerDrift = @(Get-WorkflowFolderCallerDrift -RepoRoot $repoRoot) }
+        catch { $callerDrift = @(); Write-Skip 'workflow-folder callers: the placed callers could not be compared with their templates -- run adopt-workflow-folder.ps1 to read them.' }
+        foreach ($d in $callerDrift) {
+            if ($d.Stale) {
+                Write-Host ("  [BEHIND] $($d.Rel) differs from the caller adopt-workflow-folder.ps1 (Part 1 of the 'adopt-dkj-repo-workflow' " +
+                    "skill) composes in this plugin version, its release pin aside -- first at line $($d.Line). A release " +
+                    "changed this caller after it was placed, or this repo has since declared a live branch " +
+                    "(Get-ShopifyLiveDeployBranch), and adopt-workflow-folder never rewrites a file it finds. To take the " +
+                    "change: delete the file, re-run adopt-workflow-folder.ps1 -Apply, and read git diff before committing -- it shows " +
+                    "what the template changed and any edit of your own to carry back.") -ForegroundColor Yellow
+            } else {
+                Write-Ok "workflow-folder caller: $($d.Rel) matches the template this plugin version composes, its pin aside."
             }
         }
     }

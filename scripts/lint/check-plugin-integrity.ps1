@@ -461,6 +461,11 @@
          list, matched as a whole word once the allowed links are removed. Born green after its
          own branch replaced six person names with "the owner": 31 files, 0 findings. WHAT IT
          DOES NOT REACH: a bare repo name with no owner, agent defs and skills, and history.
+     48. a model-invocable skill's description fits Claude Code's skill-listing budget (#4528). The
+         listing is capped, and a description past the cap arrives name-only, so the skill never
+         triggers on its own. Each description stays at or under 250 characters, and their sum over
+         every published plugin at or under 10,000 -- an over-count of any real session, on purpose.
+         A skill with 'disable-model-invocation: true' is outside the listing and counts toward neither.
     <!-- /checks:list -->
 
     Exit code: 0 = no errors. 1 = at least one error (usable as a gate in open-pr.ps1).
@@ -6449,6 +6454,73 @@ Write-Coverage -Category 'portable-names' -Checked $pnChecked `
         " allowed as provenance, linked to this source repo under any name it has had ($(if ($pnOwnNames.Count) { ($pnOwnNames | Select-Object -Unique) -join ', ' } else { 'none known here, so every repo link is a finding' })); any other repo" +
         " named by a GitHub link or an owner/name#n reference is a finding, and so is a name on this check's explicit person list (#3987)." +
         ' WHAT IT DOES NOT REACH: a bare repo name with no owner, the agent defs and skills, and history')
+
+# --- 48. a model-invocable skill's description fits Claude Code's skill-listing budget --------------------
+# THE LISTING IS A BUDGET, AND A DESCRIPTION PAST IT IS NOT SHOWN AT ALL (#4528). Claude Code puts every
+# model-invocable skill's description into one listing and caps the characters it spends there (1% of the
+# context window, 8,000 characters as the fallback), shared with every other plugin a session enables. What
+# does not fit is listed by NAME ONLY, so its trigger phrases never reach the model and the skill never fires
+# on its own. Measured November 27, 2026 in a consumer on v7.7.0: asana-intake and about twenty other skills
+# arrived name-only, while the model-invocable descriptions of this marketplace summed to ~35,800 characters,
+# the longest single one 2,868.
+#
+# TWO LIMITS. Each model-invocable description stays at or under 250 characters -- a trigger-first
+# line; the detail belongs in the body, which loads when the skill fires. And the SUM over every published
+# plugin stays at or under 10,000: no session enables every plugin, so this over-counts a real session
+# and is the conservative proxy for one. A skill carrying 'disable-model-invocation: true' is not in the
+# listing and counts toward neither: that flag is the route for a one-time or owner-typed skill.
+$sdMaxEach = 250
+$sdMaxTotal = 10000
+$sdChecked = 0
+$sdTotal = 0
+$sdFindings = 0
+foreach ($sdDir in (Get-PluginSubdirs -PluginRoots $publishedPlugins -Leaf 'skills')) {
+    foreach ($sdFile in @(Get-ChildItem -Path $sdDir -Recurse -Filter 'SKILL.md' -File |
+            Where-Object { $_.FullName -match '\\skills\\[^\\]+\\SKILL\.md$' } | Sort-Object FullName)) {
+        $sdText = [System.IO.File]::ReadAllText($sdFile.FullName, [System.Text.Encoding]::UTF8)
+        $sdFm = [regex]::Match($sdText, '(?s)\A\uFEFF?---\r?\n(.*?)\r?\n---\r?\n')
+        if (-not $sdFm.Success) { continue }
+        $sdBlock = $sdFm.Groups[1].Value
+        if ($sdBlock -match '(?m)^disable-model-invocation:\s*true\s*$') { continue }
+        $sdChecked++
+        $sdLines = $sdBlock -split '\r?\n'
+        $sdDesc = ''
+        for ($i = 0; $i -lt $sdLines.Count; $i++) {
+            if ($sdLines[$i] -notmatch '^description:\s*(.*)$') { continue }
+            $sdHead = $Matches[1].Trim()
+            if ($sdHead -match '^[>|][+-]?$') {
+                $sdParts = New-Object System.Collections.Generic.List[string]
+                for ($j = $i + 1; $j -lt $sdLines.Count -and ($sdLines[$j] -match '^\s' -or $sdLines[$j] -eq ''); $j++) {
+                    if ($sdLines[$j].Trim()) { $sdParts.Add($sdLines[$j].Trim()) }
+                }
+                $sdDesc = $sdParts -join ' '
+            } else {
+                $sdDesc = $sdHead.Trim('"', "'")
+            }
+            break
+        }
+        $sdTotal += $sdDesc.Length
+        if ($sdDesc.Length -gt $sdMaxEach) {
+            $sdFindings++
+            $sdRel = $sdFile.FullName.Substring($RepoRoot.Length).TrimStart('\', '/') -replace '\\', '/'
+            Add-Error ("[skill-description] $sdRel has a $($sdDesc.Length)-character description; a model-invocable skill" +
+                " stays at or under $sdMaxEach (#4528). Claude Code spends a capped budget on the skill listing, and a" +
+                ' description past it arrives name-only, so the skill never triggers. Write one trigger-first line and move' +
+                " the rest into the body -- or, for a one-time or owner-typed skill, set 'disable-model-invocation: true'.")
+        }
+    }
+}
+if ($sdTotal -gt $sdMaxTotal) {
+    $sdFindings++
+    Add-Error ("[skill-description] the model-invocable skill descriptions of the published plugins sum to $sdTotal" +
+        " characters, past the $sdMaxTotal ceiling (#4528). Claude Code's skill listing is capped, so the overflow is" +
+        " listed name-only and never triggers. Shorten descriptions, or set 'disable-model-invocation: true' on a" +
+        ' one-time or owner-typed skill.')
+}
+Write-Coverage -Category 'skill-description' -Checked $sdChecked `
+    -Note ("model-invocable skill(s) held to $sdMaxEach characters each; their descriptions sum to $sdTotal of a" +
+        " $sdMaxTotal-character ceiling across every published plugin -- $sdFindings finding(s). A skill with" +
+        " disable-model-invocation: true is outside the listing and counts toward neither (#4528)")
 
 # --- Report ---------------------------------------------------------------------------------------------
 if ($errors.Count -eq 0) {

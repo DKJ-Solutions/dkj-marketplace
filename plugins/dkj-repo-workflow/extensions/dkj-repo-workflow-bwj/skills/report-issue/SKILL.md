@@ -1,18 +1,7 @@
 ---
 name: report-issue
 description: >-
-  File a discovered issue the BWJ way -- GitHub first (the source of truth, classified at creation with
-  its labels: bug, feature or research, and the reach label), then -- only where the issue carries the reach label -- a
-  colleague-facing Asana task, cross-linked both ways. Use this in a repo that runs the BWJ procedure -- smartwatchbanden or xoxowildhearts
-  (whichever org), the plugin's own source repo dkj-marketplace, or phone-factory -- whenever a real finding
-  needs tracking and a file in the repo will change because of it, now or after an act outside the
-  repo: a bug, a broken customer-facing behaviour, a stale doc. An act outside the repo, or a decision
-  that is not yours and changes no file, is no GitHub issue (#4339). The Asana card lands in the board's `Filed` section -- tracked on GitHub now --
-  because the board's sections are the cycle's stages. The GitHub issue always gets created
-  even if Asana is unreachable, so the source-of-truth guarantee holds. Nothing here resolves a ticket
-  and nothing downstream does either: closing the GitHub issue as completed posts one closed message on
-  the task, and reopening it posts one reopened message (the asana-closed-message workflow); the card
-  stays where this skill put it unless a person moves it, and the colleague who filed it ticks it off.
+  File a finding the BWJ way: a labelled GitHub issue first, then a colleague-facing Asana task for reach-label issues. Use whenever a real finding will change a file in a BWJ repo.
 ---
 
 # report-issue -- the BWJ GitHub-first, Asana-mirrored filing procedure

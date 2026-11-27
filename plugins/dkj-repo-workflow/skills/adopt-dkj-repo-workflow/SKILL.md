@@ -1,6 +1,7 @@
 ---
 name: adopt-dkj-repo-workflow
 description: Adopt the dkj-repo-workflow workflow in a consuming repo, in six independent parts that can run in any order or alone. Part 1 scaffolds the workflow's own folder -- .dkj/dkj-repo-workflow/, moving an older root dkj-policy/ there -- the releases root with this repo's release answers, the branch-entry CI gate, the always-on budget CI gate that holds every PR to not growing what every session pays before a single assignment is given, and the PR template open-pr fills in; use this right after installing the plugin, or when the script-contract session check reports the folder missing, since an install alone writes nothing into the repo. Part 2 adopts the source repo's workflow configuration from the shipped blueprint -- placing the values that state the shared way of working into this repo's own seam libs, and proposing the rest for a person to answer; use this after specialists-init has laid down scripts/repo-config.ps1 and scripts/lib/branch-info.ps1, or whenever the script-contract check reports functions this repo has never configured. Part 3 builds the CI floor -- it places the runners that keep the fold and the resolves verification alive across a merge the shipping session never observes (a merge queue, or the GitHub UI merge button), places a scheduled runner that checks whether a GitHub-side repo setting still matches what this repo declares, and reports whether a required status check exists at all, which is the certificate ship-pr dates its staleness guard from; use it after installing the plugin, when ship-pr says the staleness guard is off because no required check is known, when a merge landed and nothing folded, or when a repo setting may have drifted. A merge queue is optional and is not this workflow policy: most repos cannot have one, so a missing queue is reported as the ordinary state rather than as a gap. Part 4 puts the one issue label this workflow prescribes on the tracker -- the reach label, minor by default, which is the tier model read on an issue instead of on a changelog entry; use it after installing the plugin, or when a filing fails because the label does not exist. Part 5 wires up the statusLine that draws the progress bar for the long runs this workflow backgrounds -- the gates and ship-pr's CI wait, which stream no stdout anywhere visible; use it after installing the plugin, or when a backgrounded run leaves the session looking idle. statusLine is a settings key, so no plugin component can place it. Part 6 switches Claude Code auto memory off (autoMemoryEnabled false in .claude/settings.json), because lessons go in the docs and never in memory; use it after installing the plugin, or when the auto-memory session check reports the key missing. Parts 1 to 3, 5 and 6 are strictly additive and dry-run by default; none overwrites anything, and part 4 is a person's gh call rather than a script.
+disable-model-invocation: true
 ---
 
 # adopt-dkj-repo-workflow -- scaffold the folder, place the config seams, build the CI floor
@@ -243,6 +244,13 @@ reaches hotfix PRs only once it reaches the live branch**
 workflow from the PR's own refs, and a hotfix branch is cut from and targets the live branch, so until the
 next promotion (or a one-file hotfix of the caller onto it) those PRs run the live branch's old copy. The
 same session check therefore reads `origin/<live>`'s copy too and warns when it leaves the live branch out.
+**A hotfix PR also meets a local check that needs no workflow file**
+([#4532](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4532)). No plugin script opens a PR to the
+live branch, so it is opened by hand with `gh pr create --base <live>`, and the live branch's own copy of the
+caller may lag the trunk's. The PreToolUse hook `guard-live-pr-entry` meets that command: where the base is the
+branch `Get-ShopifyLiveDeployBranch` declares, it runs `check-branch-entry` on the head branch and refuses the
+PR while the entry is not written. It is silent for every other base and in a repo that declares no live
+branch, and where it cannot read the base or the head it lets the PR through and says so to the session.
 
 **The branch-entry caller also holds the DEPLOY lock**
 ([#2429](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/2429)). The runner passes the PR
@@ -281,6 +289,16 @@ gates, `@vX.Y.Z` plus `with: scripts-ref: vX.Y.Z`, the tag read off the plugin's
 lines are needed because a called workflow cannot read its own `@ref`: without the input it would run a
 pinned runner around scripts at `main`. **Move both when you update the plugin**; a re-run of this command
 names a caller still on `@main`, and leaves the file as it is.
+
+**And a caller whose BODY is behind is reported at every session start, like a CI-floor runner's (#4537).**
+This command never rewrites a caller it finds, so a release that changed one (a trigger, a comment, a new
+input) reached no repo that already had it, and the pin advice above reads only the pin. The script-contract
+session check now holds `branch-entry.yml` and `always-on-budget.yml` to the template this plugin version
+composes, the release pin aside (the `@<ref>` of the `uses:` line and the `scripts-ref:` value, a tag or
+`main`), and the live branch included: a repo that declared one after placing the caller reads behind. It
+forwards a `[BEHIND]` line naming the file and the first line that differs. To take the change, delete the
+file, re-run with `-Apply`, and read `git diff` before you commit. Like `[UNADOPTED]` it counts toward
+nothing, and naming `adopt-workflow-folder` in `Get-DeclinedAdoptions` silences it.
 
 **Until #4237 the caller tracked `@main`, and the argument for that is kept below because the trade it
 weighs is still the trade.** A pinned gate keeps enforcing the shape it was pinned at -- and the entry's own
@@ -742,6 +760,17 @@ so re-running it reports every existing write runner that is still on `main` or 
 you are running -- one `ref:` line per file, and the run prints the value to put there. Where the tag
 cannot be resolved (offline), the tag itself is written and the run says so; where not even the version
 can be read, the runners fall back to `main`, and the run says that too.
+
+**And a runner whose BODY is behind is reported at every session start** (#4529). A release that changes
+a runner, as #4479 changed the fold's handling of a moved trunk, never reaches a copy you already have.
+Measured in a consumer: a `fold-on-merge.yml` from v7.0.0 stood down where the new one retries, and
+stranded five entries while nothing said so. So the script-contract session check holds every placed
+runner to the template this plugin version composes, its shared-scripts `ref:` line aside, and
+forwards a `[BEHIND]` line naming the file and the first line that differs. Re-running this part prints
+the same finding as `[behind]` under the file's `[exists]` line. To take the change, delete the file,
+re-run with `-Apply`, and read `git diff` before you commit: it shows what the template changed, and any
+edit of your own to carry back. Like `[UNADOPTED]`, it counts toward nothing, and naming
+`adopt-ci-floor` in `Get-DeclinedAdoptions` silences it.
 
 ### Exit code
 

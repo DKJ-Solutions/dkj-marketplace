@@ -1,6 +1,7 @@
 ---
 name: dkj-brandbook
-description: The DKJ-Solutions brand book -- the design tokens, the twelve themes a user picks from (and the script that applies them) and the base stylesheet every DKJ-Solutions app renders with. The core files and rules live in the dkj-repo-workflow plugin's assets/dkj-brandbook folder, the product layer in this plugin's assets/dkj-brandbook-product; this skill says where, and the rules a session needs before it starts. Use it before writing or restyling ANY visual output in a DKJ-Solutions repo -- a web page, a local HTML report, a dashboard, an email template, a chart's colours -- so it starts from the brand book instead of a fresh design. Load it alongside dataviz, not instead of it; where it offers a placeholder palette, the house tokens replace it. Never publish the result as a claude.ai Artifact: a page is an Admin page.
+description: >-
+  The DKJ-Solutions brand book: tokens, themes and base stylesheet. Load it before ANY visual output in a DKJ-Solutions repo (page, report, dashboard, email, chart colours), alongside dataviz.
 ---
 
 # The DKJ-Solutions brand book

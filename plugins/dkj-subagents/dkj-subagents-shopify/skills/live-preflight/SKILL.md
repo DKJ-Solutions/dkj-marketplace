@@ -1,6 +1,7 @@
 ---
 name: live-preflight
-description: The step between a merged trunk and a live Shopify theme push, which used to be assembled by hand from prose every release. It verifies the stand, derives the push list from the range rather than from the changelog, hands that list to the repo's drift check AS AN ARRAY, takes one verified backup as the rollback point, and prints the push command, plus a separate deletion command for theme files the range deleted. Use it on the trunk once a release is merged and green, before anything reaches live. Two things it never does, both by construction: it never runs `shopify theme push` -- the live guard reads command strings and cannot see inside a script -- and it never writes the authorisation marker, because green means the checklist is complete, never that the push is authorised.
+description: >-
+  Prepare a live Shopify theme push from a merged, green trunk: verify, push list, drift check, backup, print the command. Use before anything reaches live; it never pushes.
 ---
 
 # live-preflight -- the one step that can refuse the push

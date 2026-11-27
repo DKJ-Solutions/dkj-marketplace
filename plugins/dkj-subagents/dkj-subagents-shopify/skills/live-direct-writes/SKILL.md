@@ -1,6 +1,7 @@
 ---
 name: live-direct-writes
-description: Find file writes that reached the live theme without going through the promotion or the hotfix lane -- a `shopify theme push --allow-live` from a shell that loaded none of this repo's guards, or an admin code-editor save -- and open one issue for them. Use it when asking "did anyone write to live directly?", when setting up the scheduled check, or when its workflow reported. Only for a store whose live theme is Git-connected (Get-ShopifyLiveDeployBranch answered): the evidence is the commit Shopify's GitHub integration writes onto the deploy branch. Reads git and gh, opens at most one issue per run, and writes nothing else.
+description: >-
+  Find writes that reached a Git-connected live theme outside the promotion or hotfix lane, and open one issue. Use for "did anyone write to live directly?".
 argument-hint: "[-Ref <ref>] [-Since <UTC date>] [-DryRun]"
 ---
 
