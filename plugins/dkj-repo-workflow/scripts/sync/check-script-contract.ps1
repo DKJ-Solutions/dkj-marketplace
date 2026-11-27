@@ -649,7 +649,7 @@ if (-not $foundWorkflowFolder) {
         if (Test-Path -LiteralPath $repoConfigPath -PathType Leaf) {
             $driftTrunk = & {
                 Set-StrictMode -Off
-                try { . $args[0]; return [string](Get-SeamValue -Name 'Get-TrunkBranchName' -Default 'main') } catch { return 'main' }
+                try { . $args[0] | Out-Null; return [string](@(Get-SeamValue -Name 'Get-TrunkBranchName' -Default 'main')[-1]) } catch { return 'main' }
             } $repoConfigPath
         }
         try { $drift = @(Get-CiFloorRunnerDrift -RepoRoot $repoRoot -Trunk $driftTrunk) }
@@ -658,7 +658,8 @@ if (-not $foundWorkflowFolder) {
             if ($d.Stale) {
                 Write-Host ("  [BEHIND] $($d.Rel) differs from the runner adopt-ci-floor.ps1 (Part 3 of the 'adopt-dkj-repo-workflow' " +
                     "skill) composes in this plugin version, its shared-scripts pin aside -- first at line $($d.Line). A release " +
-                    "changed this runner after it was placed, and adopt-ci-floor never rewrites a file it finds. To take the " +
+                    "changed this runner after it was placed, or (merge-on-green.yml) this repo's pull_request workflows changed " +
+                    "since, and adopt-ci-floor never rewrites a file it finds. To take the " +
                     "change: delete the file, re-run adopt-ci-floor.ps1 -Apply, and read git diff before committing -- it shows " +
                     "what the template changed and any edit of your own to carry back.") -ForegroundColor Yellow
             } else {

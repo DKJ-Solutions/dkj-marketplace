@@ -112,6 +112,12 @@ try {
     [System.IO.File]::WriteAllText($abs, '')
     Assert-Equal $foldRel ((Get-Stale @(Get-CiFloorRunnerDrift -RepoRoot $c -Trunk 'main')) -join ',') 'an empty placed runner is behind'
 
+    # A new pull_request workflow after adoption changes merge-on-green's wake list, and only that runner:
+    # the delete-and-re-run remedy composes the new list, so reporting it is right (code review on #4529).
+    $c = New-Consumer
+    [System.IO.File]::WriteAllText((Join-Path $c '.github\workflows\lint.yml'), "name: Lint${Nl}on:${Nl}  pull_request:${Nl}jobs:${Nl}  lint:${Nl}    runs-on: ubuntu-latest${Nl}")
+    Assert-Equal '.github/workflows/merge-on-green.yml' ((Get-Stale @(Get-CiFloorRunnerDrift -RepoRoot $c -Trunk 'main')) -join ',') 'a pull_request workflow added after adoption puts merge-on-green behind, and only it'
+
     # --- 4. Absent -------------------------------------------------------------------------------------
     Write-Host '-- 4. an absent runner is not this check''s to report --' -ForegroundColor Cyan
     $c = New-Consumer
