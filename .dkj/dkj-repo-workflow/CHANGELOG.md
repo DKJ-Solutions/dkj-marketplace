@@ -2,7 +2,37 @@
 
 ## [Unreleased]
 
-**18 / 18 minor entries** <!-- pending-tally -->
+**19 / 19 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/4513-bronnen-library · 20261127-110250Z
+
+The life-hub specialists now keep external evidence apart from the dossiers, where a hub keeps a
+source library. A paper, study, guideline or textbook becomes one row in that library, never a
+dossier. What it means for the person goes into the dossier as an update, citing the row through
+the relation. Ian places sources by asking whether a thing is about the person or about the world.
+Onyx lays no links to or between sources. Rutger delivers each source he opened as a row: the GRADE
+strength of that single source sits on the row, and the evidence status of the mechanism stays on the
+mechanism page. Rutger, Hugo and Fiona look a source up in the library before searching the web. So
+does Rebecca, when she researches for a hub.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+A life-hub user finds a source once and every specialist reuses it, instead of each one searching
+the web again for evidence another already found.
+
+**Score:** 3
+
+#### Pull Request
+
+Life hub: keep external evidence in a separate library, apart from the brain
+
+Plugins: dkj-subagents-alpha, dkj-subagents-lifehub
+
+[PR #4515](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4515)
+
+---
 
 ### DEPLOY: feat/4504-dossier-name-once · 20261127-104946Z
 
